@@ -1,0 +1,10 @@
+# This file tracks the list of required packages for this project
+
+# For connecting to and controlling the motorcontrollers
+robotpy
+# For getting input from the controller (as well as a backend for the telemetry display)
+pygame
+# Additional tools (as well as a backend for the telemetry display)
+standard-j
+# For running the gui elements for telemetry (requires pygame, standard-j)
+# light-widgets-j (awaiting update)
