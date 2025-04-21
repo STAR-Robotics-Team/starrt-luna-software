@@ -1,19 +1,32 @@
 import pygame
-import time
 
-pygame.joystick.init()
-joysticks = [pygame.joystick.Joystick(x) for x in range(pygame.joystick.get_count())]
+class Controller():
 
-print(len(joysticks))
-pygame.init()
+    def __init__(self): 
+        pygame.init()
+        self.joystick = pygame.joystick.Joystick(0)
+        self.screen = pygame.display.set_mode((900, 600))
+        self.screen.fill((255, 255, 255))
 
-while True:
-        # Event processing step.
-        # Possible joystick events: JOYAXISMOTION, JOYBALLMOTION, JOYBUTTONDOWN,
-        # JOYBUTTONUP, JOYHATMOTION, JOYDEVICEADDED, JOYDEVICEREMOVED
-        joystick = pygame.joystick.Joystick(0)
-        for i in range(4):
-            axis = joystick.get_axis(i)
-            print(f"Axis {i} value: {axis}")
-        time.sleep(2)
+        font = pygame.font.Font('freesansbold.ttf', 15)
+        text = font.render('Select your command, then press the appropriate button or move the joystick in your desired direction to set it.', True, (0, 0, 0))
+        textRect = text.get_rect()
+        textRect.center = (450, 200)
+        self.screen.blit(text, textRect)
+
+        pygame.display.set_caption("Set Controller Buttons")
+        pygame.display.flip()
+        self.running = True
+        while self.running:
+            self.update()
         
+    def update(self):
+
+        for event in pygame.event.get(): 
+
+            if event.type == pygame.QUIT: 
+                self.running = False
+        
+    
+if __name__ == "__main__":
+    controller = Controller()
