@@ -1,0 +1,57 @@
+{
+  "name": "STAR Lunabotics (ROS 2 Jazzy)",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "target": "dev",
+    // Build with the host's network, like the running container. Docker's own
+    // networks can overlap campus Wi-Fi addresses and break DNS during builds.
+    "options": ["--network=host"]
+  },
+  "features": {
+    // Desktop in the browser for RViz and other GUI tools: http://localhost:6080
+    "ghcr.io/devcontainers/features/desktop-lite:1": {
+      "password": "noPassword",
+      // Listen on this computer only. With host networking, a bare port would
+      // let anyone on the same Wi-Fi open the desktop.
+      "webPort": "127.0.0.1:6080"
+    }
+  },
+  "remoteUser": "ubuntu",
+  "workspaceMount": "source=${localWorkspaceFolder},target=/ws,type=bind",
+  "workspaceFolder": "/ws",
+  "runArgs": [
+    // Use the host's network, so ROS 2 can reach the robot and CAN adapters (Linux hosts).
+    "--network=host",
+    // Lets nodes in the container reach nodes on the host through shared memory.
+    "--ipc=host",
+    // Lets scripts/can_up.sh and scripts/vcan_up.sh configure CAN interfaces.
+    "--cap-add=NET_ADMIN"
+  ],
+  "containerEnv": {
+    "COLCON_DEFAULTS_FILE": "/ws/.devcontainer/colcon-defaults.yaml",
+    // The browser desktop's X display. With host networking the container shares
+    // display numbers with the host, and Ubuntu's own desktop takes :0 and :1.
+    "DISPLAY": ":20",
+    // ROS 2 only finds nodes on this computer until you change this (see README).
+    "ROS_AUTOMATIC_DISCOVERY_RANGE": "LOCALHOST"
+  },
+  "postCreateCommand": "bash scripts/install_deps.sh",
+  "forwardPorts": [6080],
+  "portsAttributes": {
+    "6080": {
+      "label": "Desktop (noVNC)"
+    }
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-vscode.cpptools",
+        "ms-python.python",
+        "bierner.markdown-mermaid"
+      ],
+      "settings": {
+        "C_Cpp.default.compileCommands": "/ws/build/compile_commands.json"
+      }
+    }
+  }
+}
