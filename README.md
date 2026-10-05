@@ -24,15 +24,38 @@ explains why, how code gets built for the robot, and the other ways to set up.
 
 ### Open the dev container
 
-```bash
-git clone git@github.com:STAR-Robotics-Team/starrt-luna-software.git
-```
+You clone the repository onto your own computer, like any other repository. When you open
+it as a dev container, the editor reads `.devcontainer/devcontainer.json`, builds an image
+from `.devcontainer/Dockerfile`, starts a container from that image, and mounts your clone
+into it at `/ws`. Your code stays on your computer; the container supplies Linux, ROS 2,
+and the tools. Edits made inside or outside the container change the same files.
 
 The typical setup is [VS Code](https://code.visualstudio.com/) with its
-[Dev Containers extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers).
-Open the folder in VS Code and choose **Reopen in Container** when it offers, or run
-**Dev Containers: Reopen in Container** from the command palette. The first time, this
-builds the environment, which takes several minutes.
+[Dev Containers extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers):
+
+1. Start Docker (on macOS and Windows, open Docker Desktop).
+2. Clone the repository and open it in VS Code:
+
+   ```bash
+   git clone git@github.com:STAR-Robotics-Team/starrt-luna-software.git
+   cd starrt-luna-software
+   code .
+   ```
+
+   Without an SSH key on GitHub, clone
+   `https://github.com/STAR-Robotics-Team/starrt-luna-software.git` instead.
+3. VS Code notices `.devcontainer/` and offers **Reopen in Container**. Choose it. If the
+   prompt does not appear, open the command palette (Ctrl+Shift+P, or Cmd+Shift+P on
+   macOS) and run **Dev Containers: Reopen in Container**.
+4. Wait for the first build. It downloads and installs the environment, which takes
+   several minutes; later opens take seconds.
+5. Open a terminal in VS Code (**Terminal > New Terminal**). You are inside the container
+   when the bottom-left corner shows **Dev Container** and the prompt reads
+   `ubuntu@...:/ws$`.
+
+Next time, open the folder in VS Code again and it reconnects to the same container. When
+someone changes `.devcontainer/`, run **Dev Containers: Rebuild Container** to pick up the
+change.
 
 Another editor with dev container support, the Dev Containers CLI in a plain terminal, or
 a native ROS 2 Jazzy install on Ubuntu 24.04 also work; see
