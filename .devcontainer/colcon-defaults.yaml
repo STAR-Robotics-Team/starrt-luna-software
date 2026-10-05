@@ -1,0 +1,9 @@
+# Default colcon options inside the dev container (set by COLCON_DEFAULTS_FILE).
+build:
+  # Edits to Python files, launch files, and parameters take effect without a rebuild.
+  symlink-install: true
+  cmake-args:
+    # Writes build/compile_commands.json, which VS Code uses for C++ IntelliSense.
+    - -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+    # Packages that compile no C++ do not use the option above; do not warn about it.
+    - --no-warn-unused-cli

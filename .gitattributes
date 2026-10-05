@@ -1,0 +1,3 @@
+# Keep LF line endings on every platform. Shell scripts and Dockerfiles break
+# inside the Linux dev container if Git on Windows converts them to CRLF.
+* text=auto eol=lf
