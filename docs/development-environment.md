@@ -163,13 +163,49 @@ Windows the browser desktop is only reachable through an editor.
 | | Dev container on Linux | Dev container on macOS or Windows | Ubuntu 24.04 without a container |
 | --- | --- | --- | --- |
 | Build, test, and run nodes | Yes | Yes\* | Yes |
-| GUI tools (RViz, rqt) | Browser desktop, or native windows | Browser desktop through an editor\*, or native windows with XQuartz on macOS (RViz not confirmed) | Normal windows |
+| GUI tools (RViz, rqt) | Browser desktop, or native windows | Browser desktop through an editor\*, or native windows with XQuartz on macOS\* | Normal windows |
 | CANable USB adapter | Yes | No; Docker Desktop cannot pass USB devices through | Yes |
 | Virtual CAN bus (`vcan`) | Yes | Not tested | Yes |
 | ROS 2 with the robot or other computers | Yes | Usually not; see [ROS 2 networking](#ros-2-networking) | Yes |
 | Gamepad | Not set up yet (deliverable 5.2) | Not set up yet | Yes, with ROS's `joy` package\* |
 
 \* Expected but not tested yet. Update this table when you test one of these.
+
+## Changing the ROS 2 version
+
+The ROS 2 release (currently Jazzy) is a team decision, not a personal setting. Every
+package, every member's environment, and the robot must use the same release, because a
+node built against one release does not run on another. To check which release a terminal
+is using, run `echo $ROS_DISTRO`.
+
+### In the dev container
+
+The container has exactly one release installed (`/opt/ros/jazzy`), built into its image,
+so there is no other `setup.bash` to switch to. Changing the release means changing the
+image for everyone, in a pull request:
+
+1. In [`.devcontainer/Dockerfile`](../.devcontainer/Dockerfile), replace `jazzy` in the
+   base image (`ros:jazzy-ros-base`), the desktop package (`ros-jazzy-desktop`), and the
+   `setup.bash` line. The base image brings the Ubuntu version that release needs.
+2. Replace `jazzy` in [`scripts/install_deps.sh`](../scripts/install_deps.sh), and update
+   the docs.
+3. Rebuild the container. In VS Code, run **Dev Containers: Rebuild Container**.
+4. Delete `build/`, `install/`, and `log/`, then run `colcon build`, because everything
+   was built against the old release.
+
+### On a native install
+
+Several releases can be installed side by side under `/opt/ros/<release>`, but only those
+built for your Ubuntu version. On Ubuntu 24.04, apt has Jazzy and Kilted, but not Humble,
+which targets Ubuntu 22.04. Each terminal uses the release whose `setup.bash` it loaded:
+
+- Load one release per terminal. Loading a second on top of the first mixes them, and ROS
+  warns: "Please make sure that the environment does not mix paths from different
+  distributions." Open a new terminal instead.
+- If your `~/.bashrc` loads a release, every new terminal starts with it, so change that
+  line to switch.
+- After switching, delete `build/`, `install/`, and `log/` and rebuild, as in the dev
+  container.
 
 ## GUI tools
 
@@ -210,8 +246,11 @@ graphics card, and without this setting RViz stalls while starting up.
 ### Native windows on macOS with XQuartz
 
 [XQuartz](https://www.xquartz.org/) lets the container open normal Mac windows. A team
-member got this working by following the display setup in
-[Docker's ROS 2 guide](https://docs.docker.com/guides/ros2/), which these steps match:
+member got this working with the sample workspace from
+[Docker's ROS 2 guide](https://docs.docker.com/guides/ros2/), and these steps match that
+guide's display setup. That sample uses host networking like this repository's dev
+container, so the steps should carry over, but nobody has tried them with the dev
+container yet:
 
 1. Install XQuartz:
 
