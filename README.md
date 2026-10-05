@@ -65,9 +65,11 @@ The listener prints `I heard: [Hello World: 1]`, then 2, 3, and so on.
 
 ### GUI tools
 
-RViz, rqt, and other GUI programs open on a desktop that runs in your browser. Open
-<http://localhost:6080/vnc.html?autoconnect=true&resize=remote>, which sizes the desktop
-to your browser window, then run `rviz2` or `rqt_graph` in a terminal.
+By default, RViz, rqt, and other GUI programs open on a desktop that runs in your
+browser. Open <http://localhost:6080/vnc.html?autoconnect=true&resize=remote>, which sizes
+the desktop to your browser window, then run `rviz2` or `rqt_graph` in a terminal. To get
+normal windows instead, on Linux or with XQuartz on macOS, see
+[GUI tools](docs/development-environment.md#gui-tools).
 
 ## Repository layout
 

@@ -163,13 +163,63 @@ Windows the browser desktop is only reachable through an editor.
 | | Dev container on Linux | Dev container on macOS or Windows | Ubuntu 24.04 without a container |
 | --- | --- | --- | --- |
 | Build, test, and run nodes | Yes | Yes\* | Yes |
-| GUI tools (RViz, rqt) | Browser desktop | Browser desktop, through an editor\* | Normal windows |
+| GUI tools (RViz, rqt) | Browser desktop, or native windows | Browser desktop through an editor\*, or native windows with XQuartz on macOS\* | Normal windows |
 | CANable USB adapter | Yes | No; Docker Desktop cannot pass USB devices through | Yes |
 | Virtual CAN bus (`vcan`) | Yes | Not tested | Yes |
 | ROS 2 with the robot or other computers | Yes | Usually not; see [ROS 2 networking](#ros-2-networking) | Yes |
 | Gamepad | Not set up yet (deliverable 5.2) | Not set up yet | Yes, with ROS's `joy` package\* |
 
 \* Expected but not tested yet. Update this table when you test one of these.
+
+## GUI tools
+
+RViz, rqt, and other GUI programs in the dev container can show up in two ways.
+
+### Browser desktop (any operating system)
+
+The dev container runs a desktop you open in your browser, with no setup:
+<http://localhost:6080/vnc.html?autoconnect=true&resize=remote>. GUI programs started in a
+container terminal appear there.
+
+### Native windows on Linux
+
+GUI programs can also open as normal windows on your own desktop:
+
+1. On the host, once per login, let programs running as your user open windows. The
+   container's user has the same user ID as you, so this includes the container, and no
+   other user:
+
+   ```bash
+   xhost +SI:localuser:$USER
+   ```
+
+2. In the container terminal, point GUI programs at your desktop's display (run
+   `echo $DISPLAY` on the host to check its number, usually `:0`):
+
+   ```bash
+   export DISPLAY=:0 LIBGL_ALWAYS_SOFTWARE=1
+   rviz2
+   ```
+
+`LIBGL_ALWAYS_SOFTWARE=1` makes RViz draw with the CPU. The container cannot use your
+graphics card, and without this setting RViz stalls while starting up.
+
+### Native windows on macOS with XQuartz (not tested yet)
+
+[XQuartz](https://www.xquartz.org/) lets the container open normal Mac windows. These
+steps are the usual setup, but nobody on the team has tested them yet:
+
+1. Install XQuartz (`brew install --cask xquartz`, or download it from the website), then
+   log out and back in.
+2. In XQuartz, open **Settings > Security**, turn on **Allow connections from network
+   clients**, and restart XQuartz.
+3. In a Mac terminal, each time XQuartz starts, run `xhost +localhost`.
+4. In the container terminal, run `export DISPLAY=host.docker.internal:0` before starting
+   GUI programs.
+
+XQuartz only supports old versions of OpenGL, so 3D programs such as RViz may fail or run
+slowly this way. If they do, use the browser desktop. Update this section once someone
+tries it.
 
 ## CAN bus
 
