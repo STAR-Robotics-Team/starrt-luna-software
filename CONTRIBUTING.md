@@ -13,7 +13,7 @@ to `main` directly.
    git switch -c drivetrain/cmd-vel-skeleton
    ```
 
-3. Build and test in the dev container before you push:
+3. Build and test before you push:
 
    ```bash
    colcon build
@@ -33,8 +33,8 @@ to `main` directly.
   same pull request. Reviewers reject pull requests where the code and the doc disagree.
 - The first code in every workstream is a skeleton node that matches its interface table
   exactly, publishing fake data.
-- Draw diagrams in Mermaid. GitHub renders them, and the dev container's VS Code shows
-  them in Markdown preview.
+- Draw diagrams in Mermaid. GitHub renders them, and so does Markdown preview in VS Code
+  when it runs in the dev container.
 
 ## Packages
 

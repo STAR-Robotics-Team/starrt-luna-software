@@ -6,36 +6,63 @@ laptop, and the design docs the code follows.
 
 ## Get started
 
-You need [Docker](https://docs.docker.com/get-started/get-docker/),
-[VS Code](https://code.visualstudio.com/), and VS Code's
+The code builds and runs in a dev container: a Docker image with ROS 2 Jazzy and every
+tool the robot code needs, defined in `.devcontainer/`. It gives everyone the same setup,
+whatever their laptop runs.
+
+### Install Docker
+
+- **Windows:** Docker runs on WSL 2, so first run `wsl --install` in an administrator
+  PowerShell (it also installs Ubuntu), then install
+  [Docker Desktop](https://docs.docker.com/desktop/setup/install/windows-install/). For
+  faster builds, clone the repository inside Ubuntu rather than on `C:\`.
+- **macOS:** install [Docker Desktop](https://docs.docker.com/desktop/setup/install/mac-install/).
+  Apple Silicon Macs run the container natively.
+- **Linux:** install [Docker Engine](https://docs.docker.com/engine/install/) and add
+  yourself to the `docker` group.
+
+### Open the dev container
+
+```bash
+git clone git@github.com:STAR-Robotics-Team/starrt-luna-software.git
+```
+
+The typical setup is [VS Code](https://code.visualstudio.com/) with its
 [Dev Containers extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers).
+Open the folder in VS Code and choose **Reopen in Container** when it offers, or run
+**Dev Containers: Reopen in Container** from the command palette. The first time, this
+builds the environment, which takes several minutes.
 
-- **Windows:** install [WSL 2](https://learn.microsoft.com/windows/wsl/install) and Docker
-  Desktop, then clone the repository inside WSL (for example in `~/`), not on `C:\`.
-- **macOS:** install Docker Desktop. Apple Silicon Macs run the container natively.
-- **Linux:** install Docker Engine and add yourself to the `docker` group.
+Other ways work too:
 
-Then:
+- **Another editor** with dev container support, such as a JetBrains IDE, opens the same
+  container.
+- **A terminal** is enough with the [Dev Containers CLI](https://github.com/devcontainers/cli),
+  which needs Node.js. From the repository folder:
 
-1. Clone the repository and open it in VS Code:
+  ```bash
+  npx @devcontainers/cli up --workspace-folder .
+  npx @devcontainers/cli exec --workspace-folder . bash
+  ```
 
-   ```bash
-   git clone git@github.com:STAR-Robotics-Team/starrt-luna-software.git
-   code starrt-luna-software
-   ```
+  The CLI does not forward ports, so on macOS and Windows the browser desktop (see GUI
+  tools) is only reachable through an editor.
+- **No container:** on Ubuntu 24.04 with
+  [ROS 2 Jazzy installed](https://docs.ros.org/en/jazzy/Installation/Ubuntu-Install-Debs.html),
+  run `scripts/install_deps.sh` and the commands below work as written. Run
+  `source install/setup.bash` in each new terminal, and set the networking variable
+  described under ROS 2 networking yourself.
 
-2. Choose **Reopen in Container** when VS Code offers it, or run
-   **Dev Containers: Reopen in Container** from the command palette. The first time, this
-   downloads and builds the environment, which takes several minutes.
-3. In VS Code's terminal, which now runs inside the container, build and test the
-   workspace:
+### Build and test
 
-   ```bash
-   colcon build
-   colcon test && colcon test-result --verbose
-   ```
+In a terminal inside the container (in VS Code, its built-in terminal):
 
-   Open a new terminal after building, so it picks up what you built.
+```bash
+colcon build
+colcon test && colcon test-result --verbose
+```
+
+Open a new terminal after building, so it picks up what you built.
 
 ### Check that ROS 2 works
 
