@@ -6,9 +6,10 @@ laptop, and the design docs the code follows.
 
 ## Get started
 
-The code builds and runs in a dev container: a Docker image with ROS 2 Jazzy and every
-tool the robot code needs, defined in `.devcontainer/`. It gives everyone the same setup,
-whatever their laptop runs.
+The code builds and runs in Linux with ROS 2 Jazzy. The dev container provides that on
+any operating system: a Docker image with ROS 2 Jazzy and every tool the robot code needs,
+defined in `.devcontainer/`. [docs/development-environment.md](docs/development-environment.md)
+explains why, how code gets built for the robot, and the other ways to set up.
 
 ### Install Docker
 
@@ -33,26 +34,9 @@ Open the folder in VS Code and choose **Reopen in Container** when it offers, or
 **Dev Containers: Reopen in Container** from the command palette. The first time, this
 builds the environment, which takes several minutes.
 
-Other ways work too:
-
-- **Another editor** with dev container support, such as a JetBrains IDE, opens the same
-  container.
-- **A terminal** is enough with the [Dev Containers CLI](https://github.com/devcontainers/cli),
-  which needs Node.js. From the repository folder:
-
-  ```bash
-  npx @devcontainers/cli up --workspace-folder .
-  npx @devcontainers/cli exec --workspace-folder . bash
-  ```
-
-  The CLI does not forward ports, so on macOS and Windows the browser desktop (see GUI
-  tools) is only reachable through an editor.
-- **No container:** on Ubuntu 24.04, install
-  [ROS 2 Jazzy](https://docs.ros.org/en/jazzy/Installation/Ubuntu-Install-Debs.html) and
-  add `source /opt/ros/jazzy/setup.bash` to your `~/.bashrc`, so every terminal loads
-  ROS. Then run `scripts/install_deps.sh` once, and the commands below work. After you
-  build, also run `source install/setup.bash` in each new terminal, and set the networking
-  variable described under ROS 2 networking yourself.
+Another editor with dev container support, the Dev Containers CLI in a plain terminal, or
+a native ROS 2 Jazzy install on Ubuntu 24.04 also work; see
+[Ways to set up](docs/development-environment.md#ways-to-set-up).
 
 ### Build and test
 
@@ -89,6 +73,7 @@ to your browser window, then run `rviz2` or `rqt_graph` in a terminal.
 
 ```text
 .devcontainer/          dev container: ROS 2 Jazzy, build tools, browser desktop
+docs/                   development environment guide
 docs/design/            design docs, one per subsystem; start from _template.md
 scripts/                install dependencies, bring up CAN interfaces
 src/
@@ -100,49 +85,17 @@ Packages planned for this semester, one per workstream: `luna_interfaces`,
 `luna_bringup`, `luna_description`, `luna_mechanism`, `luna_teleop`, and `luna_sensors`.
 The platform design doc confirms the final names.
 
-## Hardware
+## More documentation
 
-### CAN bus
-
-The motor controllers are CTRE Talon SRX and Victor SPX, driven by CTRE Phoenix 5 over
-SocketCAN through a CANable adapter. On a Linux computer with the CANable plugged in:
-
-```bash
-scripts/can_up.sh                  # bring up can0 at 1 Mbit/s
-candump can0                       # watch traffic on the bus
-ros2 run luna_drivetrain motor_test
-```
-
-`motor_test` spins the left drive motors at 10% output until you press Ctrl+C. Lift the
-wheels off the ground first.
-
-Without hardware, `scripts/vcan_up.sh can0` creates a virtual `can0`, and `candump can0`
-shows what your code sends. The first time, you may need to run `sudo modprobe vcan` on
-the host, outside the container.
-
-USB CAN adapters only reach the container on Linux. On macOS and Windows, Docker runs
-inside a virtual machine that cannot see them.
-
-### ROS 2 networking
-
-The container shares your computer's network, and `ROS_AUTOMATIC_DISCOVERY_RANGE` is set
-to `LOCALHOST`. Your nodes only find other nodes on your own computer, so on campus Wi-Fi
-you never see, or accidentally drive, another member's nodes.
-
-To talk to the robot or another computer, run this in each terminal on both machines, with
-the same domain ID (0 to 101):
-
-```bash
-export ROS_AUTOMATIC_DISCOVERY_RANGE=SUBNET
-export ROS_DOMAIN_ID=<agreed id>
-```
-
-This works from Linux. On macOS and Windows, the virtual machine that Docker runs in
-usually blocks ROS 2 discovery across the network.
-
-## Contributing
-
-Read [CONTRIBUTING.md](CONTRIBUTING.md) before opening your first pull request.
+- [Development environment](docs/development-environment.md): why Linux, building for
+  the robot, setup options, what works on which operating system, the CAN bus, and
+  ROS 2 networking.
+- [CONTRIBUTING.md](CONTRIBUTING.md): the pull request workflow and conventions. Read it
+  before your first pull request.
+- [Design docs](docs/design/): one per subsystem, started from
+  [`_template.md`](docs/design/_template.md).
+- [`ctre_phoenix5_vendor`](src/ctre_phoenix5_vendor/README.md): how the CTRE Phoenix
+  libraries are downloaded, and how to upgrade them.
 
 ## License
 
