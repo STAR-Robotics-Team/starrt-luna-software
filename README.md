@@ -47,11 +47,12 @@ Other ways work too:
 
   The CLI does not forward ports, so on macOS and Windows the browser desktop (see GUI
   tools) is only reachable through an editor.
-- **No container:** on Ubuntu 24.04 with
-  [ROS 2 Jazzy installed](https://docs.ros.org/en/jazzy/Installation/Ubuntu-Install-Debs.html),
-  run `scripts/install_deps.sh` and the commands below work as written. Run
-  `source install/setup.bash` in each new terminal, and set the networking variable
-  described under ROS 2 networking yourself.
+- **No container:** on Ubuntu 24.04, install
+  [ROS 2 Jazzy](https://docs.ros.org/en/jazzy/Installation/Ubuntu-Install-Debs.html) and
+  add `source /opt/ros/jazzy/setup.bash` to your `~/.bashrc`, so every terminal loads
+  ROS. Then run `scripts/install_deps.sh` once, and the commands below work. After you
+  build, also run `source install/setup.bash` in each new terminal, and set the networking
+  variable described under ROS 2 networking yourself.
 
 ### Build and test
 
