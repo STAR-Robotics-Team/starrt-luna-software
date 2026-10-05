@@ -163,7 +163,7 @@ Windows the browser desktop is only reachable through an editor.
 | | Dev container on Linux | Dev container on macOS or Windows | Ubuntu 24.04 without a container |
 | --- | --- | --- | --- |
 | Build, test, and run nodes | Yes | Yes\* | Yes |
-| GUI tools (RViz, rqt) | Browser desktop, or native windows | Browser desktop through an editor\*, or native windows with XQuartz on macOS\* | Normal windows |
+| GUI tools (RViz, rqt) | Browser desktop, or native windows | Browser desktop through an editor\*, or native windows with XQuartz on macOS (RViz not confirmed) | Normal windows |
 | CANable USB adapter | Yes | No; Docker Desktop cannot pass USB devices through | Yes |
 | Virtual CAN bus (`vcan`) | Yes | Not tested | Yes |
 | ROS 2 with the robot or other computers | Yes | Usually not; see [ROS 2 networking](#ros-2-networking) | Yes |
@@ -193,6 +193,9 @@ GUI programs can also open as normal windows on your own desktop:
    xhost +SI:localuser:$USER
    ```
 
+   Docker's ROS 2 guide uses `xhost +local:docker` instead, which lets every user on the
+   computer open windows. The command above is narrower.
+
 2. In the container terminal, point GUI programs at your desktop's display (run
    `echo $DISPLAY` on the host to check its number, usually `:0`):
 
@@ -204,22 +207,41 @@ GUI programs can also open as normal windows on your own desktop:
 `LIBGL_ALWAYS_SOFTWARE=1` makes RViz draw with the CPU. The container cannot use your
 graphics card, and without this setting RViz stalls while starting up.
 
-### Native windows on macOS with XQuartz (not tested yet)
+### Native windows on macOS with XQuartz
 
-[XQuartz](https://www.xquartz.org/) lets the container open normal Mac windows. These
-steps are the usual setup, but nobody on the team has tested them yet:
+[XQuartz](https://www.xquartz.org/) lets the container open normal Mac windows. A team
+member got this working by following the display setup in
+[Docker's ROS 2 guide](https://docs.docker.com/guides/ros2/), which these steps match:
 
-1. Install XQuartz (`brew install --cask xquartz`, or download it from the website), then
-   log out and back in.
-2. In XQuartz, open **Settings > Security**, turn on **Allow connections from network
-   clients**, and restart XQuartz.
-3. In a Mac terminal, each time XQuartz starts, run `xhost +localhost`.
-4. In the container terminal, run `export DISPLAY=host.docker.internal:0` before starting
-   GUI programs.
+1. Install XQuartz:
 
-XQuartz only supports old versions of OpenGL, so 3D programs such as RViz may fail or run
-slowly this way. If they do, use the browser desktop. Update this section once someone
-tries it.
+   ```bash
+   brew install --cask xquartz
+   ```
+
+2. Open XQuartz, go to **Settings > Security**, and turn on **Allow connections from
+   network clients**. Restart the Mac.
+3. In a Mac terminal, allow connections from the container. The `xhost` lines reset
+   whenever XQuartz restarts, so run them again each time:
+
+   ```bash
+   defaults write org.xquartz.X11 nolisten_tcp -bool false
+   xhost +localhost
+   xhost + 127.0.0.1
+   ```
+
+4. In the container terminal, point GUI programs at XQuartz before starting them:
+
+   ```bash
+   export DISPLAY=host.docker.internal:0 QT_X11_NO_MITSHM=1
+   ```
+
+   `QT_X11_NO_MITSHM=1` stops Qt programs such as rqt from trying to share memory with
+   XQuartz, which cannot work across the virtual machine Docker runs in.
+
+Docker's guide runs turtlesim and rqt this way. RViz and other 3D programs have not been
+confirmed yet: XQuartz's OpenGL support is limited, so they may fail or run slowly. If
+they do, use the browser desktop, and update this section with what you find.
 
 ## CAN bus
 
@@ -258,3 +280,17 @@ export ROS_DOMAIN_ID=<agreed id>
 
 On macOS and Windows, Docker runs containers inside a virtual machine, which usually
 blocks ROS 2 discovery across the network.
+
+## Further reading
+
+- [Docker's ROS 2 guide](https://docs.docker.com/guides/ros2/): running ROS 2 in
+  containers, display setup for GUI programs, and a hands-on turtlesim and rqt exercise.
+  It uses ROS 2 Humble and its own sample workspace. In this repository's dev container,
+  skip its setup and `apt install` steps: turtlesim and rqt are already installed, so
+  start at "Install and run Turtlesim" step 3, `ros2 run turtlesim turtlesim_node`.
+- [ROS 2 Jazzy tutorials](https://docs.ros.org/en/jazzy/Tutorials.html): the official
+  introduction to nodes, topics, services, and building packages.
+- [REP 2000](https://www.ros.org/reps/rep-2000.html): which platforms each ROS 2 release
+  supports.
+- [Dev Containers CLI](https://github.com/devcontainers/cli): using the dev container
+  without an editor.
