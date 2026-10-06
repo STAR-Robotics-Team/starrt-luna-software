@@ -1,3 +1,4 @@
+# shellcheck shell=bash
 # Sourced by every interactive shell in the dev container: says where GUI
 # programs will appear.
 
