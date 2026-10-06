@@ -13,7 +13,7 @@
   // Runs on the host before the container starts: lets programs running as your
   // user, which includes the container's user (same user ID), open windows on
   // your desktop. Lasts until you log out.
-  "initializeCommand": "xhost +SI:localuser:$(id -un) > /dev/null 2>&1 || echo 'xhost failed; GUI programs may not open. See docs/development-environment.md.'",
+  "initializeCommand": "xhost +SI:localuser:$(id -un) > /dev/null 2>&1 || echo 'xhost failed; GUI programs may not open. See docs/gui-tools.md.'",
   "remoteUser": "ubuntu",
   "workspaceMount": "source=${localWorkspaceFolder},target=/ws,type=bind",
   "workspaceFolder": "/ws",
@@ -33,7 +33,8 @@
     // The container cannot use your graphics card, so draw OpenGL with the CPU.
     // Without this, RViz stalls while starting up.
     "LIBGL_ALWAYS_SOFTWARE": "1",
-    // ROS 2 only finds nodes on this computer until you change this (see README).
+    // ROS 2 only finds nodes on this computer until you change this
+    // (see docs/ros-networking.md).
     "ROS_AUTOMATIC_DISCOVERY_RANGE": "LOCALHOST"
   },
   "postCreateCommand": "bash scripts/install_deps.sh",

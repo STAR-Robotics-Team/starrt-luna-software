@@ -7,8 +7,9 @@
 Status is `Draft` (being written), `Current` (matches the code), or `Superseded` (replaced;
 link the replacement).
 
-To start a new doc, copy this file to `docs/design/<subsystem>.md` and fill in every
-section. Write "None" rather than deleting a section.
+To start a new doc, copy this file to `docs/design/<subsystem>.md`, fill in every section,
+and delete this paragraph. Write "None" rather than deleting a section.
+[Design docs](README.md) explains how design docs work.
 
 ## 1. Purpose and requirements
 

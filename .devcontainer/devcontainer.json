@@ -35,7 +35,8 @@
     // The VNC desktop's X display. With host networking the container shares
     // display numbers with the host, and Ubuntu's own desktop takes :0 and :1.
     "DISPLAY": ":20",
-    // ROS 2 only finds nodes on this computer until you change this (see README).
+    // ROS 2 only finds nodes on this computer until you change this
+    // (see docs/ros-networking.md).
     "ROS_AUTOMATIC_DISCOVERY_RANGE": "LOCALHOST"
   },
   "postCreateCommand": "bash scripts/install_deps.sh",

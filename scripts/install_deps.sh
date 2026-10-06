@@ -12,7 +12,7 @@ cd "$(dirname "$0")/.."
 ros_setup=/opt/ros/jazzy/setup.bash
 if [ ! -f "$ros_setup" ]; then
   echo "ROS 2 Jazzy is not installed ($ros_setup is missing). Use the dev container," \
-    "or install ROS 2 Jazzy first (see README.md)." >&2
+    "or install ROS 2 Jazzy first (see docs/development-environment.md)." >&2
   exit 1
 fi
 
