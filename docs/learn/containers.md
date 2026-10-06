@@ -69,14 +69,12 @@ with a window between them, looking at the same table: whatever you put on the t
 one room is right there when you look from the other.
 
 ```mermaid
-flowchart TB
+flowchart LR
   subgraph computer["Your computer"]
-    direction LR
-    editor["VS Code or any editor"] -- "edits" --> clone["Your clone of the repository<br/>~/starrt-luna-software"]
+    editor["VS Code or any editor"] -- "edits" --> clone["Your clone<br/>~/starrt-luna-software"]
   end
-  subgraph container["Dev container: Ubuntu 24.04 and ROS 2"]
-    direction LR
-    tools["ROS 2, compilers, and tools"] -- "build and run" --> ws["/ws"]
+  subgraph container["Dev container: Ubuntu 24.04, ROS 2, and tools"]
+    ws["/ws"]
   end
   clone <== "mounted: the same files, not a copy" ==> ws
 ```
