@@ -6,33 +6,30 @@ Lunabotics rover software. New to the team? Start with
 
 ## Set up
 
-| Page | Read it when |
-| --- | --- |
-| [Getting started](getting-started.md) | You are setting up for the first time. |
-| [Development environment](development-environment.md) | You want to know how the dev container works, use another editor or no container, or check what works on your operating system. |
+- **[Getting started](getting-started.md):** setting up for the first time.
+- **[Development environment](development-environment.md):** how the dev container works,
+  using another editor or no container, and what works on each operating system.
 
 ## Work day to day
 
-| Page | Read it when |
-| --- | --- |
-| [Everyday workflow](everyday-workflow.md) | You are editing, building, testing, and running code, or want to run commands from your own terminal with `scripts/dev`. |
-| [GUI tools](gui-tools.md) | You want to see RViz, rqt, or another program with a window. |
-| [CAN bus](can-bus.md) | You are working with the motor controllers. |
-| [ROS 2 networking](ros-networking.md) | Your nodes need to talk to the robot or another computer. |
+- **[Everyday workflow](everyday-workflow.md):** editing, building, testing, and running
+  code, and running commands from your own terminal with `scripts/dev`.
+- **[GUI tools](gui-tools.md):** seeing RViz, rqt, and other programs with windows.
+- **[CAN bus](can-bus.md):** working with the motor controllers, with or without hardware.
+- **[ROS 2 networking](ros-networking.md):** connecting your nodes to the robot or another
+  computer.
 
 ## Background
 
-| Page | Read it when |
-| --- | --- |
-| [Building for the robot](building-for-the-robot.md) | You want to know why a build only runs where it was built for, or how code gets built for the robot's Jetson. |
+- **[Building for the robot](building-for-the-robot.md):** why a build only runs where it
+  was built for, and how code gets built for the robot's Jetson.
 
 ## Team process
 
-| Page | Read it when |
-| --- | --- |
-| [Contributing](contributing.md) | Before your first pull request. |
-| [Design docs](design/README.md) | You are writing or reviewing a subsystem's design doc. |
-| [Writing docs](writing-docs.md) | You are adding or changing a page in these docs. |
+- **[Contributing](contributing.md):** branches, pull requests, and code style. Read it
+  before your first pull request.
+- **[Design docs](design/README.md):** writing and reviewing a subsystem's design doc.
+- **[Writing docs](writing-docs.md):** adding or changing a page in these docs.
 
 ## Package documentation
 
