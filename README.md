@@ -88,16 +88,16 @@ The listener prints `I heard: [Hello World: 1]`, then 2, 3, and so on.
 
 ### GUI tools
 
-By default, RViz, rqt, and other GUI programs open on a desktop that runs in your
-browser. Open <http://localhost:6080/vnc.html?autoconnect=true&resize=remote>, which sizes
-the desktop to your browser window, then run `rviz2` or `rqt_graph` in a terminal. To get
-normal windows instead, on Linux or with XQuartz on macOS, see
-[GUI tools](docs/development-environment.md#gui-tools).
+By default, RViz, rqt, and other GUI programs open on a desktop inside the container,
+which you view over VNC. Open <http://localhost:6080/vnc.html?autoconnect=true&resize=remote>
+in your browser, or point a VNC viewer app at `localhost:5901`, then run `rviz2` or
+`rqt_graph` in a terminal. This works on every operating system, RViz included. For normal
+windows instead, see [GUI tools](docs/development-environment.md#gui-tools).
 
 ## Repository layout
 
 ```text
-.devcontainer/          dev container: ROS 2 Jazzy, build tools, browser desktop
+.devcontainer/          dev container: ROS 2 Jazzy, build tools, VNC desktop
 docs/                   development environment guide
 docs/design/            design docs, one per subsystem; start from _template.md
 scripts/                install dependencies, bring up CAN interfaces

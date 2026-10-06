@@ -109,7 +109,7 @@ for example if the robot runs the same image.
 Install [VS Code](https://code.visualstudio.com/) and its
 [Dev Containers extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers),
 open your clone, and choose **Reopen in Container**. VS Code builds the image the first
-time, installs the workspace's dependencies, and forwards the browser desktop's port.
+time, installs the workspace's dependencies, and forwards the VNC desktop's ports.
 
 ### Dev container in another editor
 
@@ -128,7 +128,7 @@ npx @devcontainers/cli exec --workspace-folder . bash
 
 The CLI does not forward ports
 ([devcontainers/cli#22](https://github.com/devcontainers/cli/issues/22)), so on macOS and
-Windows the browser desktop is only reachable through an editor.
+Windows the VNC desktop is only reachable through an editor.
 
 ### Without a container (Ubuntu 24.04)
 
@@ -163,7 +163,7 @@ Windows the browser desktop is only reachable through an editor.
 | | Dev container on Linux | Dev container on macOS or Windows | Ubuntu 24.04 without a container |
 | --- | --- | --- | --- |
 | Build, test, and run nodes | Yes | Yes\* | Yes |
-| GUI tools (RViz, rqt) | Browser desktop, or native windows | Browser desktop through an editor\*, or native windows with XQuartz on macOS\* | Normal windows |
+| GUI tools (RViz, rqt) | VNC desktop, or native windows | VNC desktop through an editor\*, or native windows with XQuartz on macOS (no RViz) | Normal windows |
 | CANable USB adapter | Yes | No; Docker Desktop cannot pass USB devices through | Yes |
 | Virtual CAN bus (`vcan`) | Yes | Not tested | Yes |
 | ROS 2 with the robot or other computers | Yes | Usually not; see [ROS 2 networking](#ros-2-networking) | Yes |
@@ -209,13 +209,34 @@ which targets Ubuntu 22.04. Each terminal uses the release whose `setup.bash` it
 
 ## GUI tools
 
-RViz, rqt, and other GUI programs in the dev container can show up in two ways.
+RViz, rqt, and other GUI programs in the dev container can show up on a desktop inside the
+container, which you view over VNC, or as native windows on your own desktop.
 
-### Browser desktop (any operating system)
+| | VNC desktop | Native windows |
+| --- | --- | --- |
+| Works on | Every operating system | Linux; macOS through XQuartz, except RViz |
+| RViz and other 3D programs | Yes | Yes on Linux, no through XQuartz |
+| Setup | None | A few commands, below |
 
-The dev container runs a desktop you open in your browser, with no setup:
-<http://localhost:6080/vnc.html?autoconnect=true&resize=remote>. GUI programs started in a
-container terminal appear there.
+### VNC desktop (any operating system)
+
+The dev container runs a desktop and a VNC server, the same remote-desktop technology
+used to control a computer over a network. GUI programs draw everything inside the
+container, including 3D with software OpenGL, and VNC only sends the finished picture to
+your screen. That is why RViz works this way on every operating system.
+
+There are two ways to view the desktop, with no setup:
+
+- **In your browser:** open
+  <http://localhost:6080/vnc.html?autoconnect=true&resize=remote>. The page sizes the
+  desktop to your browser window.
+- **In a VNC viewer app,** such as [TigerVNC](https://tigervnc.org/) or RealVNC Viewer:
+  connect to `localhost:5901`. There is no password.
+
+GUI programs started in a container terminal appear on that desktop. Both ports only accept
+connections from your own computer, never from the network. VS Code forwards them on
+macOS and Windows; the Dev Containers CLI does not, so there the desktop needs VS Code or
+another editor.
 
 ### Native windows on Linux
 
@@ -278,9 +299,10 @@ container yet:
    `QT_X11_NO_MITSHM=1` stops Qt programs such as rqt from trying to share memory with
    XQuartz, which cannot work across the virtual machine Docker runs in.
 
-Docker's guide runs turtlesim and rqt this way. RViz and other 3D programs have not been
-confirmed yet: XQuartz's OpenGL support is limited, so they may fail or run slowly. If
-they do, use the browser desktop, and update this section with what you find.
+This works for 2D programs such as turtlesim and rqt. **RViz does not work through
+XQuartz**: a team member tried it. RViz is a 3D program that sends OpenGL drawing commands
+to the display, and XQuartz cannot handle the modern OpenGL that RViz needs. Use the VNC
+desktop for RViz and other 3D programs.
 
 ## CAN bus
 
