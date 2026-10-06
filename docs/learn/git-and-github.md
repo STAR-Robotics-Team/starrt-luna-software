@@ -31,6 +31,7 @@ Here is the life of one change. You branch off `main`, commit on your branch, an
 work is merged back after review:
 
 ```mermaid
+%%{init: {"gitGraph": {"rotateCommitLabel": false}}}%%
 gitGraph
   commit id: "team's work"
   branch docs/fix-typo
