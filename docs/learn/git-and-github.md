@@ -31,14 +31,9 @@ Here is the life of one change. You branch off `main`, commit on your branch, an
 work is merged back after review:
 
 ```mermaid
-%%{init: {"gitGraph": {"rotateCommitLabel": false}}}%%
-gitGraph
-  commit id: "team's work"
-  branch docs/fix-typo
-  checkout docs/fix-typo
-  commit id: "your change"
-  checkout main
-  merge docs/fix-typo
+flowchart LR
+  before["main<br/>the team's work"] -- "git switch -c" --> branch["Your branch<br/>your commits"]
+  branch -- "pull request, review, merge" --> after["main<br/>now includes your work"]
 ```
 
 Your computer and GitHub each hold a copy of the repository. Git calls the GitHub copy
