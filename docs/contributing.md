@@ -3,6 +3,9 @@
 How changes get into the robot software. Everything goes through a pull request, including
 design docs and these docs. Nobody pushes to `main` directly.
 
+New to Git or pull requests? Read [Git and GitHub](learn/git-and-github.md), then follow
+[Your first pull request](learn/first-pull-request.md) for a step-by-step walkthrough.
+
 ## Workflow
 
 1. Start from a deliverable assigned to you in Turgor.

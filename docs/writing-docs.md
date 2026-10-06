@@ -3,6 +3,20 @@
 How to add or change a page in these docs. The docs are written to read well on GitHub
 and to publish as a documentation site without changes, so they follow a few rules.
 
+## Write for the right reader
+
+The docs are written at three levels:
+
+- **The [learning guide](learn/README.md)** assumes no experience at all. Explain every
+  idea from the beginning, and give the reader something to try.
+- **Setup and reference pages,** such as Getting started and Everyday workflow, assume the
+  reader has finished the learning guide. Link to the guide or the
+  [glossary](learn/glossary.md) the first time you use a term from it, and explain any term
+  it does not cover.
+- **[Design docs](design/README.md)** assume a working knowledge of ROS 2 and the robot.
+
+When you introduce a new term in any page, add it to the glossary.
+
 ## Keep docs current
 
 Docs change in the same pull request as the code they describe. If your change affects how
@@ -14,6 +28,8 @@ marker in [What works where](development-environment.md#what-works-where).
 
 ## Where pages go
 
+- **Learning guide pages** go in `docs/learn/`, listed in reading order in
+  [its home page](learn/README.md).
 - **Team and environment docs** go in `docs/`, one topic per page. Add every new page to
   the map in [docs/README.md](README.md).
 - **Design docs** go in `docs/design/`; see [Design docs](design/README.md).

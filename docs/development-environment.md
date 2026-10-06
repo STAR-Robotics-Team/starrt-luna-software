@@ -15,6 +15,9 @@ To set up for the first time, follow [Getting started](getting-started.md) inste
 
 ## How the dev container works
 
+New to containers? [Containers and the dev container](learn/containers.md) explains images,
+containers, and mounting from the beginning, with exercises. In short:
+
 You clone the repository onto your own computer, like any other repository. When you open
 it as a dev container, your editor (or `scripts/dev`):
 
@@ -26,14 +29,10 @@ it as a dev container, your editor (or `scripts/dev`):
    `scripts/install_deps.sh`.
 
 Your code stays on your computer, and the container supplies the environment around it.
-Edits made inside or outside the container change the same files.
-
-| What | Where it lives | Kept when the container is rebuilt? |
-| --- | --- | --- |
-| Your code, and everything else in the repository | Your computer, seen in the container at `/ws` | Yes |
-| Build output: `build/`, `install/`, `log/` | Your computer, inside your clone (Git ignores it) | Yes |
-| ROS 2, compilers, and tools | The container image | Rebuilt from `.devcontainer/Dockerfile` |
-| The container's home folder (`/home/ubuntu`), with shell history and the CTRE download cache | The container | No |
+Edits made inside or outside the container change the same files. Only `/ws` is shared:
+anything saved elsewhere in the container, including its home folder `/home/ubuntu` and
+the CTRE download cache there, is lost when the container is rebuilt. The
+[containers page](learn/containers.md#what-lives-where) has the full table.
 
 The container shares your computer's network, so on Linux it can reach USB CAN adapters
 and the robot directly. See [CAN bus](can-bus.md) and

@@ -1,8 +1,17 @@
 # Documentation
 
 Everything you need to set up, build, run, and contribute to the STAR Robotics Team's
-Lunabotics rover software. New to the team? Start with
-[Getting started](getting-started.md).
+Lunabotics rover software.
+
+- **New to programming, Git, or the command line?** Start with the
+  [learning guide](learn/README.md). It assumes no experience at all.
+- **Already comfortable with them?** Go straight to [Getting started](getting-started.md).
+
+## Learn
+
+- **[Learning guide](learn/README.md):** the command line, Git and GitHub, containers,
+  ROS 2, and your first pull request, step by step with exercises.
+- **[Glossary](learn/glossary.md):** plain definitions of every term in these docs.
 
 ## Set up
 

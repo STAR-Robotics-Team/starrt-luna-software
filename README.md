@@ -6,8 +6,11 @@ the code follows.
 
 ## Start here
 
-New to the team? [Getting started](docs/getting-started.md) takes you from nothing to a
-working setup.
+- **New to programming, Git, or the command line?** The
+  [learning guide](docs/learn/README.md) teaches everything from the beginning, with
+  exercises.
+- **Ready to set up?** [Getting started](docs/getting-started.md) takes you from nothing to
+  a working setup.
 
 ## Documentation
 
@@ -15,6 +18,7 @@ All documentation lives in [docs/](docs/README.md). The pages you will use most:
 
 | Page | What it covers |
 | --- | --- |
+| [Learning guide](docs/learn/README.md) | The command line, Git, containers, and ROS 2, from the beginning |
 | [Getting started](docs/getting-started.md) | First-time setup |
 | [Everyday workflow](docs/everyday-workflow.md) | Editing, building, testing, and running code, from VS Code or your own terminal |
 | [Contributing](docs/contributing.md) | Branches, pull requests, and code style |

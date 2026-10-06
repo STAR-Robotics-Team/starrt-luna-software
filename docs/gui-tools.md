@@ -23,7 +23,8 @@ There are two ways to view it, with no setup:
 
 - **In your browser:** open
   <http://localhost:6080/vnc.html?autoconnect=true&resize=remote>. The page sizes the
-  desktop to your browser window.
+  desktop to your browser window. It may say the connection is "unencrypted"; that is
+  fine, because the connection never leaves your computer.
 - **In a VNC viewer app,** such as [TigerVNC](https://tigervnc.org/) or RealVNC Viewer:
   connect to `localhost:5901`. There is no password.
 

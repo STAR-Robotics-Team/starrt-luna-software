@@ -2,9 +2,12 @@
 
 How the code talks to the motor controllers, and how to test it with or without hardware.
 
-The drive motors use CTRE Talon SRX and Victor SPX motor controllers on a CAN bus. The
-code drives them with CTRE's Phoenix 5 library, which reaches the bus through SocketCAN,
-the CAN support built into the Linux kernel, and a CANable USB adapter.
+Each drive motor has a **motor controller**, a small box that sets how much power the
+motor gets. Ours are CTRE Talon SRX and Victor SPX controllers. They are wired together on
+a **CAN bus**, a pair of wires that lets the robot's computer send commands to every
+controller and hear back from them. The code drives the controllers with CTRE's Phoenix 5
+library, which reaches the bus through SocketCAN, the CAN support built into Linux, and a
+CANable USB adapter that plugs the bus into a computer.
 
 ## What you need
 

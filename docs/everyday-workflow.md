@@ -1,7 +1,8 @@
 # Everyday workflow
 
 How to edit, build, test, and run code once you are set up. If you are not set up yet,
-start with [Getting started](getting-started.md).
+start with [Getting started](getting-started.md). This page uses the ideas from
+[ROS 2 basics](learn/ros2-basics.md), such as packages, building, and sourcing.
 
 ## Where to run commands
 
@@ -44,9 +45,9 @@ if you use a native ROS install. There are two ways to get a dev container termi
 | You changed | Then |
 | --- | --- |
 | C++ code | `colcon build` |
-| An existing Python node, launch file, or parameter file | Nothing, once the package has been built: the build links these files instead of copying them |
+| An existing Python node, launch file, or parameter file | Nothing, once the package has been built: `install/` points at your files in `src/` instead of copying them, so it sees your edits |
 | A new file, package, or executable | `colcon build`, then open a new terminal |
-| Dependencies in a `package.xml` | `scripts/install_deps.sh`, then `colcon build` |
+| Dependencies in a `package.xml` | `scripts/install_deps.sh`, which installs them with rosdep, then `colcon build` |
 | Anything in `.devcontainer/` | Rebuild the container: **Dev Containers: Rebuild Container** in VS Code, or `scripts/dev rebuild` |
 | Between the dev container and a native install | `rm -rf build install log`, then `colcon build` ([why](development-environment.md#one-clone-one-environment)) |
 
