@@ -14,7 +14,8 @@ the code follows.
 
 ## Documentation
 
-All documentation lives in [docs/](docs/README.md). The pages you will use most:
+All documentation lives in [docs/](docs/README.md), and is also published as a website at
+<https://star-robotics-team.github.io/starrt-luna-software/>. The pages you will use most:
 
 | Page | What it covers |
 | --- | --- |
@@ -31,7 +32,8 @@ All documentation lives in [docs/](docs/README.md). The pages you will use most:
                             and linux-native/ without it
 docs/                       documentation, starting at docs/README.md
 docs/design/                design docs, one per subsystem
-scripts/                    scripts/dev, dependency install, and CAN setup
+mkdocs.yml                  documentation website settings and navigation
+scripts/                    scripts/dev, scripts/docs, dependency install, and CAN setup
 src/
 ├── ctre_phoenix5_vendor/   CTRE Phoenix 5 libraries, downloaded at build time
 └── luna_drivetrain/        drivetrain; holds last semester's motor bench test

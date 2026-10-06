@@ -33,7 +33,9 @@ git switch -c docs/clarify-getting-started
 Open the file in VS Code, edit it, and save. Docs are written in **Markdown**, plain text
 where `#` starts a heading, `**bold**` makes bold text, and `[text](page.md)` makes a link.
 To see how your page will look, press Ctrl+Shift+V (Cmd+Shift+V on macOS) in VS Code to
-open a preview. [Writing docs](../writing-docs.md) has the team's rules for docs.
+open a preview, or run `scripts/docs serve` to see it on a preview of the docs website.
+[Writing docs](../writing-docs.md) has the team's rules for docs, and explains the
+preview.
 
 ## 4. Check what you changed
 

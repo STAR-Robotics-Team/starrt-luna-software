@@ -1,0 +1,90 @@
+# Configuration for the documentation website, built from docs/ with MkDocs and the
+# Material theme. Preview it with `scripts/docs serve`; see docs/writing-docs.md.
+#
+# Material for MkDocs pins MkDocs below 2.0, which drops support for it. Its authors'
+# successor, Zensical, reads this file unchanged; switch to it once it is stable (it was
+# alpha, version 0.0.68, in October 2026).
+site_name: STAR Lunabotics software
+site_description: How to set up, build, and contribute to the STAR Robotics Team's Lunabotics rover software.
+site_url: https://star-robotics-team.github.io/starrt-luna-software/
+repo_url: https://github.com/STAR-Robotics-Team/starrt-luna-software
+repo_name: starrt-luna-software
+edit_uri: edit/main/docs/
+
+docs_dir: docs
+exclude_docs: |
+  requirements.txt
+
+# Every page must be listed here. Add new pages in reading order.
+nav:
+  - Home: README.md
+  - Learning guide:
+      - learn/README.md
+      - 1. The command line: learn/command-line.md
+      - 2. Git and GitHub: learn/git-and-github.md
+      - 3. Containers and the dev container: learn/containers.md
+      - 4. Getting started: getting-started.md
+      - 5. ROS 2 basics: learn/ros2-basics.md
+      - 6. Your first pull request: learn/first-pull-request.md
+      - Glossary: learn/glossary.md
+  - Reference:
+      - Development environment: development-environment.md
+      - Everyday workflow: everyday-workflow.md
+      - GUI tools: gui-tools.md
+      - CAN bus: can-bus.md
+      - ROS 2 networking: ros-networking.md
+      - Building for the robot: building-for-the-robot.md
+  - Team process:
+      - Contributing: contributing.md
+      - Design docs:
+          - design/README.md
+          - Design doc template: design/template.md
+      - Writing docs: writing-docs.md
+
+# Turn problems into build errors when building with --strict.
+validation:
+  omitted_files: warn
+  absolute_links: warn
+  unrecognized_links: warn
+  anchors: warn
+
+theme:
+  name: material
+  features:
+    - content.code.copy
+    - content.action.edit
+    - navigation.tabs
+    - navigation.sections
+    - navigation.indexes
+    - navigation.footer
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - toc.follow
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+
+markdown_extensions:
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.highlight
+  - pymdownx.inlinehilite
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format

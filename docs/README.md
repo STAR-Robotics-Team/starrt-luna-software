@@ -1,7 +1,8 @@
 # Documentation
 
 Everything you need to set up, build, run, and contribute to the STAR Robotics Team's
-Lunabotics rover software.
+Lunabotics rover software. These pages are also published as a website at
+<https://star-robotics-team.github.io/starrt-luna-software/>.
 
 - **New to programming, Git, or the command line?** Start with the
   [learning guide](learn/README.md). It assumes no experience at all.
@@ -10,26 +11,20 @@ Lunabotics rover software.
 ## Learn
 
 - **[Learning guide](learn/README.md):** the command line, Git and GitHub, containers,
-  ROS 2, and your first pull request, step by step with exercises.
+  setting up, ROS 2, and your first pull request, in order, with exercises.
+  [Getting started](getting-started.md) is step 4.
 - **[Glossary](learn/glossary.md):** plain definitions of every term in these docs.
 
-## Set up
+## Reference
 
-- **[Getting started](getting-started.md):** setting up for the first time.
 - **[Development environment](development-environment.md):** how the dev container works,
   using another editor or no container, and what works on each operating system.
-
-## Work day to day
-
 - **[Everyday workflow](everyday-workflow.md):** editing, building, testing, and running
   code, and running commands from your own terminal with `scripts/dev`.
 - **[GUI tools](gui-tools.md):** seeing RViz, rqt, and other programs with windows.
 - **[CAN bus](can-bus.md):** working with the motor controllers, with or without hardware.
 - **[ROS 2 networking](ros-networking.md):** connecting your nodes to the robot or another
   computer.
-
-## Background
-
 - **[Building for the robot](building-for-the-robot.md):** why a build only runs where it
   was built for, and how code gets built for the robot's Jetson.
 

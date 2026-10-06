@@ -1,7 +1,7 @@
 # Writing docs
 
 How to add or change a page in these docs. The docs are written to read well on GitHub
-and to publish as a documentation site without changes, so they follow a few rules.
+and to publish as the documentation website without changes, so they follow a few rules.
 
 ## Write for the right reader
 
@@ -32,6 +32,8 @@ marker in [What works where](development-environment.md#what-works-where).
   [its home page](learn/README.md).
 - **Team and environment docs** go in `docs/`, one topic per page. Add every new page to
   the map in [docs/README.md](README.md).
+- **Every page goes in the website's navigation,** the `nav` list in `mkdocs.yml`. The
+  website build fails if a page is missing from it.
 - **Design docs** go in `docs/design/`; see [Design docs](design/README.md).
 - **Package docs** go in a README next to the package's code, such as
   `src/ctre_phoenix5_vendor/README.md`.
@@ -62,6 +64,25 @@ marker in [What works where](development-environment.md#what-works-where).
   `.devcontainer/Dockerfile`. A docs site publishes only the docs, so links to code files
   would break there.
 - **Link to other websites with full URLs.**
+
+## Preview the website
+
+The docs are published as a website, built from `docs/` by MkDocs with the Material theme
+(configured in `mkdocs.yml`). To see your changes exactly as the website will show them,
+run this from the top folder of the repository, on your own computer:
+
+```bash
+scripts/docs serve
+```
+
+Then open <http://localhost:8000/starrt-luna-software/>. The preview updates each time
+you save a file; press Ctrl+C in the terminal to stop it. It runs in Docker, so there is
+nothing to install.
+
+`scripts/docs build` builds the whole site the way the pull request check does, and fails
+on any broken link, missing anchor, or page left out of the navigation. Every pull request
+that changes the docs runs that check, and once it is merged into `main`, the website
+updates by itself.
 
 ## Formatting to avoid
 

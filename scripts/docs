@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+# Builds or previews the documentation website (mkdocs.yml) with MkDocs Material,
+# running in Docker so nothing else needs installing.
+#
+#   scripts/docs serve   Preview the site at http://localhost:8000. It reloads as you
+#                        edit; press Ctrl+C to stop.
+#   scripts/docs build   Build the site into site/, failing on any broken link or page
+#                        missing from mkdocs.yml, as the pull request check does.
+#
+# Works with macOS's bash 3.2, so avoid newer bash features.
+set -eo pipefail
+
+repo=$(cd "$(dirname "$0")/.." && pwd -P)
+# Keep this version in step with docs/requirements.txt.
+image=squidfunk/mkdocs-material:9.7.7
+
+fail() {
+  echo "scripts/docs: $*" >&2
+  exit 1
+}
+
+if ! command -v docker > /dev/null 2>&1; then
+  fail "Docker is not installed. See docs/getting-started.md."
+fi
+if ! docker info > /dev/null 2>&1; then
+  fail "Docker is not running. Start Docker Desktop, or the Docker service on Linux."
+fi
+
+# Run as your own user, so files the build creates belong to you.
+# NO_MKDOCS_2_WARNING hides a notice about MkDocs 2.0 that does not apply: Material
+# keeps MkDocs below 2.0 (see mkdocs.yml).
+run=(docker run --rm --user "$(id -u):$(id -g)" --volume "$repo:/docs"
+  --env NO_MKDOCS_2_WARNING=1)
+if [ -t 0 ]; then
+  run+=(--interactive --tty)
+fi
+
+case "${1:-}" in
+  serve)
+    echo "Preview at http://localhost:8000/starrt-luna-software/ (press Ctrl+C to stop)." >&2
+    "${run[@]}" --publish 127.0.0.1:8000:8000 "$image" serve --dev-addr 0.0.0.0:8000
+    ;;
+  build)
+    "${run[@]}" "$image" build --strict
+    ;;
+  *)
+    echo "Usage: scripts/docs serve | build" >&2
+    exit 1
+    ;;
+esac
