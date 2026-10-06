@@ -46,7 +46,10 @@ The typical setup is [VS Code](https://code.visualstudio.com/) with its
    `https://github.com/STAR-Robotics-Team/starrt-luna-software.git` instead.
 3. VS Code notices `.devcontainer/` and offers **Reopen in Container**. Choose it. If the
    prompt does not appear, open the command palette (Ctrl+Shift+P, or Cmd+Shift+P on
-   macOS) and run **Dev Containers: Reopen in Container**.
+   macOS) and run **Dev Containers: Reopen in Container**. When it asks which
+   configuration to use, pick **STAR Lunabotics: VNC desktop (any OS)**. The other one,
+   **native windows (Linux, no VNC)**, is for Linux users who want GUI programs as normal
+   windows (see GUI tools below).
 4. Wait for the first build. It downloads and installs the environment, which takes
    several minutes; later opens take seconds.
 5. Open a terminal in VS Code (**Terminal > New Terminal**). You are inside the container
@@ -89,15 +92,20 @@ The listener prints `I heard: [Hello World: 1]`, then 2, 3, and so on.
 ### GUI tools
 
 By default, RViz, rqt, and other GUI programs open on a desktop inside the container,
-which you view over VNC. Open <http://localhost:6080/vnc.html?autoconnect=true&resize=remote>
-in your browser, or point a VNC viewer app at `localhost:5901`, then run `rviz2` or
-`rqt_graph` in a terminal. This works on every operating system, RViz included. For normal
-windows instead, see [GUI tools](docs/development-environment.md#gui-tools).
+which you view over VNC. It starts with the container, and every new terminal prints where
+to find it: <http://localhost:6080/vnc.html?autoconnect=true&resize=remote> in your
+browser, or `localhost:5901` in a VNC viewer app. Then run `rviz2` or `rqt_graph` in a
+terminal. This works on every operating system, RViz included.
+
+On Linux, the **native windows (Linux, no VNC)** configuration builds the container without
+VNC and opens GUI programs as normal windows on your desktop instead. See
+[GUI tools](docs/development-environment.md#gui-tools).
 
 ## Repository layout
 
 ```text
-.devcontainer/          dev container: ROS 2 Jazzy, build tools, VNC desktop
+.devcontainer/          dev container: ROS 2 Jazzy and build tools, with a VNC desktop
+                        (linux-native/ is the same without VNC)
 docs/                   development environment guide
 docs/design/            design docs, one per subsystem; start from _template.md
 scripts/                install dependencies, bring up CAN interfaces

@@ -108,8 +108,18 @@ for example if the robot runs the same image.
 
 Install [VS Code](https://code.visualstudio.com/) and its
 [Dev Containers extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers),
-open your clone, and choose **Reopen in Container**. VS Code builds the image the first
-time, installs the workspace's dependencies, and forwards the VNC desktop's ports.
+open your clone, and choose **Reopen in Container**. The repository has two
+configurations, and VS Code asks which to use:
+
+- **STAR Lunabotics: VNC desktop (any OS)** (`.devcontainer/devcontainer.json`), the
+  default. GUI programs appear on a VNC desktop.
+- **STAR Lunabotics: native windows (Linux, no VNC)**
+  (`.devcontainer/linux-native/devcontainer.json`). Builds without VNC; GUI programs open
+  as normal windows on your Linux desktop.
+
+VS Code builds the image the first time, installs the workspace's dependencies, and, in the
+VNC configuration, forwards the VNC desktop's ports. To switch configurations later, run
+**Dev Containers: Reopen in Container** again and pick the other one.
 
 ### Dev container in another editor
 
@@ -125,6 +135,9 @@ clone:
 npx @devcontainers/cli up --workspace-folder .
 npx @devcontainers/cli exec --workspace-folder . bash
 ```
+
+That uses the default VNC configuration. For native windows on Linux, add
+`--config .devcontainer/linux-native/devcontainer.json` to both commands.
 
 The CLI does not forward ports
 ([devcontainers/cli#22](https://github.com/devcontainers/cli/issues/22)), so on macOS and
@@ -216,7 +229,7 @@ container, which you view over VNC, or as native windows on your own desktop.
 | --- | --- | --- |
 | Works on | Every operating system | Linux; macOS through XQuartz, except RViz |
 | RViz and other 3D programs | Yes | Yes on Linux, no through XQuartz |
-| Setup | None | A few commands, below |
+| Setup | None; it is the default | Linux: pick the native windows configuration. macOS: a few commands |
 
 ### VNC desktop (any operating system)
 
@@ -225,7 +238,8 @@ used to control a computer over a network. GUI programs draw everything inside t
 container, including 3D with software OpenGL, and VNC only sends the finished picture to
 your screen. That is why RViz works this way on every operating system.
 
-There are two ways to view the desktop, with no setup:
+The desktop starts with the container, and every new terminal prints where to find it.
+There are two ways to view it, with no setup:
 
 - **In your browser:** open
   <http://localhost:6080/vnc.html?autoconnect=true&resize=remote>. The page sizes the
@@ -240,29 +254,25 @@ another editor.
 
 ### Native windows on Linux
 
-GUI programs can also open as normal windows on your own desktop:
+Open the repository with the **STAR Lunabotics: native windows (Linux, no VNC)**
+configuration (see [Ways to set up](#ways-to-set-up)). It builds the container without
+VNC, and GUI programs open as normal windows on your desktop with no further setup. Behind
+the scenes it does three things:
 
-1. On the host, once per login, let programs running as your user open windows. The
-   container's user has the same user ID as you, so this includes the container, and no
-   other user:
+- **Before the container starts,** it runs `xhost +SI:localuser:$USER` on your computer.
+  This lets programs running as your user open windows, which includes the container,
+  because its user has the same user ID as you. It lasts until you log out. Docker's ROS 2
+  guide uses `xhost +local:docker` instead, which lets every user on the computer open
+  windows; this is narrower.
+- **It sets `DISPLAY`** in the container to your desktop's display.
+- **It sets `LIBGL_ALWAYS_SOFTWARE=1`,** which makes RViz draw with the CPU. The
+  container cannot use your graphics card, and without this setting RViz stalls while
+  starting up.
 
-   ```bash
-   xhost +SI:localuser:$USER
-   ```
-
-   Docker's ROS 2 guide uses `xhost +local:docker` instead, which lets every user on the
-   computer open windows. The command above is narrower.
-
-2. In the container terminal, point GUI programs at your desktop's display (run
-   `echo $DISPLAY` on the host to check its number, usually `:0`):
-
-   ```bash
-   export DISPLAY=:0 LIBGL_ALWAYS_SOFTWARE=1
-   rviz2
-   ```
-
-`LIBGL_ALWAYS_SOFTWARE=1` makes RViz draw with the CPU. The container cannot use your
-graphics card, and without this setting RViz stalls while starting up.
+To get native windows from the VNC configuration instead, run the `xhost` command above on
+your computer, then `export DISPLAY=:0 LIBGL_ALWAYS_SOFTWARE=1` in the container terminal
+before starting GUI programs. Run `echo $DISPLAY` on your computer to check the display
+number.
 
 ### Native windows on macOS with XQuartz
 
