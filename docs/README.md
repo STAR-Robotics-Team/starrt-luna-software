@@ -28,11 +28,17 @@ Lunabotics rover software. These pages are also published as a website at
 - **[Building for the robot](building-for-the-robot.md):** why a build only runs where it
   was built for, and how code gets built for the robot's Jetson.
 
+## Design docs
+
+- **[All design docs](design/README.md):** how the robot's software fits together, and
+  each subsystem's design: its nodes, interfaces, parameters, and behavior on failure, with
+  each doc's status and how to write and review one.
+- **[Design doc template](design/template.md):** the starting point for a new design doc.
+
 ## Team process
 
 - **[Contributing](contributing.md):** branches, pull requests, and code style. Read it
   before your first pull request.
-- **[Design docs](design/README.md):** writing and reviewing a subsystem's design doc.
 - **[Writing docs](writing-docs.md):** adding or changing a page in these docs.
 
 ## Package documentation

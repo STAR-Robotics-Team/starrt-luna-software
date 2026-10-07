@@ -34,11 +34,11 @@ nav:
       - CAN bus: can-bus.md
       - ROS 2 networking: ros-networking.md
       - Building for the robot: building-for-the-robot.md
+  - Design docs:
+      - design/README.md
+      - Design doc template: design/template.md
   - Team process:
       - Contributing: contributing.md
-      - Design docs:
-          - design/README.md
-          - Design doc template: design/template.md
       - Writing docs: writing-docs.md
 
 # Turn problems into build errors when building with --strict.
