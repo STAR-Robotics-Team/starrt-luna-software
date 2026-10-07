@@ -55,10 +55,10 @@ flowchart LR
 2. **Tell Git who you are.** Every commit records a name and email. Use the email of your
    GitHub account:
 
-   ```bash
-   git config --global user.name "Ada Lovelace"
-   git config --global user.email "ada@example.com"
-   ```
+    ```bash
+    git config --global user.name "Ada Lovelace"
+    git config --global user.email "ada@example.com"
+    ```
 
 3. **Make a GitHub account** at [github.com](https://github.com/) if you do not have one,
    and accept the invitation to the `STAR-Robotics-Team` organization, so you can push to
@@ -67,14 +67,14 @@ flowchart LR
    [GitHub CLI](https://cli.github.com/): install it (`sudo apt install gh` on Ubuntu or
    WSL; on macOS, follow the instructions on its website), then run:
 
-   ```bash
-   gh auth login
-   ```
+    ```bash
+    gh auth login
+    ```
 
-   Choose **GitHub.com**, then **HTTPS**, say yes when it asks to authenticate Git with
-   your GitHub credentials, and choose **Login with a web browser**. With that done, clone
-   repositories with their `https://` address. VS Code shares this sign-in with the dev
-   container, so pushing works from there too.
+    Choose **GitHub.com**, then **HTTPS**, say yes when it asks to authenticate Git with
+    your GitHub credentials, and choose **Login with a web browser**. With that done, clone
+    repositories with their `https://` address. VS Code shares this sign-in with the dev
+    container, so pushing works from there too.
 
 ## The commands you will use
 

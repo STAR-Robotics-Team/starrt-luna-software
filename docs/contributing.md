@@ -11,21 +11,22 @@ New to Git or pull requests? Read [Git and GitHub](learn/git-and-github.md), the
 1. Start from a deliverable assigned to you in Turgor.
 2. Branch from an up-to-date `main`, naming the branch after your workstream:
 
-   ```bash
-   git switch main && git pull
-   git switch -c drivetrain/cmd-vel-skeleton
-   ```
+    ```bash
+    git switch main && git pull
+    git switch -c drivetrain/cmd-vel-skeleton
+    ```
 
 3. Make your change. If it changes how to set up, build, run, or use something, update the
    docs in the same pull request (see [Writing docs](writing-docs.md)).
 4. Build and test before you push, in a container terminal:
 
-   ```bash
-   colcon build
-   colcon test && colcon test-result --verbose
-   ```
+    ```bash
+    colcon build
+    colcon test && colcon test-result --verbose
+    ```
 
-   Or from your own terminal: `scripts/dev build` and `scripts/dev test`.
+    Or from your own terminal: `scripts/dev build` and `scripts/dev test`.
+
 5. Open a pull request, fill in the template, and get one approving review. Changes to
    interfaces or design docs also need the software lead's review.
 6. Show what you merged at the Sunday meeting.
@@ -44,13 +45,14 @@ they work.
   letters, digits, and underscores only; no hyphens.
 - Create a package from inside `src/`:
 
-  ```bash
-  ros2 pkg create --build-type ament_cmake --license Apache-2.0 luna_example
-  ```
+    ```bash
+    ros2 pkg create --build-type ament_cmake --license Apache-2.0 luna_example
+    ```
 
-  Then replace the `if(BUILD_TESTING)` block in its `CMakeLists.txt` with the one in
-  `src/luna_drivetrain/CMakeLists.txt`, so the linters run without per-file copyright
-  headers.
+    Then replace the `if(BUILD_TESTING)` block in its `CMakeLists.txt` with the one in
+    `src/luna_drivetrain/CMakeLists.txt`, so the linters run without per-file copyright
+    headers.
+
 - Declare every dependency in `package.xml`, then run `scripts/install_deps.sh` to
   install it.
 - Never commit third-party binaries or SDKs. Download them at build time, the way

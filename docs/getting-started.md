@@ -60,9 +60,9 @@ are much faster there.
 1. Start Docker. On macOS and Windows, open Docker Desktop.
 2. Open the repository in VS Code:
 
-   ```bash
-   code .
-   ```
+    ```bash
+    code .
+    ```
 
 3. VS Code notices the `.devcontainer/` folder and offers **Reopen in Container**. Choose
    it. If the prompt does not appear, open the command palette (Ctrl+Shift+P, or

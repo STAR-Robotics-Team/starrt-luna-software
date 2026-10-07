@@ -19,26 +19,27 @@ if you use a native ROS install. There are two ways to get a dev container termi
 2. **Build** with colcon. Building everything works, but building only the package you
    changed is faster:
 
-   ```bash
-   colcon build
-   colcon build --packages-select luna_drivetrain
-   ```
+    ```bash
+    colcon build
+    colcon build --packages-select luna_drivetrain
+    ```
 
 3. **Run** a node with `ros2 run <package> <executable>`:
 
-   ```bash
-   ros2 run luna_drivetrain motor_test
-   ```
+    ```bash
+    ros2 run luna_drivetrain motor_test
+    ```
 
-   After you build a new package or a new executable, open a new terminal first, or run
-   `source install/setup.bash`, so ROS can find it.
+    After you build a new package or a new executable, open a new terminal first, or run
+    `source install/setup.bash`, so ROS can find it.
+
 4. **Test** before you push. Pull requests must pass these:
 
-   ```bash
-   colcon test && colcon test-result --verbose
-   ```
+    ```bash
+    colcon test && colcon test-result --verbose
+    ```
 
-   To fix C++ formatting automatically, run `ament_uncrustify --reformat src/<package>`.
+    To fix C++ formatting automatically, run `ament_uncrustify --reformat src/<package>`.
 
 ## What to do after a change
 

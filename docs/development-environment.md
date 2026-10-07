@@ -102,25 +102,25 @@ On Ubuntu 24.04 you can install ROS 2 directly instead of using the dev containe
 2. Add these lines to your `~/.bashrc`, so every terminal loads ROS and matches the dev
    container's settings:
 
-   ```bash
-   source /opt/ros/jazzy/setup.bash
-   export ROS_AUTOMATIC_DISCOVERY_RANGE=LOCALHOST
-   export COLCON_DEFAULTS_FILE=<path to your clone>/.devcontainer/colcon-defaults.yaml
-   ```
+    ```bash
+    source /opt/ros/jazzy/setup.bash
+    export ROS_AUTOMATIC_DISCOVERY_RANGE=LOCALHOST
+    export COLCON_DEFAULTS_FILE=<path to your clone>/.devcontainer/colcon-defaults.yaml
+    ```
 
 3. Open a new terminal and install the workspace's dependencies. If rosdep asks you to run
    `sudo rosdep init`, run it once and try again.
 
-   ```bash
-   scripts/install_deps.sh
-   ```
+    ```bash
+    scripts/install_deps.sh
+    ```
 
 4. Build, then load the workspace in each new terminal:
 
-   ```bash
-   colcon build
-   source install/setup.bash
-   ```
+    ```bash
+    colcon build
+    source install/setup.bash
+    ```
 
 Programs with windows open as normal windows. To use the dev container on the same clone
 later, see [One clone, one environment](#one-clone-one-environment).
