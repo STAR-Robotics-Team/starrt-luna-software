@@ -57,98 +57,104 @@ you can see them side by side.
 
 1. In the first terminal, start the talker:
 
-   ```bash
-   ros2 run demo_nodes_cpp talker
-   ```
+    ```bash
+    ros2 run demo_nodes_cpp talker
+    ```
 
-   It prints `Publishing: 'Hello World: 1'`, then 2, 3, and so on.
+    It prints `Publishing: 'Hello World: 1'`, then 2, 3, and so on.
+
 2. In the second terminal, start the listener:
 
-   ```bash
-   ros2 run demo_nodes_cpp listener
-   ```
+    ```bash
+    ros2 run demo_nodes_cpp listener
+    ```
 
-   It prints `I heard: [Hello World: 5]`, picking up from whatever number the talker has
-   reached.
+    It prints `I heard: [Hello World: 5]`, picking up from whatever number the talker has
+    reached.
+
 3. In the third terminal, look around. Ask which nodes are running:
 
-   ```bash
-   ros2 node list
-   ```
+    ```bash
+    ros2 node list
+    ```
 
-   ```text
-   /listener
-   /talker
-   ```
+    ```text
+    /listener
+    /talker
+    ```
 
-   Which topics exist:
+    Which topics exist:
 
-   ```bash
-   ros2 topic list
-   ```
+    ```bash
+    ros2 topic list
+    ```
 
-   ```text
-   /chatter
-   /parameter_events
-   /rosout
-   ```
+    ```text
+    /chatter
+    /parameter_events
+    /rosout
+    ```
 
-   `/chatter` is the demo's topic. ROS creates the other two itself for settings and log
-   messages.
+    `/chatter` is the demo's topic. ROS creates the other two itself for settings and log
+    messages.
 
-   If a list looks empty or incomplete, wait a second and run the command again. The first
-   `ros2` command you run starts a helper in the background, and it takes a moment to find
-   everything.
+    If a list looks empty or incomplete, wait a second and run the command again. The first
+    `ros2` command you run starts a helper in the background, and it takes a moment to find
+    everything.
+
 4. Ask about the `/chatter` topic:
 
-   ```bash
-   ros2 topic info /chatter
-   ```
+    ```bash
+    ros2 topic info /chatter
+    ```
 
-   ```text
-   Type: std_msgs/msg/String
-   Publisher count: 1
-   Subscription count: 1
-   ```
+    ```text
+    Type: std_msgs/msg/String
+    Publisher count: 1
+    Subscription count: 1
+    ```
 
-   One node publishes (the talker), one subscribes (the listener), and messages are of
-   type `std_msgs/msg/String`.
+    One node publishes (the talker), one subscribes (the listener), and messages are of
+    type `std_msgs/msg/String`.
+
 5. See what that message type contains:
 
-   ```bash
-   ros2 interface show std_msgs/msg/String
-   ```
+    ```bash
+    ros2 interface show std_msgs/msg/String
+    ```
 
-   After a few comment lines starting with `#`, it ends with:
+    After a few comment lines starting with `#`, it ends with:
 
-   ```text
-   string data
-   ```
+    ```text
+    string data
+    ```
 
-   A `String` message has a single field, called `data`, that holds text.
+    A `String` message has a single field, called `data`, that holds text.
+
 6. Listen in on the topic yourself:
 
-   ```bash
-   ros2 topic echo /chatter
-   ```
+    ```bash
+    ros2 topic echo /chatter
+    ```
 
-   ```text
-   data: 'Hello World: 10'
-   ---
-   data: 'Hello World: 11'
-   ---
-   ```
+    ```text
+    data: 'Hello World: 10'
+    ---
+    data: 'Hello World: 11'
+    ---
+    ```
 
-   Press Ctrl+C to stop.
+    Press Ctrl+C to stop.
+
 7. Publish your own message from the command line:
 
-   ```bash
-   ros2 topic pub --once /chatter std_msgs/msg/String "{data: hi from the command line}"
-   ```
+    ```bash
+    ros2 topic pub --once /chatter std_msgs/msg/String "{data: hi from the command line}"
+    ```
 
-   Look at the listener's terminal: among the talker's messages, it printed
-   `I heard: [hi from the command line]`. The listener does not know or care who sent it;
-   it only listens to the topic.
+    Look at the listener's terminal: among the talker's messages, it printed
+    `I heard: [hi from the command line]`. The listener does not know or care who sent it;
+    it only listens to the topic.
 
 Stop the talker and listener with Ctrl+C in their terminals.
 

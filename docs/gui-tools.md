@@ -65,29 +65,29 @@ over, but nobody has tried them with our dev container yet.
 
 1. Install XQuartz:
 
-   ```bash
-   brew install --cask xquartz
-   ```
+    ```bash
+    brew install --cask xquartz
+    ```
 
 2. Open XQuartz, go to **Settings > Security**, and turn on **Allow connections from
    network clients**. Restart the Mac.
 3. In a Mac terminal, allow connections from the container. The `xhost` lines reset
    whenever XQuartz restarts, so run them again each time:
 
-   ```bash
-   defaults write org.xquartz.X11 nolisten_tcp -bool false
-   xhost +localhost
-   xhost + 127.0.0.1
-   ```
+    ```bash
+    defaults write org.xquartz.X11 nolisten_tcp -bool false
+    xhost +localhost
+    xhost + 127.0.0.1
+    ```
 
 4. In the container terminal, point programs at XQuartz before starting them:
 
-   ```bash
-   export DISPLAY=host.docker.internal:0 QT_X11_NO_MITSHM=1
-   ```
+    ```bash
+    export DISPLAY=host.docker.internal:0 QT_X11_NO_MITSHM=1
+    ```
 
-   `QT_X11_NO_MITSHM=1` stops Qt programs such as rqt from trying to share memory with
-   XQuartz, which cannot work across the virtual machine Docker runs in.
+    `QT_X11_NO_MITSHM=1` stops Qt programs such as rqt from trying to share memory with
+    XQuartz, which cannot work across the virtual machine Docker runs in.
 
 This works for 2D programs such as turtlesim and rqt. **RViz does not work through
 XQuartz**; a team member tried it. RViz is a 3D program that sends OpenGL drawing commands
