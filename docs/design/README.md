@@ -26,7 +26,8 @@ When you add a doc, link it in this table and keep its status current.
 2. Fill in the header: owner, pair, status `Draft`, and today's date.
 3. Fill in every section. Write "None" rather than deleting a section, so readers know it
    was considered.
-4. Open a pull request. Design docs get the same review as code, plus the software lead's.
+4. Delete every quote block in the template that starts with **Delete this**.
+5. Open a pull request. Design docs get the same review as code, plus the software lead's.
 
 ## Status
 
