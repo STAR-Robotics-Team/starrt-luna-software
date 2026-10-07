@@ -7,6 +7,9 @@ Lunabotics rover software. These pages are also published as a website at
 - **New to programming, Git, or the command line?** Start with the
   [learning guide](learn/README.md). It assumes no experience at all.
 - **Already comfortable with them?** Go straight to [Getting started](getting-started.md).
+- **Checking a hardware value or a competition rule?** Go to its primary source on the
+  [Sources](sources.md) page: the guidebook, datasheets, and manuals there are the source
+  of truth.
 
 ## Learn
 
@@ -34,6 +37,13 @@ Lunabotics rover software. These pages are also published as a website at
   each subsystem's design: its nodes, interfaces, parameters, and behavior on failure, with
   each doc's status and how to write and review one.
 - **[Design doc template](design/template.md):** the starting point for a new design doc.
+
+## Sources
+
+- **[Sources](sources.md):** the competition guidebook, datasheets, manuals, standards, and
+  official documentation that the robot's hardware facts and rules come from, with links
+  straight to every page these docs cite. They are the source of truth: when a doc
+  disagrees with a primary source, the source wins.
 
 ## Team process
 

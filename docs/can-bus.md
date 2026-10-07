@@ -18,7 +18,8 @@ not work there.
 ## Bring up the CANable
 
 With the CANable plugged in, bring up `can0` at 1 Mbit/s, the bitrate the motor
-controllers use, then watch the traffic on the bus:
+controllers use ([Talon SRX User's Guide, p. 5](sources.md#ctre-talon-srx-guide)), then
+watch the traffic on the bus:
 
 ```bash
 scripts/can_up.sh

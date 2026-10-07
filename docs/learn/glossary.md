@@ -17,6 +17,8 @@ one links to the page that explains it properly.
   [CAN bus](../can-bus.md)
 - **CANable:** the USB adapter that connects a computer to the CAN bus.
   [CAN bus](../can-bus.md)
+- **Citation:** a link from a fact in the docs to the source it comes from, down to the
+  page or section. [Writing docs](../writing-docs.md#cite-sources)
 - **Clone:** your own full copy of a Git repository, on your computer.
   [Git and GitHub](git-and-github.md#the-main-ideas)
 - **colcon:** the tool that builds every package in a ROS workspace.
@@ -45,6 +47,8 @@ one links to the page that explains it properly.
   such as `HOME`. [The command line](command-line.md#environment-variables)
 - **Executable:** a program a package provides, started with `ros2 run`.
   [ROS 2 basics](ros2-basics.md#packages-and-the-workspace)
+- **Fingerprint (SHA-256):** a code computed from every byte of a file. If the file
+  changes at all, so does its fingerprint. [Writing docs](../writing-docs.md#cite-sources)
 - **Git:** the tool that tracks every change to the code.
   [Git and GitHub](git-and-github.md)
 - **GitHub:** the website that stores the team's shared repository and where changes are
@@ -85,6 +89,9 @@ one links to the page that explains it properly.
   [The command line](command-line.md#folders-and-paths)
 - **Port:** a numbered door that a network program listens on, like an apartment number.
   [Containers](containers.md#two-more-ideas-you-will-meet)
+- **Primary source:** a document from whoever makes the part or sets the rule, such as a
+  datasheet or the competition guidebook. It is the source of truth for that fact.
+  [Sources](../sources.md)
 - **Prompt:** the text a terminal shows when it is ready for your next command.
   [The command line](command-line.md#your-first-commands)
 - **Publish:** send messages on a ROS topic. The opposite is **subscribe**.
@@ -107,6 +114,9 @@ one links to the page that explains it properly.
   `scripts/install_deps.sh` runs it. [Everyday workflow](../everyday-workflow.md#what-to-do-after-a-change)
 - **Script:** a file of commands saved so they can be run again.
   [The command line](command-line.md#running-scripts-and-programs)
+- **Secondary source:** a document that repeats or summarizes a primary source, such as a
+  reseller's product page. Use it only when no primary source covers the fact.
+  [Sources](../sources.md)
 - **Shell:** the program inside a terminal that reads and runs your commands, such as
   `bash`. [The command line](command-line.md#what-a-terminal-is)
 - **SocketCAN:** the CAN bus support built into Linux. [CAN bus](../can-bus.md)

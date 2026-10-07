@@ -1,0 +1,345 @@
+# Every source these docs cite: datasheets, rulebooks, standards, and vendor pages.
+#
+# Edit this file, then run `scripts/sources render` to rebuild docs/sources.md. A doc cites
+# an entry by linking to it on that page, with the page or section in the link text; see
+# "Cite sources" in docs/writing-docs.md.
+#
+# Fields:
+#   id         Short, lowercase, hyphenated, and permanent: citations link to it.
+#   group      One of the groups listed in scripts/sources.
+#   primary    true when it comes from whoever makes the part or sets the rule, such as a
+#              datasheet or the guidebook; false for a reseller's page, a retailer's chart,
+#              or a document repeating another. Primary sources win when they disagree.
+#   title      The source's own title.
+#   publisher  Who publishes it.
+#   version    The revision or date printed on it, so readers know which edition was read.
+#   url        Where to open it. For a PDF, the PDF itself.
+#   format     "pdf" or "web".
+#   sha256     For a PDF: the fingerprint of the exact file that was read. Get it with
+#              `scripts/sources hash <url>`. If the vendor changes the file, the weekly
+#              check reports it, and someone rereads the cited pages.
+#   fetch      false when the file cannot be downloaded automatically (behind a login).
+#   fetch_url  A copy the tools read instead of url, when url turns away automated checks.
+#   expect     For a web page: words the page must show. The weekly check uses them to
+#              catch a page that moved, changed, or answered with a bot check instead.
+#   checked    The date someone last read this source against the docs that cite it.
+#   notes      What the team uses it for.
+#
+# PDFs are linked, never copied into the repository: they are the publishers' copyrighted
+# work, and the docs website is public.
+
+[[source]]
+id = "nasa-lunabotics-guidebook-2027"
+primary = true
+group = "Competition rules"
+title = "NASA Lunabotics Challenge Guidebook 2026-2027"
+publisher = "NASA and the Astronauts Memorial Foundation"
+version = "Revised 10/5/26"
+url = "https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf"
+format = "pdf"
+sha256 = "856e20b50acb0d39307bdb1b421862c9e2b5e03c8adeb4260cc2f4f50471d7ae"
+checked = 2026-10-07
+notes = "Run timing, the E-stop and energy logger rules, autonomy and bandwidth scoring, and the 80 kg mass limit."
+
+[[source]]
+id = "andymark-cim-curve"
+primary = true
+group = "Datasheets and manuals"
+title = "2.5 in CIM motor curve, am-0255 (Chiaphua PM25R-45F-1003)"
+publisher = "AndyMark"
+version = "Tested 2011/11/10"
+url = "https://s3.amazonaws.com/docusync-files/9f2c14096cb651c76ea92520dce95d49694b5a25f88381e01f4df24db3c64e1e/am-0255%20CIM-motor-curve-am-0255.pdf"
+format = "pdf"
+sha256 = "9f2c14096cb651c76ea92520dce95d49694b5a25f88381e01f4df24db3c64e1e"
+checked = 2026-10-07
+notes = "Drive motor data at 12 V: free and stall current, stall torque, torque constant."
+
+[[source]]
+id = "andymark-775-redline-report"
+primary = true
+group = "Datasheets and manuals"
+title = "775 RedLine Motor Performance Test Report, am-3775a (DF-30F-2003)"
+publisher = "AndyMark and Chiaphua"
+version = "Tested 5/10/2018"
+url = "https://s3.amazonaws.com/docusync-files/edd416abca3a3c3d33d09a7da3e876bfe534588e878915a4b6ec049034be169c/am-3775a%20RedLine%20Performance%20Curve.PDF"
+format = "pdf"
+sha256 = "edd416abca3a3c3d33d09a7da3e876bfe534588e878915a4b6ec049034be169c"
+checked = 2026-10-07
+notes = "Excavator motor data at 12 V. The page is a scan, so it has no text layer."
+
+[[source]]
+id = "glideforce-lact-datasheet"
+primary = true
+group = "Datasheets and manuals"
+title = "LACT Industrial Duty Linear Actuator datasheet"
+publisher = "Concentric International (Glideforce), hosted by Pololu"
+version = "190703"
+url = "https://www.pololu.com/file/0J1901/ID-LACT-Acme-Screw-Drive-Linear-Actuator-Data-Sheet-190703.pdf"
+format = "pdf"
+sha256 = "fa9246aa4da06289f97c8ccd7dd97d3a9c4093db0ef76d138c41c7d076cda1c0"
+checked = 2026-10-07
+notes = "Depth actuators: current by gear ratio, duty cycle, and the part-number key."
+
+[[source]]
+id = "ctre-victor-spx-guide"
+primary = true
+group = "Datasheets and manuals"
+title = "Victor SPX User's Guide"
+publisher = "CTRE"
+version = "Updated 2021-11-29"
+url = "https://ctre.download/files/user-manual/Victor%20SPX%20User's%20Guide.pdf"
+format = "pdf"
+sha256 = "ec9ead84cb2ecf21192894506b25d68fda0e10a44f064577e30bd36d81dfb170"
+checked = 2026-10-07
+notes = "Input voltage range and current ratings."
+
+[[source]]
+id = "ctre-talon-srx-guide"
+primary = true
+group = "Datasheets and manuals"
+title = "Talon SRX User's Guide"
+publisher = "CTRE"
+version = "Updated 2017-02-03"
+url = "https://ctre.download/files/user-manual/Talon%20SRX%20User's%20Guide.pdf"
+format = "pdf"
+sha256 = "d1ca3a7c7884a8a40562bc3816bd9856272cd36eb7c94c32c8ce5840ca9232d4"
+checked = 2026-10-07
+notes = "Input voltage range, CAN bus rate, and the data port's analog and limit switch inputs."
+
+[[source]]
+id = "ctre-vrm-guide"
+primary = true
+group = "Datasheets and manuals"
+title = "VRM User's Guide"
+publisher = "CTRE"
+version = "1/17/2016"
+url = "https://ctre.download/files/user-manual/VRM%20User's%20Guide.pdf"
+format = "pdf"
+sha256 = "5b572789ccb362ad0bd65db854b497bf8fd9c6f575a2375ca6910a4c339b9ca2"
+checked = 2026-10-07
+notes = "Input range, output voltages, and the 1.5 A continuous limit on the 2 A channels."
+
+[[source]]
+id = "ctre-pdp-guide"
+primary = true
+group = "Datasheets and manuals"
+title = "PDP User's Guide"
+publisher = "CTRE"
+version = "3/28/2018"
+url = "https://ctre.download/files/user-manual/PDP%20User's%20Guide.pdf"
+format = "pdf"
+sha256 = "224b3486e9db72e89f9a192870d2093d7c75b22a3680fd9ea2e20b9e9087fc65"
+checked = 2026-10-07
+notes = "Channels, fused outputs, wire sizes, input range, CAN rate, and the termination jumper."
+
+[[source]]
+id = "nvidia-orin-nano-carrier-spec"
+primary = true
+group = "Datasheets and manuals"
+title = "Jetson Orin Nano Developer Kit Carrier Board Specification, SP-11324-001"
+publisher = "NVIDIA"
+version = "v1.3"
+url = "https://developer.nvidia.com/embedded/downloads"
+format = "pdf"
+sha256 = "4a0f7ba948bce4881e176f0f8636ef3dbd40e3df9dd33134e6a7433359d18c02"
+fetch = false
+checked = 2026-10-07
+notes = "Behind NVIDIA's login: search the Jetson Download Center for SP-11324-001. DC jack input, the J14 button header, and the J17 CAN header."
+
+[[source]]
+id = "unitree-l2-manual"
+primary = true
+group = "Datasheets and manuals"
+title = "Unitree 4D LiDAR L2 User Manual"
+publisher = "Unitree"
+version = "As downloaded 2026-10-07"
+url = "https://oss-global-cdn.unitree.com/static/Unitree%204D%20LiDAR%20L2%20User%20Manual.pdf"
+format = "pdf"
+sha256 = "95a3e52ce5fa1cc9366095d646e6c6ff23de0fd23eddb1fff7bf5a698cbe76b1"
+checked = 2026-10-07
+notes = "Supply voltage and power, including the self-heating peak."
+
+[[source]]
+id = "open-mesh-om-datasheet"
+primary = true
+group = "Datasheets and manuals"
+title = "OM-Series datasheet (OM2P, OM5P-AC)"
+publisher = "Open-Mesh, hosted by a reseller"
+version = "As downloaded 2026-10-07"
+url = "https://www.open-mesh.nl/wp-content/uploads/OpenMesh-OM-Series-Datasheet.pdf"
+format = "pdf"
+sha256 = "716b5dd2b5e6d1d8500ffb0f3ef29b4c35e801c52751c1f479b5bd4c9d20d499"
+checked = 2026-10-07
+notes = "Radio power draw. Open-Mesh no longer exists, so this copy may disappear."
+
+[[source]]
+id = "bussmann-185-datasheet"
+primary = true
+group = "Datasheets and manuals"
+title = "Series 181, 184, 185 thermal circuit breakers"
+publisher = "Eaton Bussmann, hosted by AndyMark (am-0282)"
+version = "As downloaded 2026-10-07"
+url = "https://files.andymark.com/PDFs/am-0282_data_sheet.pdf"
+format = "pdf"
+sha256 = "baba5c15ada1218997f9c616c919a604de5ef6211d61b85852209a2503b05a7b"
+checked = 2026-10-07
+notes = "Main breaker ratings and voltage."
+
+[[source]]
+id = "andymark-cim-page"
+primary = false
+group = "Vendor and product pages"
+title = "CIM Motor 2.5 in."
+publisher = "AndyMark"
+url = "https://www.andymark.com/products/2-5-in-cim-motor"
+format = "web"
+expect = "CIM Motor"
+checked = 2026-10-07
+notes = "AndyMark resells this CCL motor. Its free and stall currents differ from the maker's test curve (andymark-cim-curve); use the curve."
+
+[[source]]
+id = "andymark-775-redline-page"
+primary = true
+group = "Vendor and product pages"
+title = "775 RedLine Motor"
+publisher = "AndyMark"
+url = "https://www.andymark.com/products/andymark-775-redline-motor"
+format = "web"
+expect = "775 RedLine"
+checked = 2026-10-07
+notes = "Product specifications, with their plus or minus 10% tolerance."
+
+[[source]]
+id = "andymark-neverest-page"
+primary = true
+group = "Vendor and product pages"
+title = "NeveRest Series Motor Only"
+publisher = "AndyMark"
+url = "https://www.andymark.com/products/neverest-series-motor-only"
+format = "web"
+expect = "NeveRest"
+checked = 2026-10-07
+notes = "Conveyor and hatch motor specifications."
+
+[[source]]
+id = "pololu-lact18-500apl"
+primary = false
+group = "Vendor and product pages"
+title = "Glideforce LACT18-500APL Industrial-Duty Linear Actuator"
+publisher = "Pololu"
+url = "https://www.pololu.com/product/3608"
+format = "web"
+expect = "LACT18-500APL"
+checked = 2026-10-07
+notes = "A reseller's page, but the only published stall current and limit switch behavior; the maker's datasheet leaves them out."
+
+[[source]]
+id = "liperior-16000-4s-page"
+primary = true
+group = "Vendor and product pages"
+title = "Liperior 16000mAh 4S 12C 14.8V LiPo Battery"
+publisher = "RC Battery"
+url = "https://rcbattery.com/liperior-16000mah-4s-12c-14-8v-lipo-battery-with-xt90-plug.html"
+format = "web"
+expect = "16000mAh"
+checked = 2026-10-07
+notes = "Capacity, discharge ratings, and weight."
+
+[[source]]
+id = "waveshare-sn65hvd230-wiki"
+primary = true
+group = "Vendor and product pages"
+title = "SN65HVD230 CAN Board"
+publisher = "Waveshare"
+url = "https://www.waveshare.com/wiki/SN65HVD230_CAN_Board"
+format = "web"
+expect = "SN65HVD230"
+checked = 2026-10-07
+notes = "The CAN transceiver NVIDIA recommends for development."
+
+[[source]]
+id = "alte-wire-sizing-chart"
+primary = false
+group = "Vendor and product pages"
+title = "Wire sizing chart for 12V, 24V, and 48V DC systems"
+publisher = "AltE"
+url = "https://www.altestore.com/pages/wire-sizing-chart-for-12v-24v-and-48v-dc-systems"
+format = "web"
+expect = "Wire Sizing Chart"
+checked = 2026-10-07
+notes = "A retailer's chart of copper wire ampacity, used in the power budget. Check against the wire maker's rating for how the wire is run."
+
+[[source]]
+id = "ros-rep-2000"
+primary = true
+group = "Software references"
+title = "REP 2000: ROS 2 Releases and Target Platforms"
+publisher = "Open Robotics"
+url = "https://www.ros.org/reps/rep-2000.html"
+fetch_url = "https://raw.githubusercontent.com/ros-infrastructure/rep/master/rep-2000.rst"
+format = "web"
+expect = "Jazzy Jalisco"
+checked = 2026-10-07
+notes = "Which operating systems each ROS 2 release supports, and at which tier."
+
+[[source]]
+id = "nvidia-jetson-can-r38-4"
+primary = true
+group = "Software references"
+title = "Jetson Linux Developer Guide r38.4: Controller Area Network (CAN)"
+publisher = "NVIDIA"
+url = "https://docs.nvidia.com/jetson/archives/r38.4/DeveloperGuide/HR/ControllerAreaNetworkCan.html"
+format = "web"
+expect = "Controller Area Network"
+checked = 2026-10-07
+notes = "The Jetson's CAN controller, the transceiver it needs, and its driver. Its J17 pin table disagrees with the carrier specification."
+
+[[source]]
+id = "nvidia-jetson-power-r36-5"
+primary = true
+group = "Software references"
+title = "Jetson Linux Developer Guide r36.5: Platform Power and Performance (Orin)"
+publisher = "NVIDIA"
+url = "https://docs.nvidia.com/jetson/archives/r36.5/DeveloperGuide/SD/PlatformPowerAndPerformance/JetsonOrinNanoSeriesJetsonOrinNxSeriesAndJetsonAgxOrinSeries.html"
+format = "web"
+expect = "Supported Modes and Power Efficiency"
+checked = 2026-10-07
+notes = "The Jetson's power modes."
+
+[[source]]
+id = "ctre-phoenix5-motor-controllers"
+primary = true
+group = "Software references"
+title = "Phoenix 5 documentation: Bring Up: Talon FX/SRX and Victor SPX"
+publisher = "CTRE"
+url = "https://v5.docs.ctr-electronics.com/en/stable/ch13_MC.html"
+format = "web"
+expect = "Current Limit"
+checked = 2026-10-07
+notes = "Current limiting (Talon SRX only) and what the Victor SPX can measure."
+
+[[source]]
+id = "esa-margin-philosophy"
+primary = true
+group = "Engineering practice"
+title = "Margin philosophy for science assessment studies, SRE-PA/2011.097"
+publisher = "ESA"
+version = "Issue 1 Rev 3, 15/06/2012"
+url = "https://sci.esa.int/documents/34375/36249/1567260131067-Margin_philosophy_for_science_assessment_studies_1.3.pdf"
+format = "pdf"
+sha256 = "0ddc1b0116f96b2a4f26732dfe67ca682b7df397156c0ed6809c3c0392cc9501"
+checked = 2026-10-07
+notes = "Power margins by design maturity, and the system margin, used in the power budget."
+
+[[source]]
+id = "nasa-tm-20220012395"
+primary = true
+group = "Engineering practice"
+title = "NASA/TM-20220012395: 40 kW Fission Surface Power System Deployability"
+publisher = "NASA Glenn Research Center"
+version = "2022"
+url = "https://ntrs.nasa.gov/api/citations/20220012395/downloads/TM-20220012395.pdf"
+format = "pdf"
+sha256 = "52d22b3e3ae7630e13078f9144793cc4e78d897d9c1599a05e20d0a949af5f83"
+checked = 2026-10-07
+notes = "NASA Glenn's own 30% power growth practice. Its AIAA S-120A growth table is a reproduction; the standard itself is paywalled."

@@ -1,0 +1,4 @@
+# Python packages for `scripts/sources verify`. Its other commands need only Python 3.11
+# or newer.
+anthropic==1.11.0
+pypdf==6.19.0

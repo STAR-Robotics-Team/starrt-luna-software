@@ -14,6 +14,7 @@ edit_uri: edit/main/docs/
 docs_dir: docs
 exclude_docs: |
   requirements.txt
+  sources.toml
 
 # Every page must be listed here. Add new pages in reading order.
 nav:
@@ -37,6 +38,7 @@ nav:
   - Design docs:
       - design/README.md
       - Design doc template: design/template.md
+  - Sources: sources.md
   - Team process:
       - Contributing: contributing.md
       - Writing docs: writing-docs.md
