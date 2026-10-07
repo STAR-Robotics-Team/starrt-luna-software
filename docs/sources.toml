@@ -319,6 +319,18 @@ checked = 2026-10-07
 notes = "Current limiting (Talon SRX only) and what the Victor SPX can measure."
 
 [[source]]
+id = "ctre-phoenix5-unmanaged-api"
+primary = true
+group = "Software references"
+title = "CTRE Phoenix C++: ctre::phoenix::unmanaged::Unmanaged Class Reference"
+publisher = "CTRE"
+url = "https://api.ctr-electronics.com/phoenix/stable/cpp/classctre_1_1phoenix_1_1unmanaged_1_1_unmanaged.html"
+format = "web"
+expect = "Timeout before disabling"
+checked = 2026-10-07
+notes = "FeedEnable(timeoutMs): the controllers disable themselves when the enable is not fed again within the timeout."
+
+[[source]]
 id = "esa-margin-philosophy"
 primary = true
 group = "Engineering practice"
