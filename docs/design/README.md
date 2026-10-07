@@ -27,7 +27,9 @@ When you add a doc, link it in this table and keep its status current.
 3. Fill in every section. Write "None" rather than deleting a section, so readers know it
    was considered.
 4. Delete every quote block in the template that starts with **Delete this**.
-5. Open a pull request. Design docs get the same review as code, plus the software lead's.
+5. Add the doc to the `Design docs` section of the `nav` list in `mkdocs.yml`, in the same
+   order as the table above, so it appears on the website.
+6. Open a pull request. Design docs get the same review as code, plus the software lead's.
 
 ## Status
 
