@@ -4,8 +4,9 @@
 | --- | --- | --- | --- |
 | [name] | [name] | Draft | YYYY-MM-DD |
 
-Status is `Draft` (being written), `Current` (matches the code), or `Superseded` (replaced;
-link the replacement).
+Status is `Draft` (being written), `Approved` (reviewed, no code yet), `In progress` (code
+being written to match), `Current` (code matches), or `Superseded` (replaced; link the
+replacement). See [Design docs](README.md#status).
 
 To start a new doc, copy this file to `docs/design/<subsystem>.md`, fill in every section,
 and delete this paragraph. Write "None" rather than deleting a section.

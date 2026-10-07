@@ -30,13 +30,19 @@ When you add a doc, link it in this table and keep its status current.
 
 ## Status
 
-Every doc has one of three statuses in its header:
+Design docs are written and reviewed before the code, so a doc moves through these
+statuses, shown in its header:
 
 | Status | Meaning |
 | --- | --- |
 | `Draft` | Being written. The interfaces may still change. |
-| `Current` | Matches the code. |
+| `Approved` | Written and reviewed, but no code exists yet. Code can start. |
+| `In progress` | Code is being written to match the doc, but does not fully match yet. |
+| `Current` | The code matches the doc. |
 | `Superseded` | Replaced by another doc, which it links to. |
+
+Change the status in the same pull request that makes it true: the review that approves
+the doc, the first code pull request, and the one that finishes the code.
 
 Update the "Last reviewed" date whenever you check the doc against the code.
 
