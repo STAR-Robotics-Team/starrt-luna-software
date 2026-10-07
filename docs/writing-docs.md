@@ -56,6 +56,33 @@ marker in [What works where](development-environment.md#what-works-where).
 - **Use tables** for comparisons and reference lists.
 - **Draw diagrams in Mermaid,** in a fenced `mermaid` code block.
 
+## Lists
+
+The website reads Markdown a little more strictly than GitHub does, so a list that looks
+right on GitHub can break on the website: a code block falls out of its step and the
+numbering restarts at 1, or the next step joins the paragraph above it. Two rules prevent
+this, and GitHub shows lists written this way correctly too:
+
+- **Indent everything after a step's first paragraph by 4 spaces,** such as a code block
+  or a second paragraph. Lines that wrap the first paragraph can line up with its text.
+- **Leave a blank line before the next step** when a step ends with a code block or a
+  second paragraph.
+
+````markdown
+1. In the first terminal, start the talker:
+
+    ```bash
+    ros2 run demo_nodes_cpp talker
+    ```
+
+    It prints `Publishing: 'Hello World: 1'`, then 2, 3, and so on.
+
+2. In the second terminal, start the listener.
+````
+
+If a list breaks either rule, `scripts/docs build` and the pull request check fail and
+name the paragraph to fix.
+
 ## Links
 
 - **Link between docs with relative links,** such as `[GUI tools](gui-tools.md)` or
@@ -140,7 +167,8 @@ you save a file; press Ctrl+C in the terminal to stop it. It runs in Docker, so 
 nothing to install.
 
 `scripts/docs build` builds the whole site the way the pull request check does, and fails
-on any broken link, missing anchor, or page left out of the navigation. Every pull request
+on any broken link, missing anchor, page left out of the navigation, or broken
+[list](#lists). Every pull request
 that changes the docs runs that check, and once it is merged into `main`, the website
 updates by itself.
 

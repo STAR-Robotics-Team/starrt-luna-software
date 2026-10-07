@@ -16,6 +16,10 @@ exclude_docs: |
   requirements.txt
   sources.toml
 
+# Fails the build when a list will look different here than on GitHub.
+hooks:
+  - scripts/docs_hooks.py
+
 # Every page must be listed here. Add new pages in reading order.
 nav:
   - Home: README.md
