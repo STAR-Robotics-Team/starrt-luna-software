@@ -37,6 +37,7 @@ nav:
       - Building for the robot: building-for-the-robot.md
   - Design docs:
       - design/README.md
+      - Operating modes: design/operating-modes.md
       - Design doc template: design/template.md
   - Sources: sources.md
   - Team process:

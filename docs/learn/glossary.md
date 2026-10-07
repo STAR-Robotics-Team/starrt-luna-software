@@ -45,6 +45,9 @@ one links to the page that explains it properly.
   [Containers](containers.md)
 - **Environment variable:** a named setting that the shell gives to the programs it runs,
   such as `HOME`. [The command line](command-line.md#environment-variables)
+- **E-stop:** the big red emergency stop button on top of the robot. One push cuts the
+  battery off from everything that moves, and it stays pressed until someone resets it.
+  [Operating modes](../design/operating-modes.md)
 - **Executable:** a program a package provides, started with `ros2 run`.
   [ROS 2 basics](ros2-basics.md#packages-and-the-workspace)
 - **Fingerprint (SHA-256):** a code computed from every byte of a file. If the file
@@ -53,6 +56,9 @@ one links to the page that explains it properly.
   [Git and GitHub](git-and-github.md)
 - **GitHub:** the website that stores the team's shared repository and where changes are
   reviewed. [Git and GitHub](git-and-github.md)
+- **Heartbeat:** a small message the operator laptop sends many times a second so the
+  robot knows the link is alive. If it stops arriving, the robot stops.
+  [Operating modes](../design/operating-modes.md)
 - **Home folder:** your own folder of files, such as `/home/ada`; `~` is a shortcut for
   it. [The command line](command-line.md#folders-and-paths)
 - **Host:** your own computer, as opposed to a container running on it.
@@ -77,6 +83,8 @@ one links to the page that explains it properly.
   mounts your clone at `/ws`, so both see the same files.
   [Containers](containers.md#mounting-how-your-files-get-into-the-container)
 - **Node:** one program in a ROS system. [ROS 2 basics](ros2-basics.md#nodes-topics-and-messages)
+- **Operating mode:** what the robot is allowed to do right now, such as DISABLED, or
+  ENABLED and driving between zones. [Operating modes](../design/operating-modes.md)
 - **Option:** a word starting with `-` or `--` that changes how a command works; also
   called a flag. [The command line](command-line.md#commands-options-and-arguments)
 - **`origin`:** Git's name for the copy of the repository on GitHub.
@@ -89,6 +97,9 @@ one links to the page that explains it properly.
   [The command line](command-line.md#folders-and-paths)
 - **Port:** a numbered door that a network program listens on, like an apartment number.
   [Containers](containers.md#two-more-ideas-you-will-meet)
+- **Power budget:** the spreadsheet that adds up how much current and energy each part of
+  the robot uses in each operating mode, to size the battery, breakers, and wires.
+  [Operating modes](../design/operating-modes.md)
 - **Primary source:** a document from whoever makes the part or sets the rule, such as a
   datasheet or the competition guidebook. It is the source of truth for that fact.
   [Sources](../sources.md)

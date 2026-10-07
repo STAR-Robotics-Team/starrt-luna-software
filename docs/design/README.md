@@ -10,6 +10,7 @@ code. The software sections of the team's Lunabotics design reports are drawn fr
 | Doc | Subsystem | Status |
 | --- | --- | --- |
 | `system.md` | Architecture and integration: how every subsystem fits together | Not started |
+| [`operating-modes.md`](operating-modes.md) | Operating modes and power states: what is on and what may move in each mode, for the whole robot | Draft |
 | `platform.md` | Platform and dev environment | Not started |
 | `drivetrain.md` | Drivetrain | Not started |
 | `mechanism.md` | Mechanism control | Not started |
