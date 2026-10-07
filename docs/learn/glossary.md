@@ -89,6 +89,9 @@ one links to the page that explains it properly.
   [The command line](command-line.md#folders-and-paths)
 - **Port:** a numbered door that a network program listens on, like an apartment number.
   [Containers](containers.md#two-more-ideas-you-will-meet)
+- **Primary source:** a document from whoever makes the part or sets the rule, such as a
+  datasheet or the competition guidebook. It is the source of truth for that fact.
+  [Sources](../sources.md)
 - **Prompt:** the text a terminal shows when it is ready for your next command.
   [The command line](command-line.md#your-first-commands)
 - **Publish:** send messages on a ROS topic. The opposite is **subscribe**.
@@ -111,6 +114,9 @@ one links to the page that explains it properly.
   `scripts/install_deps.sh` runs it. [Everyday workflow](../everyday-workflow.md#what-to-do-after-a-change)
 - **Script:** a file of commands saved so they can be run again.
   [The command line](command-line.md#running-scripts-and-programs)
+- **Secondary source:** a document that repeats or summarizes a primary source, such as a
+  reseller's product page. Use it only when no primary source covers the fact.
+  [Sources](../sources.md)
 - **Shell:** the program inside a terminal that reads and runs your commands, such as
   `bash`. [The command line](command-line.md#what-a-terminal-is)
 - **SocketCAN:** the CAN bus support built into Linux. [CAN bus](../can-bus.md)

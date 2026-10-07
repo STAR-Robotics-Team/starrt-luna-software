@@ -72,6 +72,11 @@ datasheet, a rule from the competition guidebook, or a vendor's spec, cite the s
 to the page or section. Readers can then check the fact in one click, and so can the checks
 below.
 
+Cite the primary source, the maker's datasheet or the guidebook itself, whenever one covers
+the fact. The [Sources](sources.md) page marks the few secondary sources, such as a
+reseller's product page. If a doc disagrees with a primary source, the source wins: fix the
+doc in the same pull request.
+
 **To cite,** link to the source's entry on the [Sources](sources.md) page, and put the page
 or section after the last comma of the link text:
 
@@ -91,7 +96,8 @@ Ubuntu 24.04 is Tier 1 ([REP 2000, section "Jazzy Jalisco (May 2024 - May 2029)"
 **To add a source** that is not on the Sources page yet:
 
 1. Add an entry to `docs/sources.toml`, copying an existing entry of the same format. The
-   comments at the top of the file explain each field.
+   comments at the top of the file explain each field. Set `primary` to `true` only when
+   the document comes from whoever makes the part or sets the rule.
 2. For a PDF, run `scripts/sources hash` with the link to the PDF, and paste the `sha256`
    line it prints into the entry. This is the PDF's fingerprint.
 3. For a web page, set `expect` to a few words the page shows, such as its title.

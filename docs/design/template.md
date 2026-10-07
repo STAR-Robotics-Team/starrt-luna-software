@@ -56,7 +56,9 @@ same pull request.
 ## 5. Libraries and hardware interfaces
 
 > **Delete this:** list the libraries and drivers this subsystem uses, and the hardware it
-> talks to: buses, CAN IDs, USB devices, serial ports, and wiring.
+> talks to: buses, CAN IDs, USB devices, serial ports, and wiring. Cite every hardware
+> value and competition rule from its primary source, as
+> [Cite sources](../writing-docs.md#cite-sources) explains.
 
 ## 6. Block diagram
 
