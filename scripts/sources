@@ -311,11 +311,15 @@ def render(sources, citations):
                 out.append(f"- **Used for:** {s['notes']}")
             cited = by_source.get(s["id"], [])
             if cited:
-                places = []
-                for c in sorted(cited, key=lambda c: (str(c.doc), c.line)):
-                    page = c.doc.relative_to(DOCS).as_posix()
-                    places.append(f"[{c.location}]({deep_link(s, c)}) in [{doc_title(c.doc)}]({page})")
-                out.append(f"- **Cited at:** {'; '.join(places)}")
+                # One line per citing doc, each cited page or section once, in page order.
+                by_doc = {}
+                for c in cited:
+                    by_doc.setdefault(c.doc, {}).setdefault(c.location, c)
+                out.append("- **Cited at:**")
+                for doc in sorted(by_doc):
+                    spots = sorted(by_doc[doc].values(), key=lambda c: (c.first_page or 0, c.last_page or 0, c.section or ""))
+                    links = ", ".join(f"[{c.location}]({deep_link(s, c)})" for c in spots)
+                    out.append(f"    - [{doc_title(doc)}]({doc.relative_to(DOCS).as_posix()}): {links}")
             else:
                 out.append("- **Cited at:** not cited in these docs yet")
     return "\n".join(out) + "\n"
@@ -397,12 +401,16 @@ def normalized(text):
     return re.sub(r"\s+", " ", re.sub(r"[\u2010-\u2015]", "-", text)).strip().lower()
 
 
+# The permalink mark some sites put after each heading: a pilcrow, or an icon-font glyph.
+HEADING_MARK = re.compile(r"[\u00b6\ue000-\uf8ff]")
+
+
 def find_section(text, section):
     """Where a section starts: the last line that is exactly its heading, since a table of
     contents comes first, or else the first place its words appear."""
     lines = text.split("\n")
     want = normalized(section)
-    exact = [i for i, line in enumerate(lines) if normalized(line) == want]
+    exact = [i for i, line in enumerate(lines) if normalized(HEADING_MARK.sub("", line)) == want]
     if exact:
         return len("\n".join(lines[:exact[-1]]))
     # Each dash becomes one "-", so positions in the copy match the original text.

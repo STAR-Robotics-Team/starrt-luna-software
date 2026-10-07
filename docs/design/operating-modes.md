@@ -33,24 +33,28 @@ Requirements:
 - R3. Every actuator output is zero within 100 ms of a disable command, and within
   `link_timeout` plus 100 ms of the last operator heartbeat.
 - R4. After a fault or an E-stop, moving again takes two deliberate operator actions:
-  clear the fault, then enable. This follows guidebook §13.2.7: "resetting of the E-STOP
-  alone shall not resume operation."
-- R5. The hardware E-stop meets guidebook §13.2: an unmodified COTS red button at least
+  clear the fault, then enable. This follows [guidebook §13.2.7, p. 42](../sources.md#nasa-lunabotics-guidebook-2027):
+  "resetting of the E-STOP alone shall not resume operation."
+- R5. The hardware E-stop meets [guidebook §13.2, pp. 41-42](../sources.md#nasa-lunabotics-guidebook-2027): an unmodified COTS red button at least
   40 mm across, at the highest point, reachable from any side, latching, and with one push
   disconnecting the batteries from all controllers and the other active subsystems. No
   software is in its path.
-- R6. The energy logger sits between the battery and the E-stop (guidebook §13.1.2), so
+- R6. The energy logger sits between the battery and the E-stop ([guidebook §13.1.2, p. 41](../sources.md#nasa-lunabotics-guidebook-2027)), so
   pressing the E-stop does not erase its reading.
 - R7. In every task mode, the current limits of the actuators it allows, plus the
   electronics, add up to less than the main breaker's rating. The power budget relies on
   this.
 - R8. While ENABLED, the operator can switch between TELEOP and AUTO without stopping, by
   an explicit command only. Gamepad input is ignored in AUTO, because an autonomous attempt
-  must be hands-free (guidebook §16).
+  must be hands-free ([guidebook §16, pp. 55-57](../sources.md#nasa-lunabotics-guidebook-2027)).
 - R9. One control on the operator station disables the robot from any mode, to obey the
-  power-off command (§13.9.19) and the end-of-run inhibit (§15.4.1).
+  power-off command ([§13.9.19, p. 45](../sources.md#nasa-lunabotics-guidebook-2027)) and the end-of-run inhibit
+  ([§15.4.1, p. 54](../sources.md#nasa-lunabotics-guidebook-2027)).
 - R10. What the robot streams to the operator station depends on the mode, to keep average
-  bandwidth low: each 1 Mbit/s of average bandwidth costs 30 points per run (§17.1.4).
+  bandwidth low. The link must average 4,000 kbit/s or less ([§14.1.19, p. 48](../sources.md#nasa-lunabotics-guidebook-2027)). For
+  the score, each arena camera used adds 0.5 Mbit/s to the average, every 1 Mbit/s of the
+  total costs 30 of the 120 points, and a total over 4 Mbit/s scores zero
+  ([§17.1.4, p. 60](../sources.md#nasa-lunabotics-guidebook-2027)).
 
 ### The modes
 
@@ -62,7 +66,7 @@ robot state and the task mode.
 | Power state | How it is entered | What has power |
 | --- | --- | --- |
 | OFF | Main breaker open | Nothing |
-| E-STOPPED | E-stop pressed | Only the energy logger, which sits before the E-stop, and a computer on its own battery if the robot has one (§13.2.11, open question 7) |
+| E-STOPPED | E-stop pressed | Only the energy logger, which sits before the E-stop, and a computer on its own battery if the robot has one ([§13.2.11, p. 42](../sources.md#nasa-lunabotics-guidebook-2027), open question 7) |
 | POWERED | Main breaker closed and E-stop released | Everything. Motors still move only when software enables them. |
 
 #### Robot states (software)
@@ -96,9 +100,10 @@ again until the operator clears and enables it (R4).
 
 #### Task modes (software, only while ENABLED)
 
-The task modes follow the competition cycle in guidebook §3.7.11: excavate, travel loaded,
-dump, travel empty. Each is also a unit that autonomy earns points on: excavation
-automation, travel automation, and dump automation (§16).
+The task modes follow the competition's mission cycle ([guidebook §3.7.11, p. 7](../sources.md#nasa-lunabotics-guidebook-2027)):
+excavate, travel loaded, dump, travel empty. Each is also a unit that autonomy earns
+points on: excavation automation, travel automation, and dump automation
+([§16, pp. 55-56](../sources.md#nasa-lunabotics-guidebook-2027)).
 
 | Task mode | What it is for | Allowed to move |
 | --- | --- | --- |
@@ -123,7 +128,7 @@ TELEOP and AUTO changes neither the task mode nor the limits; the new source's c
 take over and the old source's are ignored.
 
 The guidebook says excavation tools must be "completely removed from contact with the
-regolith before returning to remote control operation" (§16.1.5). When the operator takes
+regolith before returning to remote control operation" ([§16.1.5, p. 55](../sources.md#nasa-lunabotics-guidebook-2027)). When the operator takes
 control back during EXCAVATE with the excavator lowered, `mode_manager` warns but does not
 refuse: the operator must always be able to take control.
 
@@ -166,16 +171,21 @@ EXCAVATE, comes to about 135 A.
 | Hatch | To decide | Off | Off | Full (11.5 A at stall) | Full | 20 A |
 
 "Full" means no software limit is needed, because the motor cannot draw more than its
-channel breaker even when stalled at 12 V.
+channel breaker even when stalled at 12 V: a NeveRest stalls at 11.5 A
+([NeveRest Series Motor Only](../sources.md#andymark-neverest-page)).
 
-Only a Talon SRX can enforce these limits. A Victor SPX has no current limiting and no
-current sensing, so a Victor can only follow a Talon (as the drive followers do, copying
+Only a Talon SRX can enforce these limits. CTRE documents current limiting for the Talon
+SRX ([Phoenix 5 docs, section "Current Limit"](../sources.md#ctre-phoenix5-motor-controllers)),
+and a Victor SPX cannot even measure its current
+([Phoenix 5 docs, section "Plot tab"](../sources.md#ctre-phoenix5-motor-controllers)), so
+it cannot limit it. A Victor can only follow a Talon (as the drive followers do, copying
 its output) or run a motor whose stall current is already under its breaker, like the
 NeveRest motors.
 
 The limits are on supply current, which is what the battery and breakers see. At low speed
-a motor carries more current than it draws from the battery: a stalled CIM under a 30 A
-supply limit still carries about 70 A, so the drivetrain and mechanism docs need their own
+a motor carries more current than it draws from the battery. A CIM stalls at 131 A at 12 V
+([CIM motor curve, p. 1](../sources.md#andymark-cim-curve)), so a stalled CIM under a 30 A
+supply limit on a 14.8 V battery still carries about 70 A, and the drivetrain and mechanism docs need their own
 stall detection.
 
 Every controller also runs voltage compensation at 12 V, so a motor behaves the same on a
@@ -208,7 +218,7 @@ than 12 V on average.
 
 In AUTO the stream carries the obstacle map and planned path because the judges require
 "visualization of the real time obstacle detection and associated mapping of obstacles
-and the resulting path planning" (§16), and leaves the camera off to save bandwidth (R10).
+and the resulting path planning" ([§16, p. 55](../sources.md#nasa-lunabotics-guidebook-2027)), and leaves the camera off to save bandwidth (R10).
 
 ## 3. Interfaces
 
@@ -294,19 +304,23 @@ The battery thresholds are for LiPo cells and change if the battery does (open q
 ## 5. Libraries and hardware interfaces
 
 - **Phoenix 5 enable.** The motor controllers run only while some process calls
-  `ctre::phoenix::unmanaged::Unmanaged::FeedEnable()`. The enable frame (`000401BF` in
+  `ctre::phoenix::unmanaged::Unmanaged::FeedEnable(timeoutMs)`; they disable themselves
+  when `timeoutMs` passes without another call
+  ([Phoenix C++ API, section "FeedEnable()"](../sources.md#ctre-phoenix5-unmanaged-api)).
+  Our code passes 100 ms. The enable frame (`000401BF` in
   `candump`, see [CAN bus](../can-bus.md)) carries no device number, so it looks like it
   enables every CTRE controller on the bus, whichever process sends it. Exactly one
   process may feed it, and only while ENABLED (open question 6).
 - **PDP over CAN.** The PDP reports battery voltage, the current on each channel, and the
-  energy used, which feed `/power/battery`. Logging them by mode checks the power budget
+  energy used ([PDP User's Guide, pp. 17-20](../sources.md#ctre-pdp-guide)), which feed
+  `/power/battery`. Logging them by mode checks the power budget
   against real runs, and shows the energy score before the judges' logger does.
 - **Controller settings.** Each node sets its controllers' current limits, voltage
   compensation, and neutral mode from parameters at startup: brake for the drive motors
   and hatch, so they hold still when disabled, and coast for the excavator chain.
 - **E-stop, main breaker, and energy logger.** Hardware only, with no software interface.
   The power path, with the Jetson fed straight from the battery (its carrier takes 9 to
-  20 V):
+  20 V, [carrier board specification, p. 7](../sources.md#nvidia-orin-nano-carrier-spec)):
 
 ```mermaid
 flowchart TB
@@ -341,7 +355,7 @@ The dotted arrows are `/robot/mode`, which every node follows.
 
 | Failure | How it is detected | What happens |
 | --- | --- | --- |
-| Operator link lost | No heartbeat for `link_timeout` | ENABLED becomes DISABLED with the reason "link lost". The operator enables again once the link is back. This applies in AUTO too, because while the link is down the robot cannot hear the power-off command (§13.9.19). |
+| Operator link lost | No heartbeat for `link_timeout` | ENABLED becomes DISABLED with the reason "link lost". The operator enables again once the link is back. This applies in AUTO too, because while the link is down the robot cannot hear the power-off command ([§13.9.19, p. 45](../sources.md#nasa-lunabotics-guidebook-2027)). |
 | `mode_manager` stops | `/robot/mode` older than `mode_timeout` | Each actuator node sets its outputs to zero and the enable stops being fed |
 | The node feeding the enable stops | The Phoenix enable times out | Controllers disable themselves within 100 ms |
 | Drive commands stop | `/cmd_vel` older than the drivetrain's timeout (drivetrain doc) | Drive output zero; mode unchanged |
@@ -360,7 +374,7 @@ The dotted arrows are `/robot/mode`, which every node follows.
 | R2 | After boot, send drive and mechanism commands: nothing moves. Clear a fault: the robot stays DISABLED. | Bench | Not run |
 | R3 | Disable mid-drive, and separately unplug the operator Wi-Fi mid-drive, with the wheels off the ground. Measure the time to zero output in the bag. | Bench | Not run |
 | R4 | Press and reset the E-stop while ENABLED; nothing moves until clear and enable | Robot | Not run |
-| R5 | Inspection checklist (§12.1); with the E-stop pressed, measure every rail at zero except the logger and any compute battery | Robot | Not run |
+| R5 | Inspection checklist ([§12.1, p. 40](../sources.md#nasa-lunabotics-guidebook-2027)); with the E-stop pressed, measure every rail at zero except the logger and any compute battery | Robot | Not run |
 | R6 | Read the logger, press and reset the E-stop, read it again: unchanged | Robot | Not run |
 | R7 | The budget workbook's Protection sheet passes for every mode, and each limit read back from its controller matches the parameter | Bench | Not run |
 | R8 | Switch TELEOP to AUTO and back while driving on fake planner output; gamepad input in AUTO has no effect | Laptop | Not run |
@@ -371,16 +385,16 @@ The dotted arrows are `/robot/mode`, which every node follows.
 
 | Question | Owner | Due |
 | --- | --- | --- |
-| 1. Keep the 4S LiPo (16.8 V full) or move to a 12 V class battery? The Victor SPX, PDP, and VRM are rated to 16 V (see the power budget audit). | Electrical lead | 2026-10-25 |
+| 1. Keep the 4S LiPo (16.8 V full) or move to a 12 V class battery? The Victor SPX ([User's Guide, p. 3](../sources.md#ctre-victor-spx-guide)), PDP ([User's Guide, p. 6](../sources.md#ctre-pdp-guide)), and VRM ([User's Guide, p. 5](../sources.md#ctre-vrm-guide)) are rated to 16 V. | Electrical lead | 2026-10-25 |
 | 2. Does the robot drive while digging? A comment on the Spring 2026 power budget (cell M3) asks the same. If not, EXCAVATE allows no drive. | Mechanical lead | 2026-10-25 |
 | 3. Does the conveyor run during DUMP? | Mechanical lead | 2026-10-25 |
 | 4. Which sensors tell software that the excavator is stowed and the hatch is closed? The entry guards need them. | Mechanical and electrical leads | 2026-11-01 |
-| 5. Which controller runs each mechanism motor? Motors that need a current limit must be on a Talon SRX: the excavator's 775 RedLine (130 A stall) and the depth actuators (about 50 A stall). | Electrical lead | 2026-11-01 |
+| 5. Which controller runs each mechanism motor? Motors that need a current limit must be on a Talon SRX: the excavator's 775 RedLine (130 A stall, [test report, p. 1](../sources.md#andymark-775-redline-report)) and the depth actuators (about 50 A stall, [Pololu product page, section "Using the actuator"](../sources.md#pololu-lact18-500apl)). | Electrical lead | 2026-11-01 |
 | 6. Does one process's Phoenix enable keep another process's controllers enabled? This decides which node feeds the enable and owns CTRE access. Test on the bench. | Drivetrain owner | 2026-10-25 |
-| 7. Give the Jetson its own battery (§13.2.11), so an E-stop does not reboot it or cut its logs? | Electrical lead and software lead | 2026-11-01 |
+| 7. Give the Jetson its own battery ([§13.2.11, p. 42](../sources.md#nasa-lunabotics-guidebook-2027)), so an E-stop does not reboot it or cut its logs? | Electrical lead and software lead | 2026-11-01 |
 | 8. Ask the organizers: does energy used during the 10-minute setup count, and does a separate compute battery have to go through the energy logger? | Software lead | 2026-10-25 |
 | 9. Should `link_timeout` be longer in AUTO, to ride through Wi-Fi dropouts? Measure dropouts in the pits first. | Teleop owner | 2026-11-08 |
-| 10. Does anything deploy after the run starts (stowed envelope 150 × 75 × 75 cm, §13.3)? If so, add a DEPLOY step. | Mechanical lead | 2026-11-01 |
+| 10. Does anything deploy after the run starts (stowed envelope 150 × 75 × 75 cm, [§13.3, p. 42](../sources.md#nasa-lunabotics-guidebook-2027))? If so, add a DEPLOY step. | Mechanical lead | 2026-11-01 |
 
 ## Handoff
 
