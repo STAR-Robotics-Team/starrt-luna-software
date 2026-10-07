@@ -40,22 +40,25 @@ directly from CTRE and uses it under CTRE's license.
 | Phoenix 6 `tools` (shared backend) | 26.1.3 |
 
 Every archive is checked against a SHA-256 hash in `CMakeLists.txt`, and the build fails
-if a download does not match. Linux on x86-64 (laptops, CI) and arm64 (the Jetson, Apple
-Silicon Macs in the dev container) are supported.
+if a download does not match. Linux on x86-64 (most laptops) and arm64 (the Jetson, and
+Apple Silicon Macs in the dev container) are supported.
 
 ## Building offline
 
 Archives are kept in `~/.cache/ctre_phoenix5_vendor`, so only the first build needs
-internet. To build on a machine that has never been online, copy that folder over from
-one that has. Set `-DCTRE_DOWNLOAD_DIR=<path>` to use a different folder, or
-`-DCTRE_MAVEN_URL=<url>` if CTRE moves its repository.
+internet. In the dev container, that folder is inside the container, so the first build
+after a container rebuild downloads them again. To build on a machine that has never been
+online, copy that folder over from one that has.
+
+Set `-DCTRE_DOWNLOAD_DIR=<path>` to use a different folder, or `-DCTRE_MAVEN_URL=<url>` if
+CTRE moves its repository.
 
 ## Upgrading Phoenix
 
-1. Pick versions from CTRE's maven listings for
-   [api-cpp](https://maven.ctr-electronics.com/release/com/ctre/phoenix/api-cpp/),
-   [cci](https://maven.ctr-electronics.com/release/com/ctre/phoenix/cci/), and
-   [tools](https://maven.ctr-electronics.com/release/com/ctre/phoenix6/tools/).
+1. Pick versions from CTRE's version lists for
+   [api-cpp](https://maven.ctr-electronics.com/release/com/ctre/phoenix/api-cpp/maven-metadata.xml),
+   [cci](https://maven.ctr-electronics.com/release/com/ctre/phoenix/cci/maven-metadata.xml), and
+   [tools](https://maven.ctr-electronics.com/release/com/ctre/phoenix6/tools/maven-metadata.xml).
 2. Change `PHOENIX5_VERSION` and `PHOENIX6_TOOLS_VERSION` in `CMakeLists.txt`.
 3. Download each archive the build uses (`headers`, `linuxx86-64`, and `linuxarm64` for
    each of the three), run `sha256sum` on them, and replace every hash.

@@ -1,29 +1,25 @@
-// Default dev container: ROS 2 Jazzy with a VNC desktop for GUI programs, on any
-// operating system. linux-native/devcontainer.json is the same without VNC.
-// Keep the two files in sync.
+// Dev container for Linux hosts without the VNC desktop: GUI programs open as
+// normal windows on your own desktop. Same as ../devcontainer.json otherwise;
+// keep the two files in sync.
 {
-  "name": "STAR Lunabotics: VNC desktop (any OS)",
+  "name": "STAR Lunabotics: native windows (Linux, no VNC)",
   "build": {
-    "dockerfile": "Dockerfile",
+    "dockerfile": "../Dockerfile",
     "target": "dev",
     // Build with the host's network, like the running container. Docker's own
     // networks can overlap campus Wi-Fi addresses and break DNS during builds.
     "options": ["--network=host"]
   },
-  "features": {
-    // VNC desktop for RViz and other GUI tools: http://localhost:6080 or localhost:5901
-    "ghcr.io/devcontainers/features/desktop-lite:1": {
-      "password": "noPassword",
-      // Listen on this computer only. With host networking, a bare port would
-      // let anyone on the same Wi-Fi open the desktop.
-      "webPort": "127.0.0.1:6080"
-    }
-  },
+  // Runs on the host before the container starts: lets programs running as your
+  // user, which includes the container's user (same user ID), open windows on
+  // your desktop. Lasts until you log out.
+  "initializeCommand": "xhost +SI:localuser:$(id -un) > /dev/null 2>&1 || echo 'xhost failed; GUI programs may not open. See docs/gui-tools.md.'",
   "remoteUser": "ubuntu",
   "workspaceMount": "source=${localWorkspaceFolder},target=/ws,type=bind",
   "workspaceFolder": "/ws",
   "runArgs": [
-    // Use the host's network, so ROS 2 can reach the robot and CAN adapters (Linux hosts).
+    // Use the host's network, so ROS 2 can reach the robot and CAN adapters, and
+    // so GUI programs can reach your desktop's display.
     "--network=host",
     // Lets nodes in the container reach nodes on the host through shared memory.
     "--ipc=host",
@@ -32,24 +28,16 @@
   ],
   "containerEnv": {
     "COLCON_DEFAULTS_FILE": "/ws/.devcontainer/colcon-defaults.yaml",
-    // The VNC desktop's X display. With host networking the container shares
-    // display numbers with the host, and Ubuntu's own desktop takes :0 and :1.
-    "DISPLAY": ":20",
+    // Your desktop's display, so GUI programs open as normal windows.
+    "DISPLAY": "${localEnv:DISPLAY}",
+    // The container cannot use your graphics card, so draw OpenGL with the CPU.
+    // Without this, RViz stalls while starting up.
+    "LIBGL_ALWAYS_SOFTWARE": "1",
     // ROS 2 only finds nodes on this computer until you change this
     // (see docs/ros-networking.md).
     "ROS_AUTOMATIC_DISCOVERY_RANGE": "LOCALHOST"
   },
   "postCreateCommand": "bash scripts/install_deps.sh",
-  "forwardPorts": [6080, 5901],
-  "portsAttributes": {
-    "6080": {
-      "label": "Desktop in the browser (noVNC)"
-    },
-    "5901": {
-      "label": "Desktop for a VNC viewer app",
-      "onAutoForward": "silent"
-    }
-  },
   "customizations": {
     "vscode": {
       "extensions": [

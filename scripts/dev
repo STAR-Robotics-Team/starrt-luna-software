@@ -1,0 +1,174 @@
+#!/usr/bin/env bash
+# Runs commands in the team's dev container from your own terminal, so you can
+# use any editor. It wraps the Dev Containers CLI, which reads .devcontainer/,
+# so it starts the same container VS Code does. Run `scripts/dev help` for usage;
+# docs/everyday-workflow.md explains it in full.
+#
+# Works with macOS's bash 3.2, so avoid newer bash features.
+set -eo pipefail
+
+repo=$(cd "$(dirname "$0")/.." && pwd -P)
+cli_version=0.89.0
+
+usage() {
+  cat << 'EOF'
+Usage: scripts/dev [--native] <command> [arguments]
+
+Run commands in the dev container from your own terminal.
+
+Commands:
+  up            Start the dev container, building it the first time
+  shell         Open a terminal inside the dev container
+  build [ARGS]  Build the workspace with colcon build ARGS
+  test [ARGS]   Run colcon test ARGS, then show the results
+  run CMD       Run any command in the workspace, with ROS and the workspace loaded
+  stop          Stop the dev container
+  rebuild       Recreate the dev container, after changes to .devcontainer/
+  help          Show this help
+
+Options:
+  --native      Use the native windows configuration (Linux only, no VNC desktop).
+                To make it your default: export LUNA_DEV_CONFIG=linux-native
+
+Examples:
+  scripts/dev build --packages-select luna_drivetrain
+  scripts/dev run ros2 run demo_nodes_cpp talker
+EOF
+}
+
+fail() {
+  echo "scripts/dev: $*" >&2
+  exit 1
+}
+
+config_name=${LUNA_DEV_CONFIG:-vnc}
+if [ "$1" = "--native" ]; then
+  config_name=linux-native
+  shift
+fi
+
+command=${1:-help}
+if [ $# -gt 0 ]; then
+  shift
+fi
+
+case "$command" in
+  help | -h | --help)
+    usage
+    exit 0
+    ;;
+  run)
+    if [ $# -eq 0 ]; then
+      fail "run needs a command, for example: scripts/dev run ros2 topic list"
+    fi
+    ;;
+  up | shell | build | test | stop | rebuild) ;;
+  *)
+    usage >&2
+    fail "unknown command '$command'"
+    ;;
+esac
+
+case "$config_name" in
+  vnc) config="$repo/.devcontainer/devcontainer.json" ;;
+  linux-native) config="$repo/.devcontainer/linux-native/devcontainer.json" ;;
+  *) fail "LUNA_DEV_CONFIG must be 'vnc' or 'linux-native', not '$config_name'" ;;
+esac
+
+if ! command -v docker > /dev/null 2>&1; then
+  fail "Docker is not installed. See docs/getting-started.md."
+fi
+if ! docker info > /dev/null 2>&1; then
+  fail "Docker is not running. Start Docker Desktop, or the Docker service on Linux."
+fi
+
+# Prefer an installed Dev Containers CLI; otherwise run a pinned version with npx.
+if command -v devcontainer > /dev/null 2>&1; then
+  cli=(devcontainer)
+elif [ -x "$HOME/.devcontainers/bin/devcontainer" ]; then
+  cli=("$HOME/.devcontainers/bin/devcontainer")
+elif command -v npx > /dev/null 2>&1; then
+  cli=(npx --yes "@devcontainers/cli@$cli_version")
+else
+  fail "the Dev Containers CLI is not installed. Install it with:
+  curl -fsSL https://raw.githubusercontent.com/devcontainers/cli/main/scripts/install.sh | sh
+then add ~/.devcontainers/bin to your PATH. See docs/everyday-workflow.md."
+fi
+
+# Containers of this clone that use the selected configuration.
+find_container() {
+  docker ps -q \
+    --filter "label=devcontainer.local_folder=$repo" \
+    --filter "label=devcontainer.config_file=$config"
+}
+
+# Starts the container, building it if needed. Arguments go to `devcontainer up`.
+start_container() {
+  if ! "${cli[@]}" up --workspace-folder "$repo" --config "$config" "$@" > /dev/null; then
+    fail "the dev container did not start; see the messages above."
+  fi
+  echo "The dev container is running." >&2
+}
+
+ensure_running() {
+  if [ -z "$(find_container)" ]; then
+    echo "Starting the dev container ($config_name). The first time, this builds it," \
+      "which takes several minutes." >&2
+    start_container
+  fi
+}
+
+# Runs a command in the container. The environment probe is off: it is slow and
+# prints the terminal banner, and each command loads ROS itself instead.
+in_container() {
+  "${cli[@]}" exec --workspace-folder "$repo" --config "$config" \
+    --default-user-env-probe none "$@"
+}
+
+# Loads ROS (but not the workspace, which should not be loaded while building it).
+# $ROS_DISTRO must expand inside the container, hence the single quotes.
+# shellcheck disable=SC2016
+load_ros='source "/opt/ros/$ROS_DISTRO/setup.bash"'
+# Loads ROS and, once it has been built, the workspace.
+load_workspace="$load_ros"'; if [ -f install/setup.bash ]; then source install/setup.bash; fi'
+
+case "$command" in
+  up)
+    if [ -n "$(find_container)" ]; then
+      echo "The dev container is already running ($config_name)." >&2
+    else
+      ensure_running
+    fi
+    ;;
+  shell)
+    ensure_running
+    in_container bash
+    ;;
+  build)
+    ensure_running
+    in_container bash -c "$load_ros; colcon build \"\$@\"" bash "$@"
+    ;;
+  test)
+    ensure_running
+    in_container bash -c "$load_ros; colcon test \"\$@\" && colcon test-result --verbose" bash "$@"
+    ;;
+  run)
+    ensure_running
+    in_container bash -c "$load_workspace; exec \"\$@\"" bash "$@"
+    ;;
+  stop)
+    containers=$(docker ps -q --filter "label=devcontainer.local_folder=$repo")
+    if [ -z "$containers" ]; then
+      echo "No dev container is running for this clone." >&2
+    else
+      # Word splitting is intended: one container ID per word.
+      # shellcheck disable=SC2086
+      docker stop $containers > /dev/null
+      echo "Stopped the dev container ($(echo "$containers" | wc -l | tr -d ' ') running for this clone)." >&2
+    fi
+    ;;
+  rebuild)
+    echo "Rebuilding the dev container ($config_name)." >&2
+    start_container --remove-existing-container
+    ;;
+esac

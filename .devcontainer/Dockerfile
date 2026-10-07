@@ -34,6 +34,9 @@ RUN apt-get update \
 RUN echo 'ubuntu ALL=(root) NOPASSWD:ALL' > /etc/sudoers.d/ubuntu \
     && chmod 0440 /etc/sudoers.d/ubuntu
 
-# Source the workspace in every shell once it has been built.
+# Source the workspace in every shell once it has been built, and say where GUI
+# programs will appear.
 RUN echo 'if [ -f /ws/install/setup.bash ]; then source /ws/install/setup.bash; fi' \
+      >> /etc/bash.bashrc \
+    && echo 'if [ -f /ws/.devcontainer/welcome.sh ]; then source /ws/.devcontainer/welcome.sh; fi' \
       >> /etc/bash.bashrc

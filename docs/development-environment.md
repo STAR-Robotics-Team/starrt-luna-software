@@ -1,8 +1,7 @@
 # Development environment
 
-How laptops, the dev container, and the robot fit together: where code is written, where
-it is built and run, and what each setup can do. The [README](../README.md) has the quick
-start; this page has the details and the reasons behind them.
+How laptops, the dev container, and the robot fit together, and what each setup can do.
+To set up for the first time, follow [Getting started](getting-started.md) instead.
 
 ## The short version
 
@@ -10,127 +9,92 @@ start; this page has the details and the reasons behind them.
   your clone of the repository.
 - **Building and running** happens in Linux with ROS 2 Jazzy. You get that from the dev
   container on any operating system, or by installing Ubuntu 24.04 and ROS 2 Jazzy
-  directly. A build runs anywhere its environment matches, not only on the computer that
-  built it (see [Why a build is tied to its environment](#why-a-build-is-tied-to-its-environment)).
-- **The robot** runs the code on its NVIDIA Jetson. How code gets built for the Jetson is
-  still being decided (see [Building for the robot](#building-for-the-robot)).
+  directly.
+- **The robot** runs the code on its NVIDIA Jetson. See
+  [Building for the robot](building-for-the-robot.md).
 
-## Why Linux with ROS 2 Jazzy
+## How the dev container works
 
-The team standardizes on Ubuntu 24.04 with ROS 2 Jazzy for three reasons:
+New to containers? [Containers and the dev container](learn/containers.md) explains images,
+containers, and mounting from the beginning, with exercises. In short:
 
-1. **It is ROS 2 Jazzy's main platform.** [REP 2000](https://www.ros.org/reps/rep-2000.html)
-   lists Ubuntu 24.04 as Tier 1 for both x86-64 and arm64, with ready-made apt packages for
-   ROS and for community packages such as sensor drivers. Windows 10 is also Tier 1, but
-   only as an archive of ROS's core packages, and macOS is Tier 3, meaning you build ROS
-   yourself from source.
-2. **The robot runs Linux.** Developing on the same operating system means what works on
-   your laptop works on the robot.
-3. **The drivetrain needs SocketCAN,** the CAN bus support built into the Linux kernel.
-   It is how the code reaches the motor controllers through the CANable adapter, and
-   Windows and macOS do not have it.
+You clone the repository onto your own computer, like any other repository. When you open
+it as a dev container, your editor (or `scripts/dev`):
 
-The dev container is this environment, packaged: an Ubuntu 24.04 image with ROS 2 Jazzy
-and the team's tools, defined in [`.devcontainer/`](../.devcontainer/). It gives every
-operating system the same setup.
+1. builds a Docker image from `.devcontainer/Dockerfile`, with Ubuntu 24.04, ROS 2 Jazzy,
+   and the team's tools;
+2. starts a container from that image;
+3. mounts your clone into the container at `/ws`;
+4. when the container is first created, installs the workspace's dependencies with
+   `scripts/install_deps.sh`.
 
-## Why a build is tied to its environment
+Your code stays on your computer, and the container supplies the environment around it.
+Edits made inside or outside the container change the same files. Only `/ws` is shared:
+anything saved elsewhere in the container, including its home folder `/home/ubuntu` and
+the CTRE download cache there, is lost when the container is rebuilt. The
+[containers page](learn/containers.md#what-lives-where) has the full table.
 
-Compiling turns C++ source code into machine code for one specific environment:
+The container shares your computer's network, so on Linux it can reach USB CAN adapters
+and the robot directly. See [CAN bus](can-bus.md) and
+[ROS 2 networking](ros-networking.md).
 
-- **CPU type:** x86-64 (most laptops) or arm64 (the Jetson and Apple Silicon Macs).
-- **Operating system and its libraries,** such as Ubuntu 24.04's C and C++ standard
-  libraries.
-- **ROS version and its libraries.** A node built against ROS 2 Jazzy needs Jazzy's
-  libraries to run.
+## The two configurations
 
-A compiled program runs wherever those three match, not only on the computer that built
-it. For example, every container started from the dev container image has the same
-operating system and ROS libraries, so a program built in one runs in any other on a
-computer with the same CPU type. Python nodes are not compiled, but they still need the
-same ROS version and Python packages.
+The repository has two dev container configurations. They build the same environment and
+differ only in how programs with windows, such as RViz, appear.
 
-### One clone, one environment
+| Configuration | File | Programs with windows | Use it on |
+| --- | --- | --- | --- |
+| **STAR Lunabotics: VNC desktop (any OS)**, the default | `.devcontainer/devcontainer.json` | On a VNC desktop inside the container | Any operating system |
+| **STAR Lunabotics: native windows (Linux, no VNC)** | `.devcontainer/linux-native/devcontainer.json` | As normal windows on your desktop | Linux |
 
-The `build/` folder is the exception: it records the absolute paths it was created with.
-If you use both the dev container and a native ROS install on the same clone, they see the
-folder at different paths (`/ws` inside the container), and the second one to build fails
-with:
+[GUI tools](gui-tools.md) explains both. To switch, pick the other configuration when you
+open the container: in VS Code with **Dev Containers: Reopen in Container**, or with
+`scripts/dev --native`.
 
-```text
-CMake Error: The current CMakeCache.txt directory /ws/build/... is different than the
-directory ... where CMakeCache.txt was created
-```
+## Ways to open the dev container
 
-When you switch between the two, delete the build output first. The next build recreates
-it:
-
-```bash
-rm -rf build install log
-```
-
-## Building for the robot
-
-The Jetson has an arm64 CPU and most laptops are x86-64, so code for the robot has to be
-built for arm64, against the robot's operating system and ROS libraries. Building for a
-different CPU or operating system than the one doing the build is called
-cross-compiling in the broad sense. There are three ways to do it:
-
-| Approach | How it works | Trade-offs |
-| --- | --- | --- |
-| Build on the Jetson | Clone the repository on the robot and run `colcon build` there. | No extra setup. Usually slower than a laptop, but this workspace is small. |
-| Emulated arm64 image | A laptop builds an arm64 container image, running arm64 programs through the QEMU emulator (`docker buildx build --platform linux/arm64`). | Uses the same Dockerfile. Slow: on one laptop, the first build of this workspace took about 2 minutes emulated versus about 7 seconds natively. |
-| True cross-compilation | An x86-64 compiler produces arm64 code and links it against a copy of the robot's libraries (a "sysroot"). | Fastest builds, but the sysroot has to be kept identical to the robot's software. ROS's own cross-compiling tool, [`ros-tooling/cross_compile`](https://github.com/ros-tooling/cross_compile), was archived in 2022, so the team would maintain this setup alone. |
-
-For a workspace this size, building on the Jetson or in an emulated image is simpler than
-true cross-compilation. The platform workstream chooses one in deliverables 2.4 (Jetson
-bring-up) and 2.5 (robot deployment), and records it in the platform design doc.
-
-To try the emulated approach, register the arm64 emulator once per boot, then build the
-image's `base` stage for arm64:
-
-```bash
-docker run --privileged --rm tonistiigi/binfmt --install arm64
-docker buildx build --platform linux/arm64 --target base --network=host --load \
-  -t luna-base:arm64 -f .devcontainer/Dockerfile .devcontainer
-```
-
-`--network=host` avoids DNS failures when one of Docker's own networks overlaps campus
-Wi-Fi addresses.
-
-Apple Silicon Macs already build arm64 code in the dev container. That code runs on the
-Jetson only if the Jetson's operating system and ROS libraries match the dev container's,
-for example if the robot runs the same image.
-
-## Ways to set up
-
-### Dev container in VS Code (typical)
+### VS Code (typical)
 
 Install [VS Code](https://code.visualstudio.com/) and its
 [Dev Containers extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers),
-open your clone, and choose **Reopen in Container**. VS Code builds the image the first
-time, installs the workspace's dependencies, and forwards the browser desktop's port.
+open your clone, and choose **Reopen in Container**.
+[Getting started](getting-started.md#3-open-the-dev-container) has the steps. VS Code runs
+its C++ and Python tools inside the container, so autocomplete and error highlighting
+understand ROS. It stops the container when you close the window.
 
-### Dev container in another editor
+### Another editor
 
 Editors with dev container support, such as JetBrains IDEs, read the same
-`.devcontainer/devcontainer.json` and open the same container.
+`.devcontainer/` configuration.
 
-### Dev container from a terminal
+### Your own terminal, with `scripts/dev`
 
-The [Dev Containers CLI](https://github.com/devcontainers/cli) needs Node.js. From your
-clone:
+`scripts/dev` runs commands in the dev container from your own terminal, so you can use
+any editor: `scripts/dev build`, `scripts/dev shell`, and so on. See
+[Everyday workflow](everyday-workflow.md#run-commands-from-your-own-terminal).
+
+An editor running outside the container cannot see ROS's headers, which live in the
+container, so its C++ autocomplete does not understand ROS code. Building and running are
+unaffected.
+
+### The Dev Containers CLI directly
+
+`scripts/dev` is built on the [Dev Containers CLI](https://github.com/devcontainers/cli),
+which you can also use directly:
 
 ```bash
-npx @devcontainers/cli up --workspace-folder .
-npx @devcontainers/cli exec --workspace-folder . bash
+devcontainer up --workspace-folder .
+devcontainer exec --workspace-folder . bash
 ```
 
-The CLI does not forward ports
-([devcontainers/cli#22](https://github.com/devcontainers/cli/issues/22)), so on macOS and
-Windows the browser desktop is only reachable through an editor.
+Add `--config .devcontainer/linux-native/devcontainer.json` to both for the native windows
+configuration. If you have not installed the CLI, replace `devcontainer` with
+`npx @devcontainers/cli`, which needs Node.js.
 
-### Without a container (Ubuntu 24.04)
+## Without a container (Ubuntu 24.04)
+
+On Ubuntu 24.04 you can install ROS 2 directly instead of using the dev container:
 
 1. Install ROS 2 Jazzy by following the
    [official guide](https://docs.ros.org/en/jazzy/Installation/Ubuntu-Install-Debs.html),
@@ -158,18 +122,58 @@ Windows the browser desktop is only reachable through an editor.
    source install/setup.bash
    ```
 
+Programs with windows open as normal windows. To use the dev container on the same clone
+later, see [One clone, one environment](#one-clone-one-environment).
+
 ## What works where
 
 | | Dev container on Linux | Dev container on macOS or Windows | Ubuntu 24.04 without a container |
 | --- | --- | --- | --- |
 | Build, test, and run nodes | Yes | Yes\* | Yes |
-| GUI tools (RViz, rqt) | Browser desktop, or native windows | Browser desktop through an editor\*, or native windows with XQuartz on macOS\* | Normal windows |
+| Programs with windows (RViz, rqt) | VNC desktop, or native windows | VNC desktop through an editor\*, or native windows with XQuartz on macOS (not RViz) | Normal windows |
 | CANable USB adapter | Yes | No; Docker Desktop cannot pass USB devices through | Yes |
 | Virtual CAN bus (`vcan`) | Yes | Not tested | Yes |
-| ROS 2 with the robot or other computers | Yes | Usually not; see [ROS 2 networking](#ros-2-networking) | Yes |
+| ROS 2 with the robot or other computers | Yes | Usually not; see [ROS 2 networking](ros-networking.md) | Yes |
 | Gamepad | Not set up yet (deliverable 5.2) | Not set up yet | Yes, with ROS's `joy` package\* |
 
 \* Expected but not tested yet. Update this table when you test one of these.
+
+## One clone, one environment
+
+The dev container and a native ROS install can share a clone, but not its build output.
+The build output records the absolute paths it was created with: `build/` in CMake's
+settings, and `install/` in links back to your source files. The two environments see
+your clone at different paths (`/ws` inside the container), so whichever builds second
+fails with:
+
+```text
+CMake Error: The current CMakeCache.txt directory /ws/build/... is different than the
+directory ... where CMakeCache.txt was created
+```
+
+When you switch between them, delete the build output first. The next build recreates it.
+
+```bash
+rm -rf build install log
+```
+
+## Why Linux with ROS 2 Jazzy
+
+The team standardizes on Ubuntu 24.04 with ROS 2 Jazzy for three reasons:
+
+1. **It is ROS 2 Jazzy's main platform.** [REP 2000](https://www.ros.org/reps/rep-2000.html)
+   lists Ubuntu 24.04 as Tier 1 for both x86-64 and arm64, with ready-made apt packages
+   for ROS and for community packages such as sensor drivers. Windows 10 is also Tier 1,
+   but only as an archive of ROS's core packages, and macOS is Tier 3, meaning you build
+   ROS yourself from source.
+2. **The robot runs Linux.** Developing on the same operating system means what works on
+   your laptop works on the robot.
+3. **The drivetrain needs SocketCAN,** the CAN bus support built into the Linux kernel.
+   It is how the code reaches the motor controllers through the CANable adapter, and
+   Windows and macOS do not have it.
+
+The dev container is this environment, packaged, so every operating system gets the same
+setup.
 
 ## Changing the ROS 2 version
 
@@ -184,12 +188,12 @@ The container has exactly one release installed (`/opt/ros/jazzy`), built into i
 so there is no other `setup.bash` to switch to. Changing the release means changing the
 image for everyone, in a pull request:
 
-1. In [`.devcontainer/Dockerfile`](../.devcontainer/Dockerfile), replace `jazzy` in the
-   base image (`ros:jazzy-ros-base`), the desktop package (`ros-jazzy-desktop`), and the
-   `setup.bash` line. The base image brings the Ubuntu version that release needs.
-2. Replace `jazzy` in [`scripts/install_deps.sh`](../scripts/install_deps.sh), and update
-   the docs.
-3. Rebuild the container. In VS Code, run **Dev Containers: Rebuild Container**.
+1. In `.devcontainer/Dockerfile`, replace `jazzy` in the base image
+   (`ros:jazzy-ros-base`), the desktop package (`ros-jazzy-desktop`), and the `setup.bash`
+   line. The base image brings the Ubuntu version that release needs.
+2. Replace `jazzy` in `scripts/install_deps.sh`, and update these docs.
+3. Rebuild the container, with **Dev Containers: Rebuild Container** in VS Code or
+   `scripts/dev rebuild`.
 4. Delete `build/`, `install/`, and `log/`, then run `colcon build`, because everything
    was built against the old release.
 
@@ -204,132 +208,4 @@ which targets Ubuntu 22.04. Each terminal uses the release whose `setup.bash` it
   distributions." Open a new terminal instead.
 - If your `~/.bashrc` loads a release, every new terminal starts with it, so change that
   line to switch.
-- After switching, delete `build/`, `install/`, and `log/` and rebuild, as in the dev
-  container.
-
-## GUI tools
-
-RViz, rqt, and other GUI programs in the dev container can show up in two ways.
-
-### Browser desktop (any operating system)
-
-The dev container runs a desktop you open in your browser, with no setup:
-<http://localhost:6080/vnc.html?autoconnect=true&resize=remote>. GUI programs started in a
-container terminal appear there.
-
-### Native windows on Linux
-
-GUI programs can also open as normal windows on your own desktop:
-
-1. On the host, once per login, let programs running as your user open windows. The
-   container's user has the same user ID as you, so this includes the container, and no
-   other user:
-
-   ```bash
-   xhost +SI:localuser:$USER
-   ```
-
-   Docker's ROS 2 guide uses `xhost +local:docker` instead, which lets every user on the
-   computer open windows. The command above is narrower.
-
-2. In the container terminal, point GUI programs at your desktop's display (run
-   `echo $DISPLAY` on the host to check its number, usually `:0`):
-
-   ```bash
-   export DISPLAY=:0 LIBGL_ALWAYS_SOFTWARE=1
-   rviz2
-   ```
-
-`LIBGL_ALWAYS_SOFTWARE=1` makes RViz draw with the CPU. The container cannot use your
-graphics card, and without this setting RViz stalls while starting up.
-
-### Native windows on macOS with XQuartz
-
-[XQuartz](https://www.xquartz.org/) lets the container open normal Mac windows. A team
-member got this working with the sample workspace from
-[Docker's ROS 2 guide](https://docs.docker.com/guides/ros2/), and these steps match that
-guide's display setup. That sample uses host networking like this repository's dev
-container, so the steps should carry over, but nobody has tried them with the dev
-container yet:
-
-1. Install XQuartz:
-
-   ```bash
-   brew install --cask xquartz
-   ```
-
-2. Open XQuartz, go to **Settings > Security**, and turn on **Allow connections from
-   network clients**. Restart the Mac.
-3. In a Mac terminal, allow connections from the container. The `xhost` lines reset
-   whenever XQuartz restarts, so run them again each time:
-
-   ```bash
-   defaults write org.xquartz.X11 nolisten_tcp -bool false
-   xhost +localhost
-   xhost + 127.0.0.1
-   ```
-
-4. In the container terminal, point GUI programs at XQuartz before starting them:
-
-   ```bash
-   export DISPLAY=host.docker.internal:0 QT_X11_NO_MITSHM=1
-   ```
-
-   `QT_X11_NO_MITSHM=1` stops Qt programs such as rqt from trying to share memory with
-   XQuartz, which cannot work across the virtual machine Docker runs in.
-
-Docker's guide runs turtlesim and rqt this way. RViz and other 3D programs have not been
-confirmed yet: XQuartz's OpenGL support is limited, so they may fail or run slowly. If
-they do, use the browser desktop, and update this section with what you find.
-
-## CAN bus
-
-The motor controllers are CTRE Talon SRX and Victor SPX, driven by CTRE Phoenix 5 over
-SocketCAN through a CANable adapter. On Linux, with the CANable plugged in:
-
-```bash
-scripts/can_up.sh                  # bring up can0 at 1 Mbit/s
-candump can0                       # watch traffic on the bus
-ros2 run luna_drivetrain motor_test
-```
-
-`motor_test` spins the left drive motors at 10% output until you press Ctrl+C. Lift the
-wheels off the ground first.
-
-Without hardware, `scripts/vcan_up.sh can0` creates a virtual `can0`, and `candump can0`
-shows every frame your code sends. If it cannot create the interface, run
-`sudo modprobe vcan` on the host computer, outside the container, and try again.
-
-## ROS 2 networking
-
-ROS 2 nodes find each other automatically over the network. On campus Wi-Fi, that would
-mean seeing, and possibly driving, other members' nodes. So the dev container sets
-`ROS_AUTOMATIC_DISCOVERY_RANGE=LOCALHOST`: your nodes only find nodes on your own
-computer. Set it yourself in a native install (see
-[Without a container](#without-a-container-ubuntu-2404)).
-
-The dev container shares your computer's network, so on Linux it can reach other
-computers directly. To talk to the robot or another computer, run this in each terminal
-on both machines, with the same domain ID (0 to 101):
-
-```bash
-export ROS_AUTOMATIC_DISCOVERY_RANGE=SUBNET
-export ROS_DOMAIN_ID=<agreed id>
-```
-
-On macOS and Windows, Docker runs containers inside a virtual machine, which usually
-blocks ROS 2 discovery across the network.
-
-## Further reading
-
-- [Docker's ROS 2 guide](https://docs.docker.com/guides/ros2/): running ROS 2 in
-  containers, display setup for GUI programs, and a hands-on turtlesim and rqt exercise.
-  It uses ROS 2 Humble and its own sample workspace. In this repository's dev container,
-  skip its setup and `apt install` steps: turtlesim and rqt are already installed, so
-  start at "Install and run Turtlesim" step 3, `ros2 run turtlesim turtlesim_node`.
-- [ROS 2 Jazzy tutorials](https://docs.ros.org/en/jazzy/Tutorials.html): the official
-  introduction to nodes, topics, services, and building packages.
-- [REP 2000](https://www.ros.org/reps/rep-2000.html): which platforms each ROS 2 release
-  supports.
-- [Dev Containers CLI](https://github.com/devcontainers/cli): using the dev container
-  without an editor.
+- After switching, delete `build/`, `install/`, and `log/` and rebuild.
