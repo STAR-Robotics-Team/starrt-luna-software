@@ -27,6 +27,8 @@ Lunabotics rover software. These pages are also published as a website at
   computer.
 - **[Building for the robot](building-for-the-robot.md):** why a build only runs where it
   was built for, and how code gets built for the robot's Jetson.
+- **[Sources](sources.md):** every datasheet, rulebook, and reference page these docs
+  cite, with links to the cited pages.
 
 ## Design docs
 

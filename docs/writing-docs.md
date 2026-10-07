@@ -65,6 +65,60 @@ marker in [What works where](development-environment.md#what-works-where).
   would break there.
 - **Link to other websites with full URLs.**
 
+## Cite sources
+
+When a page states a fact that comes from outside the team, such as a value from a
+datasheet, a rule from the competition guidebook, or a vendor's spec, cite the source down
+to the page or section. Readers can then check the fact in one click, and so can the checks
+below.
+
+**To cite,** link to the source's entry on the [Sources](sources.md) page, and put the page
+or section after the last comma of the link text:
+
+```markdown
+The controllers run at 1 Mbit/s ([Talon SRX User's Guide, p. 5](sources.md#ctre-talon-srx-guide)).
+Ubuntu 24.04 is Tier 1 ([REP 2000, section "Jazzy Jalisco (May 2024 - May 2029)"](sources.md#ros-rep-2000)).
+```
+
+- **A PDF:** `p. 5` or `pp. 26-27`, using the page number your PDF viewer shows, not the
+  number printed on the page. The two often differ, and only the viewer's number works in a
+  link.
+- **A web page:** `section "Heading"`, with the heading's exact words, or nothing after the
+  title when the fact is on the page as a whole.
+- **From a page in a folder,** adjust the path, such as `../sources.md#ros-rep-2000` from
+  `docs/design/`.
+
+**To add a source** that is not on the Sources page yet:
+
+1. Add an entry to `docs/sources.toml`, copying an existing entry of the same format. The
+   comments at the top of the file explain each field.
+2. For a PDF, run `scripts/sources hash` with the link to the PDF, and paste the `sha256`
+   line it prints into the entry. This is the PDF's fingerprint.
+3. For a web page, set `expect` to a few words the page shows, such as its title.
+4. Run `scripts/sources render` to rebuild the Sources page, and commit both files.
+
+Never add the PDF itself to the repository. Datasheets and rulebooks are their publishers'
+copyrighted work, and this website is public, so the registry keeps the link and the
+fingerprint instead.
+
+**To check citations,** run these from the top folder of the repository, in the dev
+container or your own terminal. They need Python 3.11 or newer.
+
+| Command | What it checks | Runs on its own |
+| --- | --- | --- |
+| `scripts/sources check` | Every citation points at a registry entry, with a page for PDFs, and the Sources page is up to date | On every pull request that changes the docs |
+| `scripts/sources links` | Every link still answers, every web page still shows its `expect` words, and no PDF has changed since it was read | Every Monday |
+| `scripts/sources verify` | Claude reads each cited page and says whether it supports the passage that cites it | Every Monday, once the repository has an `ANTHROPIC_API_KEY` secret |
+
+`verify` also needs `pip install -r scripts/sources-requirements.txt` and an Anthropic API
+key in `ANTHROPIC_API_KEY`; `scripts/sources verify --dry-run` shows what it would send
+without one. Its verdicts are a model's reading of the page, so treat them like a
+reviewer's comments and check the quoted evidence before changing a doc.
+
+When `links` reports that a PDF changed, its publisher has revised it. Reread the cited
+pages, which the Sources page lists, fix any doc that no longer matches, then update the
+entry's `version`, `sha256`, and `checked`.
+
 ## Preview the website
 
 The docs are published as a website, built from `docs/` by MkDocs with the Material theme

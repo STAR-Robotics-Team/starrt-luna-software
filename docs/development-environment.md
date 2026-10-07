@@ -161,7 +161,8 @@ rm -rf build install log
 
 The team standardizes on Ubuntu 24.04 with ROS 2 Jazzy for three reasons:
 
-1. **It is ROS 2 Jazzy's main platform.** [REP 2000](https://www.ros.org/reps/rep-2000.html)
+1. **It is ROS 2 Jazzy's main platform.** The ROS platform list,
+   [REP 2000, section "Jazzy Jalisco (May 2024 - May 2029)"](sources.md#ros-rep-2000),
    lists Ubuntu 24.04 as Tier 1 for both x86-64 and arm64, with ready-made apt packages
    for ROS and for community packages such as sensor drivers. Windows 10 is also Tier 1,
    but only as an archive of ROS's core packages, and macOS is Tier 3, meaning you build

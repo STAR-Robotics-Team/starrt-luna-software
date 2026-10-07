@@ -17,6 +17,8 @@ one links to the page that explains it properly.
   [CAN bus](../can-bus.md)
 - **CANable:** the USB adapter that connects a computer to the CAN bus.
   [CAN bus](../can-bus.md)
+- **Citation:** a link from a fact in the docs to the source it comes from, down to the
+  page or section. [Writing docs](../writing-docs.md#cite-sources)
 - **Clone:** your own full copy of a Git repository, on your computer.
   [Git and GitHub](git-and-github.md#the-main-ideas)
 - **colcon:** the tool that builds every package in a ROS workspace.
@@ -45,6 +47,8 @@ one links to the page that explains it properly.
   such as `HOME`. [The command line](command-line.md#environment-variables)
 - **Executable:** a program a package provides, started with `ros2 run`.
   [ROS 2 basics](ros2-basics.md#packages-and-the-workspace)
+- **Fingerprint (SHA-256):** a code computed from every byte of a file. If the file
+  changes at all, so does its fingerprint. [Writing docs](../writing-docs.md#cite-sources)
 - **Git:** the tool that tracks every change to the code.
   [Git and GitHub](git-and-github.md)
 - **GitHub:** the website that stores the team's shared repository and where changes are
