@@ -292,7 +292,7 @@ flowchart TB
     ```
 
     ```text
-    [INFO] [launch]: All log files can be found below /home/ubuntu/.ros/log/2026-10-13-05-29-22-792603-ooboonchoo-16768
+    [INFO] [launch]: All log files can be found below /home/ubuntu/.ros/log/2026-10-13-05-29-22-792603-my-laptop-16768
     [INFO] [launch]: Default logging verbosity is set to INFO
     [INFO] [hello_publisher-1]: process started with pid [16772]
     [INFO] [hello_subscriber-2]: process started with pid [16773]
