@@ -1,0 +1,116 @@
+{#-
+  The website's home page: a banner for people who have not joined the team yet, then
+  docs/README.md as usual. scripts/docs_hooks.py gives the home page this template, so
+  docs/README.md stays plain Markdown that reads well on GitHub. Edit the banner's words
+  here and the rest of the home page in docs/README.md. See "The home page" in
+  docs/writing-docs.md.
+-#}
+{% extends "main.html" %}
+
+{% block styles %}
+  {{ super() }}
+  <style>
+    .luna-hero {
+      background: linear-gradient(160deg, #1a237e 0%, #0b1026 70%);
+      color: #ffffff;
+    }
+    .luna-hero__grid {
+      display: grid;
+      gap: 2rem;
+      align-items: center;
+      padding: 2.4rem 0.8rem 2.6rem;
+    }
+    .luna-hero__eyebrow {
+      margin: 0 0 0.6rem;
+      color: #9fa8da;
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .luna-hero .luna-hero__title {
+      margin: 0 0 0.8rem;
+      color: #ffffff;
+      font-size: 2rem;
+      font-weight: 700;
+      line-height: 1.15;
+      letter-spacing: -0.01em;
+    }
+    .luna-hero__lead {
+      max-width: 32rem;
+      margin: 0 0 1.4rem;
+      color: #e8eaf6;
+      font-size: 0.9rem;
+      line-height: 1.6;
+    }
+    .luna-hero__actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.6rem;
+    }
+    .luna-hero .md-button {
+      margin: 0;
+      border-color: #ffffff;
+      color: #ffffff;
+    }
+    .luna-hero .md-button--primary {
+      background-color: #ffffff;
+      color: #1a237e;
+    }
+    .luna-hero .md-button:hover,
+    .luna-hero .md-button:focus {
+      border-color: #ffca28;
+      background-color: #ffca28;
+      color: #0b1026;
+    }
+    .luna-hero__art img {
+      display: block;
+      width: 100%;
+      max-width: 34rem;
+      height: auto;
+      margin: 0 auto;
+      border-radius: 0.9rem;
+      box-shadow: 0 0.6rem 2rem rgba(0, 0, 0, 0.35);
+    }
+    @media screen and (min-width: 60em) {
+      .luna-hero__grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 3rem;
+        padding: 3.2rem 0.8rem 3.4rem;
+      }
+      .luna-hero .luna-hero__title {
+        font-size: 2.5rem;
+      }
+    }
+    /* The banner carries the page's title, so hide the Markdown title under it. */
+    .md-content__inner > h1:first-of-type {
+      display: none;
+    }
+  </style>
+{% endblock %}
+
+{% block tabs %}
+  {{ super() }}
+  <section class="luna-hero md-typeset" aria-labelledby="luna-hero-title">
+    <div class="md-grid luna-hero__grid">
+      <div>
+        <p class="luna-hero__eyebrow">STAR Robotics Team · Rutgers University</p>
+        <h1 class="luna-hero__title" id="luna-hero-title">Build a robot that builds on the Moon</h1>
+        <p class="luna-hero__lead">
+          We are writing the software for a rover that digs up simulated Moon soil and
+          builds a berm with it, on its own, for NASA's Lunabotics Challenge at Kennedy
+          Space Center in May 2027. No experience needed: these pages teach you everything,
+          starting from your first terminal command.
+        </p>
+        <div class="luna-hero__actions">
+          <a class="md-button md-button--primary" href="{{ 'competition/' | url }}">What is Lunabotics?</a>
+          <a class="md-button" href="https://discord.gg/vHa52wx9VK">Join us on Discord</a>
+        </div>
+      </div>
+      <div class="luna-hero__art">
+        <img src="{{ 'images/home-hero.svg' | url }}" width="640" height="400"
+          alt="A rover carries a load of Moon dirt across the lunar surface toward a long berm, with Earth in the sky.">
+      </div>
+    </div>
+  </section>
+{% endblock %}

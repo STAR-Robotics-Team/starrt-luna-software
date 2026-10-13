@@ -6,6 +6,8 @@ the code follows.
 
 ## Start here
 
+- **Want to join?** The [docs home page](docs/README.md) explains what the software team
+  does and [how to join](docs/README.md#join-the-team). No experience needed.
 - **New to Lunabotics?** [The Lunabotics competition](docs/competition/README.md) explains
   what the robot has to do and how it scores points.
 - **New to programming, Git, or the command line?** The
