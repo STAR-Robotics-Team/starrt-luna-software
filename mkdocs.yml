@@ -16,7 +16,8 @@ exclude_docs: |
   requirements.txt
   sources.toml
 
-# Fails the build when a list will look different here than on GitHub.
+# Gives the home page its banner (overrides/home.html), and fails the build when a list
+# will look different here than on GitHub.
 hooks:
   - scripts/docs_hooks.py
 
@@ -62,6 +63,8 @@ validation:
 
 theme:
   name: material
+  # Templates that change the theme: the home page's banner (overrides/home.html).
+  custom_dir: overrides
   features:
     - content.code.copy
     - content.action.edit

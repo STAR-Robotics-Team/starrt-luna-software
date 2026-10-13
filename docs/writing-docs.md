@@ -31,7 +31,7 @@ marker in [What works where](development-environment.md#what-works-where).
 - **Learning guide pages** go in `docs/learn/`, listed in reading order in
   [its home page](learn/README.md).
 - **Team and environment docs** go in `docs/`, one topic per page. Add every new page to
-  the map in [docs/README.md](README.md).
+  the map under "Already on the team?" in [docs/README.md](README.md).
 - **Every page goes in the website's navigation,** the `nav` list in `mkdocs.yml`. The
   website build fails if a page is missing from it.
 - **Design docs** go in `docs/design/`; see [Design docs](design/README.md).
@@ -206,6 +206,15 @@ on any broken link, missing anchor, page left out of the navigation, or broken
 [list](#lists). Every pull request
 that changes the docs runs that check, and once it is merged into `main`, the website
 updates by itself.
+
+## The home page
+
+The website's home page, `docs/README.md`, is the first thing people who might join the
+team see, so it starts with what the team does and why to join, and keeps the map of the
+docs under "Already on the team?". On the website, a banner with a picture and two
+buttons sits above it. The banner is a theme template, `overrides/home.html`, because
+Markdown cannot lay out a banner; edit its words there. Everything below the banner is
+plain Markdown in `docs/README.md`, like any other page.
 
 ## Formatting to avoid
 

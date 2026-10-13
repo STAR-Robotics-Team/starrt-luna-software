@@ -1,5 +1,9 @@
-"""MkDocs hook (see mkdocs.yml): fails the website build when a list will look different
-on the website than on GitHub.
+"""MkDocs hooks (see mkdocs.yml): give the home page its banner, and fail the website
+build when a list will look different on the website than on GitHub.
+
+The home page, docs/README.md, uses the overrides/home.html template, which adds a banner
+above it. Choosing the template here, instead of in the page's front matter, keeps the
+page free of settings that GitHub would show as a table.
 
 The website's Markdown reader keeps a code block or a second paragraph inside a list item
 only when it is indented 4 spaces, and it needs a blank line before the next item after
@@ -23,6 +27,12 @@ MERGED = re.compile(r"<p>((?:(?!</p>).)*?)\n(?:\d+\.|[-*]) (?:(?!</p>).)*</p>", 
 def words(fragment):
     text = re.sub(r"\s+", " ", html.unescape(re.sub(r"<[^>]+>", "", fragment))).strip()
     return text if len(text) <= 80 else text[:77] + "..."
+
+
+def on_page_markdown(markdown, page, **kwargs):
+    if page.file.src_uri == "README.md":
+        page.meta["template"] = "home.html"
+    return markdown
 
 
 def on_page_content(content, page, **kwargs):
