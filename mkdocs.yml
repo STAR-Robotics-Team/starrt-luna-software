@@ -37,6 +37,11 @@ nav:
       - 4. Getting started: getting-started.md
       - 5. ROS 2 basics: learn/ros2-basics.md
       - 6. Your first pull request: learn/first-pull-request.md
+      - 7. Services, actions, and parameters: learn/ros2-services-actions-parameters.md
+      - 8. Write your first node: learn/ros2-first-node.md
+      - 9. Launch files and parameter files: learn/ros2-launch-files.md
+      - 10. Seeing inside a running robot: learn/ros2-tools.md
+      - 11. Frames, tf2, and RViz: learn/ros2-frames-and-rviz.md
       - Glossary: learn/glossary.md
   - Reference:
       - Development environment: development-environment.md

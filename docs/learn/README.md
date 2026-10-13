@@ -14,6 +14,9 @@ When you meet a word you do not know, look it up in the [glossary](glossary.md).
 
 ## The path
 
+Pages 1 to 6 get you set up and sending changes to the team. Pages 7 to 11 teach you to
+write code for the robot.
+
 1. **[The command line](command-line.md):** what a terminal is, and how to move around
    your files and run commands by typing.
 2. **[Git and GitHub](git-and-github.md):** how the team keeps track of every change to
@@ -26,6 +29,16 @@ When you meet a word you do not know, look it up in the [glossary](glossary.md).
    will watch messages flow and drive a simulated turtle from the command line.
 6. **[Your first pull request](first-pull-request.md):** send a real change to the team,
    step by step.
+7. **[Services, actions, and parameters](ros2-services-actions-parameters.md):** the other
+   ways nodes talk, and how to change a node's settings, tried out on turtlesim.
+8. **[Write your first node](ros2-first-node.md):** write, build, and run a publisher and
+   a subscriber in C++.
+9. **[Launch files and parameter files](ros2-launch-files.md):** give your node settings,
+   and start several nodes with one command.
+10. **[Seeing inside a running robot](ros2-tools.md):** log messages, recording and
+    replaying topics, and finding out why a node hears nothing.
+11. **[Frames, tf2, and RViz](ros2-frames-and-rviz.md):** how the robot keeps track of
+    where things are, and how to see it in 3D.
 
 Already know some of this? Skip ahead; each page lists what it covers at the top.
 
@@ -34,4 +47,6 @@ Already know some of this? Skip ahead; each page lists what it covers at the top
 - [Everyday workflow](../everyday-workflow.md): the edit, build, and run loop you will
   use every day.
 - [Design docs](../design/README.md): how each part of the robot is designed. These
-  assume you have finished this guide.
+  assume you have finished this guide. Your first robot code is a node for your
+  workstream that publishes made-up data from its design doc's interface table, as
+  [Write your first node](ros2-first-node.md#your-next-real-step) explains.
