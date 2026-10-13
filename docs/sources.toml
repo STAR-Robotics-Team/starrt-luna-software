@@ -296,6 +296,32 @@ checked = 2026-10-07
 notes = "Which operating systems each ROS 2 release supports, and at which tier."
 
 [[source]]
+id = "ros-rep-103"
+primary = true
+group = "Software references"
+title = "REP 103: Standard Units of Measure and Coordinate Conventions"
+publisher = "Open Robotics"
+url = "https://www.ros.org/reps/rep-0103.html"
+fetch_url = "https://raw.githubusercontent.com/ros-infrastructure/rep/master/rep-0103.rst"
+format = "web"
+expect = "Standard Units of Measure and Coordinate Conventions"
+checked = 2026-10-13
+notes = "The units ROS uses (meters, radians, hertz), which way a robot's axes point, and how rotations are stored."
+
+[[source]]
+id = "ros-rep-105"
+primary = true
+group = "Software references"
+title = "REP 105: Coordinate Frames for Mobile Platforms"
+publisher = "Open Robotics"
+url = "https://www.ros.org/reps/rep-0105.html"
+fetch_url = "https://raw.githubusercontent.com/ros-infrastructure/rep/master/rep-0105.rst"
+format = "web"
+expect = "Coordinate Frames for Mobile Platforms"
+checked = 2026-10-13
+notes = "The standard frame names for a mobile robot (map, odom, base_link) and how they connect."
+
+[[source]]
 id = "nvidia-jetson-can-r38-4"
 primary = true
 group = "Software references"

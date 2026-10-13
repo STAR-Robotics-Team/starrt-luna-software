@@ -14,7 +14,7 @@ the doc, and cite the page.
   primary source wins.
 - **To cite a source or add one,** see [Cite sources](writing-docs.md#cite-sources).
 
-27 sources, 24 of them primary, cited 209 times. PDF page
+29 sources, 26 of them primary, cited 209 times. PDF page
 numbers are the ones a PDF viewer shows, so each link opens the PDF at the cited page. This
 page is generated from `docs/sources.toml` by `scripts/sources render`.
 
@@ -258,6 +258,24 @@ NVIDIA, *Jetson Linux Developer Guide r36.5: Platform Power and Performance (Ori
 - **Primary source.**
 - **Checked:** 2026-10-07
 - **Used for:** The Jetson's power modes.
+- **Cited at:** not cited in these docs yet
+
+### `ros-rep-103`
+
+Open Robotics, *REP 103: Standard Units of Measure and Coordinate Conventions*. [Open the web page](https://www.ros.org/reps/rep-0103.html).
+
+- **Primary source.**
+- **Checked:** 2026-10-13
+- **Used for:** The units ROS uses (meters, radians, hertz), which way a robot's axes point, and how rotations are stored.
+- **Cited at:** not cited in these docs yet
+
+### `ros-rep-105`
+
+Open Robotics, *REP 105: Coordinate Frames for Mobile Platforms*. [Open the web page](https://www.ros.org/reps/rep-0105.html).
+
+- **Primary source.**
+- **Checked:** 2026-10-13
+- **Used for:** The standard frame names for a mobile robot (map, odom, base_link) and how they connect.
 - **Cited at:** not cited in these docs yet
 
 ### `ros-rep-2000`
