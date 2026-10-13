@@ -5,6 +5,8 @@ one links to the page that explains it properly.
 
 - **Absolute path:** a path that starts at the top of the file system, `/`, so it works
   from any folder. [The command line](command-line.md#folders-and-paths)
+- **Action:** a long job one ROS node asks another to do, with a **goal**, **feedback**
+  while it runs, and a **result** at the end. It can be canceled. [Services, actions, and parameters](ros2-services-actions-parameters.md#three-ways-to-talk)
 - **Arena (Artemis Arena):** the walled bin of regolith simulant, about 6.88 m by 5 m,
   where the robot competes. [The arena and a run](../competition/arena-and-runs.md)
 - **Argument:** a word you add after a command to tell it what to work on.
@@ -13,6 +15,9 @@ one links to the page that explains it properly.
   Macs. [Building for the robot](../building-for-the-robot.md)
 - **Autonomy:** the robot doing its work by itself, with no human at the controls. It earns
   the most points in the competition. [How scoring works](../competition/scoring.md#7-autonomy)
+- **Bag:** a recording of the messages on chosen ROS topics, made with `ros2 bag record`
+  and played back with `ros2 bag play`.
+  [Seeing inside a running robot](ros2-tools.md#record-and-replay-with-ros2-bag)
 - **Bandwidth:** how much data flows over a network link each second, measured in Mbit/s.
   The competition scores the robot's link on it. [How scoring works](../competition/scoring.md#4-bandwidth)
 - **Berm:** a long, low mound of regolith. Building one is the robot's job in the
@@ -25,12 +30,18 @@ one links to the page that explains it properly.
   own branch. [Git and GitHub](git-and-github.md#the-main-ideas)
 - **Build:** turning source code into programs that can run, done with `colcon build`.
   [ROS 2 basics](ros2-basics.md#packages-and-the-workspace)
+- **Callback:** a function you hand over to be run later, when something happens, such
+  as a timer firing or a message arriving. [Write your first node](ros2-first-node.md#what-each-part-does)
 - **CAN bus:** the wiring that lets the robot's computer talk to its motor controllers.
   [CAN bus](../can-bus.md)
 - **CANable:** the USB adapter that connects a computer to the CAN bus.
   [CAN bus](../can-bus.md)
 - **Citation:** a link from a fact in the docs to the source it comes from, down to the
   page or section. [Writing docs](../writing-docs.md#cite-sources)
+- **Class:** in C++, a blueprint that bundles data with the functions that use it. A ROS
+  node is a class. [Write your first node](ros2-first-node.md#what-each-part-does)
+- **Client:** the node that sends a request to a service, or a goal to an action.
+  [Services, actions, and parameters](ros2-services-actions-parameters.md#three-ways-to-talk)
 - **Clone:** your own full copy of a Git repository, on your computer.
   [Git and GitHub](git-and-github.md#the-main-ideas)
 - **colcon:** the tool that builds every package in a ROS workspace.
@@ -45,6 +56,8 @@ one links to the page that explains it properly.
   [The Lunabotics competition](../competition/README.md#competition-week)
 - **Construction zone:** the corner of the arena where the robot builds the berm.
   [The arena and a run](../competition/arena-and-runs.md#the-arenas-layout)
+- **Constructor:** the part of a C++ class that runs once, when an object of the class is
+  made. [Write your first node](ros2-first-node.md#what-each-part-does)
 - **Container:** a running, separate environment made from an image, like a lightweight
   computer inside yours. [Containers](containers.md)
 - **CTRE Phoenix:** the library from CTRE, the company that makes our motor controllers,
@@ -70,12 +83,20 @@ one links to the page that explains it properly.
   [The arena and a run](../competition/arena-and-runs.md#the-arenas-layout)
 - **Executable:** a program a package provides, started with `ros2 run`.
   [ROS 2 basics](ros2-basics.md#packages-and-the-workspace)
+- **Feedback:** the progress reports an action server sends while it works on a goal.
+  [Services, actions, and parameters](ros2-services-actions-parameters.md#three-ways-to-talk)
 - **Fingerprint (SHA-256):** a code computed from every byte of a file. If the file
   changes at all, so does its fingerprint. [Writing docs](../writing-docs.md#cite-sources)
+- **Fixed frame:** the frame RViz draws everything relative to.
+  [Frames, tf2, and RViz](ros2-frames-and-rviz.md#try-it-see-the-frames-in-rviz)
+- **Frame:** a starting point for measuring positions, with its own x, y, and z
+  directions, such as the robot's center, `base_link`.
+  [Frames, tf2, and RViz](ros2-frames-and-rviz.md#where-always-means-relative-to-what)
 - **Git:** the tool that tracks every change to the code.
   [Git and GitHub](git-and-github.md)
 - **GitHub:** the website that stores the team's shared repository and where changes are
   reviewed. [Git and GitHub](git-and-github.md)
+- **Goal:** the job an action client asks an action server to do. [Services, actions, and parameters](ros2-services-actions-parameters.md#three-ways-to-talk)
 - **Hands-free:** nobody touching the controls, so the robot is working autonomously.
   [How scoring works](../competition/scoring.md#the-cycle-segments)
 - **Heartbeat:** a small message the operator laptop sends many times a second so the
@@ -89,12 +110,18 @@ one links to the page that explains it properly.
   [Containers](containers.md)
 - **Jetson:** the NVIDIA computer on the robot that runs its software.
   [Building for the robot](../building-for-the-robot.md)
+- **Lambda:** in C++, a small function without a name, written right where it is needed,
+  often as a callback. [Write your first node](ros2-first-node.md#what-each-part-does)
 - **Launch file:** a file that starts several ROS nodes at once, with their settings.
-  [ROS 2 basics](ros2-basics.md#two-more-ideas-you-will-meet)
+  [Launch files and parameter files](ros2-launch-files.md#write-a-launch-file)
 - **Lidar:** a sensor that measures distances by sweeping a laser around.
   [The arena and a run](../competition/arena-and-runs.md#the-regolith)
 - **`localhost`:** a name that always means "this computer".
   [Containers](containers.md#two-more-ideas-you-will-meet)
+- **Log level:** how serious a log message is: `DEBUG`, `INFO`, `WARN`, `ERROR`, or
+  `FATAL`. [Seeing inside a running robot](ros2-tools.md#log-messages-and-rqt_console)
+- **Log message:** a line a node prints about what it is doing. Every node also sends its
+  log messages on the `/rosout` topic. [Seeing inside a running robot](ros2-tools.md#log-messages-and-rqt_console)
 - **`main`:** the team's official branch, the version that runs on the robot.
   [Git and GitHub](git-and-github.md#the-main-ideas)
 - **Markdown:** the simple text format these docs are written in.
@@ -114,16 +141,23 @@ one links to the page that explains it properly.
 - **Node:** one program in a ROS system. [ROS 2 basics](ros2-basics.md#nodes-topics-and-messages)
 - **Obstacle zone:** the part of the arena between digging and building, with rocks,
   craters, and a column. [The arena and a run](../competition/arena-and-runs.md#obstacles)
+- **Odometry:** working out how far a robot has moved from its own motion, such as how far
+  its wheels have turned. [Frames, tf2, and RViz](ros2-frames-and-rviz.md#standard-frames-for-a-mobile-robot)
 - **Operating mode:** what the robot is allowed to do right now, such as DISABLED, or
   ENABLED and driving between zones. [Operating modes](../design/operating-modes.md)
 - **Option:** a word starting with `-` or `--` that changes how a command works; also
   called a flag. [The command line](command-line.md#commands-options-and-arguments)
 - **`origin`:** Git's name for the copy of the repository on GitHub.
   [Git and GitHub](git-and-github.md#the-main-ideas)
+- **Overlay:** a workspace loaded on top of others in a terminal, by sourcing its
+  `install/setup.bash`. `ros2 run` looks in it first.
+  [Write your first node](ros2-first-node.md#build-and-run)
 - **Package:** a folder of ROS code that is built as one unit.
   [ROS 2 basics](ros2-basics.md#packages-and-the-workspace)
 - **Parameter:** a setting a ROS node reads when it starts, such as a maximum speed.
-  [ROS 2 basics](ros2-basics.md#two-more-ideas-you-will-meet)
+  [Services, actions, and parameters](ros2-services-actions-parameters.md#try-it-change-a-parameter)
+- **Parameter file:** a YAML file of parameter values that a node reads when it starts.
+  [Launch files and parameter files](ros2-launch-files.md#put-the-parameters-in-a-file)
 - **Path:** a file's address, the folders you go through to reach it.
   [The command line](command-line.md#folders-and-paths)
 - **Port:** a numbered door that a network program listens on, like an apartment number.
@@ -144,6 +178,10 @@ one links to the page that explains it properly.
   review first. [Your first pull request](first-pull-request.md)
 - **Push:** send your commits from your computer to GitHub.
   [Git and GitHub](git-and-github.md#the-main-ideas)
+- **QoS (quality of service):** settings that say how a topic's messages are delivered,
+  such as how many to keep for a subscriber that falls behind. [Write your first node](ros2-first-node.md#what-each-part-does)
+- **Quaternion:** four numbers that ROS uses to store a rotation.
+  [Frames, tf2, and RViz](ros2-frames-and-rviz.md#try-it-publish-frames)
 - **Rebuild (a container):** build the dev container's image again after its setup in
   `.devcontainer/` changes. [Containers](containers.md#two-more-ideas-you-will-meet)
 - **Regolith:** the loose dust and rock covering the Moon's surface. A **regolith
@@ -151,22 +189,39 @@ one links to the page that explains it properly.
   [The Lunabotics competition](../competition/README.md#why-nasa-wants-robots-that-build-berms)
 - **Relative path:** a path that starts from the folder you are in.
   [The command line](command-line.md#folders-and-paths)
+- **Remapping:** renaming a topic for one node when it starts, without changing its code.
+  [Launch files and parameter files](ros2-launch-files.md#try-it-remap-a-topic)
 - **Repository (repo):** a project folder that Git tracks, with its full history.
   [Git and GitHub](git-and-github.md#the-main-ideas)
+- **Request:** what a service client sends to a server, which answers with a
+  **response**. [Services, actions, and parameters](ros2-services-actions-parameters.md#three-ways-to-talk)
+- **Result:** what an action server sends back when it finishes a goal. [Services, actions, and parameters](ros2-services-actions-parameters.md#three-ways-to-talk)
 - **ROS 2:** Robot Operating System 2, the framework that lets the robot's programs talk
   to each other. [ROS 2 basics](ros2-basics.md)
 - **rosdep:** the tool that installs the system software each package says it needs. Our
   `scripts/install_deps.sh` runs it. [Everyday workflow](../everyday-workflow.md#what-to-do-after-a-change)
+- **rqt:** a set of small ROS tools with windows, such as `rqt_graph` and `rqt_console`.
+  [Seeing inside a running robot](ros2-tools.md#log-messages-and-rqt_console)
+- **RViz:** the ROS tool that shows frames, sensor data, maps, and paths in 3D.
+  [Frames, tf2, and RViz](ros2-frames-and-rviz.md#try-it-see-the-frames-in-rviz)
 - **Script:** a file of commands saved so they can be run again.
   [The command line](command-line.md#running-scripts-and-programs)
 - **Secondary source:** a document that repeats or summarizes a primary source, such as a
   reseller's product page. Use it only when no primary source covers the fact.
   [Sources](../sources.md)
+- **Server:** the node that offers a service or an action, and answers requests or goals.
+  [Services, actions, and parameters](ros2-services-actions-parameters.md#three-ways-to-talk)
+- **Service:** a request from one ROS node to another, with one response, such as
+  "enable the robot". [Services, actions, and parameters](ros2-services-actions-parameters.md#three-ways-to-talk)
+- **Shared pointer (`SharedPtr`):** a handle to a C++ object, which stays alive as long as
+  something holds a handle to it. [Write your first node](ros2-first-node.md#what-each-part-does)
 - **Shell:** the program inside a terminal that reads and runs your commands, such as
   `bash`. [The command line](command-line.md#what-a-terminal-is)
 - **SocketCAN:** the CAN bus support built into Linux. [CAN bus](../can-bus.md)
 - **Source (a file):** run a setup file's commands in the current terminal, so the
   settings it makes stay. [ROS 2 basics](ros2-basics.md#sourcing-why-you-sometimes-open-a-new-terminal)
+- **Spin:** `rclcpp::spin` hands control of a node to ROS, which runs its callbacks as
+  events arrive, until you press Ctrl+C. [Write your first node](ros2-first-node.md#what-each-part-does)
 - **Staging:** choosing which changes go into your next Git commit, with `git add`.
   [Git and GitHub](git-and-github.md#save-a-snapshot-git-add-and-git-commit)
 - **Starting zone:** the 2 m by 2 m corner of the arena where the robot begins each run.
@@ -178,10 +233,19 @@ one links to the page that explains it properly.
 - **Teleoperation:** driving the robot remotely, from Mission Control.
   [The Lunabotics competition](../competition/README.md#what-the-robot-does)
 - **Terminal:** a window where you type commands. [The command line](command-line.md)
+- **tf2:** the ROS library that keeps track of every frame, and works out where any frame is
+  relative to another. [Frames, tf2, and RViz](ros2-frames-and-rviz.md#standard-frames-for-a-mobile-robot)
+- **Timer:** makes a node run a callback again and again, at a fixed interval. [Write your first node](ros2-first-node.md#what-each-part-does)
 - **Topic:** a named channel that ROS nodes send messages on, such as `/cmd_vel`.
   [ROS 2 basics](ros2-basics.md#nodes-topics-and-messages)
+- **Transform:** how to get from one frame to another: how far to move, and how far to
+  turn. [Frames, tf2, and RViz](ros2-frames-and-rviz.md#where-always-means-relative-to-what)
 - **Twist:** the standard ROS message for "move at this speed", with forward and turning
   velocities. [ROS 2 basics](ros2-basics.md#try-it-drive-a-turtle)
+- **Underlay:** a workspace that an overlay is loaded on top of.
+  [Write your first node](ros2-first-node.md#build-and-run)
+- **URDF:** a file that describes a robot's parts and where they are attached, which
+  provides the frames of its body and sensors. [Frames, tf2, and RViz](ros2-frames-and-rviz.md#frames-on-the-rover)
 - **VNC:** remote-desktop technology. The dev container runs a desktop you view over VNC.
   [GUI tools](../gui-tools.md)
 - **VS Code:** the code editor most of the team uses.
@@ -198,3 +262,6 @@ one links to the page that explains it properly.
   [The command line](command-line.md#open-a-terminal)
 - **x86-64:** the type of processor in most laptops.
   [Building for the robot](../building-for-the-robot.md)
+- **YAML:** a plain-text format for settings, in which the spaces at the start of each
+  line decide what belongs to what. Parameter files use it.
+  [Launch files and parameter files](ros2-launch-files.md#put-the-parameters-in-a-file)

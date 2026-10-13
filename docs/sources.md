@@ -14,7 +14,7 @@ the doc, and cite the page.
   primary source wins.
 - **To cite a source or add one,** see [Cite sources](writing-docs.md#cite-sources).
 
-27 sources, 24 of them primary, cited 209 times. PDF page
+29 sources, 26 of them primary, cited 221 times. PDF page
 numbers are the ones a PDF viewer shows, so each link opens the PDF at the cited page. This
 page is generated from `docs/sources.toml` by `scripts/sources render`.
 
@@ -259,6 +259,28 @@ NVIDIA, *Jetson Linux Developer Guide r36.5: Platform Power and Performance (Ori
 - **Checked:** 2026-10-07
 - **Used for:** The Jetson's power modes.
 - **Cited at:** not cited in these docs yet
+
+### `ros-rep-103`
+
+Open Robotics, *REP 103: Standard Units of Measure and Coordinate Conventions*. [Open the web page](https://www.ros.org/reps/rep-0103.html).
+
+- **Primary source.**
+- **Checked:** 2026-10-13
+- **Used for:** The units ROS uses (meters, radians, hertz), which way a robot's axes point, and how rotations are stored.
+- **Cited at:**
+    - [Frames, tf2, and RViz](learn/ros2-frames-and-rviz.md): [section "Axis Orientation"](https://www.ros.org/reps/rep-0103.html#:~:text=Axis%20Orientation), [section "Base Units"](https://www.ros.org/reps/rep-0103.html#:~:text=Base%20Units), [section "Derived Units"](https://www.ros.org/reps/rep-0103.html#:~:text=Derived%20Units), [section "Rotation Representation"](https://www.ros.org/reps/rep-0103.html#:~:text=Rotation%20Representation)
+    - [Launch files and parameter files](learn/ros2-launch-files.md): [section "Derived Units"](https://www.ros.org/reps/rep-0103.html#:~:text=Derived%20Units)
+    - [Services, actions, and parameters](learn/ros2-services-actions-parameters.md): [section "Derived Units"](https://www.ros.org/reps/rep-0103.html#:~:text=Derived%20Units)
+
+### `ros-rep-105`
+
+Open Robotics, *REP 105: Coordinate Frames for Mobile Platforms*. [Open the web page](https://www.ros.org/reps/rep-0105.html).
+
+- **Primary source.**
+- **Checked:** 2026-10-13
+- **Used for:** The standard frame names for a mobile robot (map, odom, base_link) and how they connect.
+- **Cited at:**
+    - [Frames, tf2, and RViz](learn/ros2-frames-and-rviz.md): [whole source](https://www.ros.org/reps/rep-0105.html), [section "Relationship between Frames"](https://www.ros.org/reps/rep-0105.html#:~:text=Relationship%20between%20Frames), [section "base_link"](https://www.ros.org/reps/rep-0105.html#:~:text=base_link), [section "map"](https://www.ros.org/reps/rep-0105.html#:~:text=map), [section "odom"](https://www.ros.org/reps/rep-0105.html#:~:text=odom)
 
 ### `ros-rep-2000`
 

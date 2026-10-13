@@ -122,5 +122,8 @@ the branch is "not fully merged", check the pull request on GitHub:
 - Review is a conversation; push more commits to the same branch to update the pull
   request.
 
-From here, [Everyday workflow](../everyday-workflow.md) covers working on robot code, and
-[Contributing](../contributing.md) has the team's full rules.
+[Contributing](../contributing.md) has the team's full rules for pull requests. The rest
+of this guide teaches you to write code for the robot, starting with the other ways ROS
+nodes talk to each other.
+
+Next: [Services, actions, and parameters](ros2-services-actions-parameters.md).

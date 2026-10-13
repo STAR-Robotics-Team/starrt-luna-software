@@ -94,6 +94,8 @@ flowchart LR
 4. **Send your first pull request,** a real change to the team's code or docs:
    [Your first pull request](learn/first-pull-request.md) walks you through it.
 5. **Join an area and a pair,** and start on its design doc and code.
+   [Write your first node](learn/ros2-first-node.md) and the pages after it teach what
+   your first robot code needs.
 
 ## Join the team
 
@@ -131,8 +133,9 @@ enrolled at Rutgers in the semester of the competition or the one before
 ### Learn
 
 - **[Learning guide](learn/README.md):** the command line, Git and GitHub, containers,
-  setting up, ROS 2, and your first pull request, in order, with exercises.
-  [Getting started](getting-started.md) is step 4.
+  setting up, ROS 2, and your first pull request, then writing, launching, and debugging
+  your own ROS 2 nodes, in order, with exercises. [Getting started](getting-started.md)
+  is step 4.
 - **[Glossary](learn/glossary.md):** plain definitions of every term in these docs.
 
 ### Reference

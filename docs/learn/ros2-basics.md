@@ -263,9 +263,15 @@ is why the docs say to open a new terminal after building, or to run
 ## Two more ideas you will meet
 
 - A **launch file** starts several nodes at once, with their settings, so you do not need
-  a terminal for each one.
+  a terminal for each one. You will write one in
+  [Launch files and parameter files](ros2-launch-files.md).
 - A **parameter** is a setting a node reads when it starts, such as a motor's CAN ID or a
-  maximum speed. Each subsystem's design doc lists its parameters.
+  maximum speed. Each subsystem's design doc lists its parameters, and
+  [Services, actions, and parameters](ros2-services-actions-parameters.md#try-it-change-a-parameter)
+  has you change some.
+
+Topics are not the only way nodes talk: services and actions, for requests that need an
+answer and for long jobs, come later in this guide too.
 
 ## Key ideas
 
@@ -276,7 +282,8 @@ is why the docs say to open a new terminal after building, or to run
 - Code lives in packages under `src/`; `colcon build` builds them into `install/`.
 - Sourcing a setup file tells a terminal where ROS and our packages are.
 
-To go deeper, the official [ROS 2 Jazzy tutorials](https://docs.ros.org/en/jazzy/Tutorials.html)
+After your first pull request, this guide goes deeper into ROS 2, up to writing your own
+nodes. The official [ROS 2 Jazzy tutorials](https://docs.ros.org/en/jazzy/Tutorials.html)
 cover each of these ideas with more exercises.
 
 Next: [Your first pull request](first-pull-request.md).
