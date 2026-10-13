@@ -23,6 +23,11 @@ hooks:
 # Every page must be listed here. Add new pages in reading order.
 nav:
   - Home: README.md
+  - The competition:
+      - competition/README.md
+      - The arena and a run: competition/arena-and-runs.md
+      - Rules the robot must follow: competition/robot-rules.md
+      - How scoring works: competition/scoring.md
   - Learning guide:
       - learn/README.md
       - 1. The command line: learn/command-line.md

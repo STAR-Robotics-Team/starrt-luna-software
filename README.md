@@ -6,6 +6,8 @@ the code follows.
 
 ## Start here
 
+- **New to Lunabotics?** [The Lunabotics competition](docs/competition/README.md) explains
+  what the robot has to do and how it scores points.
 - **New to programming, Git, or the command line?** The
   [learning guide](docs/learn/README.md) teaches everything from the beginning, with
   exercises.

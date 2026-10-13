@@ -4,12 +4,24 @@ Everything you need to set up, build, run, and contribute to the STAR Robotics T
 Lunabotics rover software. These pages are also published as a website at
 <https://star-robotics-team.github.io/starrt-luna-software/>.
 
+- **New to Lunabotics?** Read [The Lunabotics competition](competition/README.md): what
+  the robot has to do, how a run works, and how points are scored.
 - **New to programming, Git, or the command line?** Start with the
   [learning guide](learn/README.md). It assumes no experience at all.
 - **Already comfortable with them?** Go straight to [Getting started](getting-started.md).
 - **Checking a hardware value or a competition rule?** Go to its primary source on the
   [Sources](sources.md) page: the guidebook, datasheets, and manuals there are the source
   of truth.
+
+## The competition
+
+- **[The Lunabotics competition](competition/README.md):** what NASA's challenge is, the
+  season's deadlines, and competition week.
+- **[The arena and a run](competition/arena-and-runs.md):** the arena, Mission Control,
+  and a run step by step.
+- **[Rules the robot must follow](competition/robot-rules.md):** size, mass, the E-stop,
+  sensors, and radio rules.
+- **[How scoring works](competition/scoring.md):** every point, with worked examples.
 
 ## Learn
 

@@ -5,10 +5,22 @@ one links to the page that explains it properly.
 
 - **Absolute path:** a path that starts at the top of the file system, `/`, so it works
   from any folder. [The command line](command-line.md#folders-and-paths)
+- **Arena (Artemis Arena):** the walled bin of regolith simulant, about 6.88 m by 5 m,
+  where the robot competes. [The arena and a run](../competition/arena-and-runs.md)
 - **Argument:** a word you add after a command to tell it what to work on.
   [The command line](command-line.md#commands-options-and-arguments)
 - **arm64:** a type of computer processor, used by the robot's Jetson and by Apple Silicon
   Macs. [Building for the robot](../building-for-the-robot.md)
+- **Autonomy:** the robot doing its work by itself, with no human at the controls. It earns
+  the most points in the competition. [How scoring works](../competition/scoring.md#7-autonomy)
+- **Bandwidth:** how much data flows over a network link each second, measured in Mbit/s.
+  The competition scores the robot's link on it. [How scoring works](../competition/scoring.md#4-bandwidth)
+- **Berm:** a long, low mound of regolith. Building one is the robot's job in the
+  competition. [The Lunabotics competition](../competition/README.md)
+- **Berm multiplier:** the factor that shrinks autonomy points when the berm is under
+  25 liters. [How scoring works](../competition/scoring.md#the-berm-multiplier)
+- **BP-1 (Black Point-1):** the crushed basalt that fills the arena in place of Moon
+  regolith. [The arena and a run](../competition/arena-and-runs.md#the-regolith)
 - **Branch:** a separate line of work in a Git repository. You make each change on your
   own branch. [Git and GitHub](git-and-github.md#the-main-ideas)
 - **Build:** turning source code into programs that can run, done with `colcon build`.
@@ -29,6 +41,10 @@ one links to the page that explains it properly.
   [Git and GitHub](git-and-github.md#the-main-ideas)
 - **Compile:** translate source code, such as C++, into a program the computer can run.
   [ROS 2 basics](ros2-basics.md#packages-and-the-workspace)
+- **Construction run:** one of a team's two scored 15-minute runs in the arena.
+  [The Lunabotics competition](../competition/README.md#competition-week)
+- **Construction zone:** the corner of the arena where the robot builds the berm.
+  [The arena and a run](../competition/arena-and-runs.md#the-arenas-layout)
 - **Container:** a running, separate environment made from an image, like a lightweight
   computer inside yours. [Containers](containers.md)
 - **CTRE Phoenix:** the library from CTRE, the company that makes our motor controllers,
@@ -47,7 +63,11 @@ one links to the page that explains it properly.
   such as `HOME`. [The command line](command-line.md#environment-variables)
 - **E-stop:** the big red emergency stop button on top of the robot. One push cuts the
   battery off from everything that moves, and it stays pressed until someone resets it.
-  [Operating modes](../design/operating-modes.md)
+  [Rules the robot must follow](../competition/robot-rules.md#the-emergency-stop)
+- **Energy logger:** the meter on the robot that records how much energy it used in a
+  run. [Rules the robot must follow](../competition/robot-rules.md#power-and-the-energy-logger)
+- **Excavation zone:** the part of the arena where the robot may dig.
+  [The arena and a run](../competition/arena-and-runs.md#the-arenas-layout)
 - **Executable:** a program a package provides, started with `ros2 run`.
   [ROS 2 basics](ros2-basics.md#packages-and-the-workspace)
 - **Fingerprint (SHA-256):** a code computed from every byte of a file. If the file
@@ -56,6 +76,8 @@ one links to the page that explains it properly.
   [Git and GitHub](git-and-github.md)
 - **GitHub:** the website that stores the team's shared repository and where changes are
   reviewed. [Git and GitHub](git-and-github.md)
+- **Hands-free:** nobody touching the controls, so the robot is working autonomously.
+  [How scoring works](../competition/scoring.md#the-cycle-segments)
 - **Heartbeat:** a small message the operator laptop sends many times a second so the
   robot knows the link is alive. If it stops arriving, the robot stops.
   [Operating modes](../design/operating-modes.md)
@@ -69,6 +91,8 @@ one links to the page that explains it properly.
   [Building for the robot](../building-for-the-robot.md)
 - **Launch file:** a file that starts several ROS nodes at once, with their settings.
   [ROS 2 basics](ros2-basics.md#two-more-ideas-you-will-meet)
+- **Lidar:** a sensor that measures distances by sweeping a laser around.
+  [The arena and a run](../competition/arena-and-runs.md#the-regolith)
 - **`localhost`:** a name that always means "this computer".
   [Containers](containers.md#two-more-ideas-you-will-meet)
 - **`main`:** the team's official branch, the version that runs on the robot.
@@ -79,10 +103,17 @@ one links to the page that explains it properly.
   [Git and GitHub](git-and-github.md#the-main-ideas)
 - **Message:** one piece of data sent on a ROS topic. Its **message type** fixes what it
   contains. [ROS 2 basics](ros2-basics.md#nodes-topics-and-messages)
+- **Mission Control Center (MCC):** the room the team runs the robot from during a run,
+  out of sight of the arena. [The arena and a run](../competition/arena-and-runs.md#mission-control)
+- **Mission cycle:** the robot's repeating job: dig, carry the regolith across the
+  obstacles, dump it on the berm, and drive back.
+  [The Lunabotics competition](../competition/README.md#what-the-robot-does)
 - **Mount:** sharing a folder from your computer into a container. The dev container
   mounts your clone at `/ws`, so both see the same files.
   [Containers](containers.md#mounting-how-your-files-get-into-the-container)
 - **Node:** one program in a ROS system. [ROS 2 basics](ros2-basics.md#nodes-topics-and-messages)
+- **Obstacle zone:** the part of the arena between digging and building, with rocks,
+  craters, and a column. [The arena and a run](../competition/arena-and-runs.md#obstacles)
 - **Operating mode:** what the robot is allowed to do right now, such as DISABLED, or
   ENABLED and driving between zones. [Operating modes](../design/operating-modes.md)
 - **Option:** a word starting with `-` or `--` that changes how a command works; also
@@ -115,6 +146,9 @@ one links to the page that explains it properly.
   [Git and GitHub](git-and-github.md#the-main-ideas)
 - **Rebuild (a container):** build the dev container's image again after its setup in
   `.devcontainer/` changes. [Containers](containers.md#two-more-ideas-you-will-meet)
+- **Regolith:** the loose dust and rock covering the Moon's surface. A **regolith
+  simulant** is an Earth material that imitates it.
+  [The Lunabotics competition](../competition/README.md#why-nasa-wants-robots-that-build-berms)
 - **Relative path:** a path that starts from the folder you are in.
   [The command line](command-line.md#folders-and-paths)
 - **Repository (repo):** a project folder that Git tracks, with its full history.
@@ -135,10 +169,14 @@ one links to the page that explains it properly.
   settings it makes stay. [ROS 2 basics](ros2-basics.md#sourcing-why-you-sometimes-open-a-new-terminal)
 - **Staging:** choosing which changes go into your next Git commit, with `git add`.
   [Git and GitHub](git-and-github.md#save-a-snapshot-git-add-and-git-commit)
+- **Starting zone:** the 2 m by 2 m corner of the arena where the robot begins each run.
+  [The arena and a run](../competition/arena-and-runs.md#the-arenas-layout)
 - **Subscribe:** receive messages from a ROS topic.
   [ROS 2 basics](ros2-basics.md#nodes-topics-and-messages)
 - **`sudo`:** run a command as an administrator.
   [The command line](command-line.md#running-scripts-and-programs)
+- **Teleoperation:** driving the robot remotely, from Mission Control.
+  [The Lunabotics competition](../competition/README.md#what-the-robot-does)
 - **Terminal:** a window where you type commands. [The command line](command-line.md)
 - **Topic:** a named channel that ROS nodes send messages on, such as `/cmd_vel`.
   [ROS 2 basics](ros2-basics.md#nodes-topics-and-messages)
@@ -148,6 +186,10 @@ one links to the page that explains it properly.
   [GUI tools](../gui-tools.md)
 - **VS Code:** the code editor most of the team uses.
   [Getting started](../getting-started.md#1-install-the-tools)
+- **Watt-hour (Wh):** a unit of energy: 1 watt used for 1 hour.
+  [How scoring works](../competition/scoring.md#3-berm-productivity-per-watt-hour)
+- **Wireless access point (WAP):** the Wi-Fi router that links Mission Control to the
+  robot. [The arena and a run](../competition/arena-and-runs.md#how-the-robot-talks-to-mission-control)
 - **Working directory:** the folder a terminal is currently in.
   [The command line](command-line.md#folders-and-paths)
 - **Workspace:** a folder of ROS packages that are built together; our repository is one.
