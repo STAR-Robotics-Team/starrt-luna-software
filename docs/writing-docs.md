@@ -54,7 +54,8 @@ marker in [What works where](development-environment.md#what-works-where).
   copy them. Say where to run them: a container terminal, or your own terminal.
 - **Say what success looks like,** such as the output a command prints.
 - **Use tables** for comparisons and reference lists.
-- **Draw diagrams in Mermaid,** in a fenced `mermaid` code block.
+- **Draw diagrams in Mermaid,** in a fenced `mermaid` code block. For pictures, see
+  [Images](#images).
 
 ## Lists
 
@@ -82,6 +83,39 @@ this, and GitHub shows lists written this way correctly too:
 
 If a list breaks either rule, `scripts/docs build` and the pull request check fail and
 name the paragraph to fix.
+
+## Images
+
+Use an image when a picture explains something better than words or a Mermaid diagram:
+a map, a photo, a screenshot, or a figure from the guidebook.
+
+- **Put images next to the pages that use them,** in an `images/` folder, such as
+  `docs/competition/images/`, with lowercase hyphenated names like `arena-layout.png`.
+- **Embed them with Markdown,** and write alt text that says what the image shows, for
+  readers who cannot see it. Put a caption in italics on the next line, with a blank line
+  between them:
+
+    ```markdown
+    ![A top view of the arena, with the excavation, obstacle, and construction zones.](images/mission-map.svg)
+
+    *The arena from above, drawn to scale.*
+    ```
+
+- **Keep them small,** under about 250 KB each: SVG for drawings, WebP or JPEG for
+  photos, and PNG for screenshots and figures.
+- **Check them on the dark theme too.** A drawing with a see-through background can
+  disappear on it, so give drawings their own light background.
+- **Drawings the team makes are SVG files,** which you can open and edit in a text editor
+  or a drawing program such as Inkscape.
+
+**Figures from a source.** A page may show a figure from a source, such as the guidebook,
+when it explains something better than words:
+
+- Crop it to the figure, and leave out logos.
+- Credit and cite it in the caption, naming the figure, such as
+  `*Figure 9 of the guidebook ([§11.4, p. 35](sources.md#nasa-lunabotics-guidebook-2027)).*`
+- Show only the figures a page needs. The document itself stays linked, never copied (see
+  [Cite sources](#cite-sources)).
 
 ## Links
 
@@ -132,7 +166,8 @@ Ubuntu 24.04 is Tier 1 ([REP 2000, section "Jazzy Jalisco (May 2024 - May 2029)"
 
 Never add the PDF itself to the repository. Datasheets and rulebooks are their publishers'
 copyrighted work, and this website is public, so the registry keeps the link and the
-fingerprint instead.
+fingerprint instead. A page may still show a few of a document's figures, credited, as
+[Images](#images) explains.
 
 **To check citations,** run these from the top folder of the repository, in the dev
 container or your own terminal. They need Python 3.11 or newer.

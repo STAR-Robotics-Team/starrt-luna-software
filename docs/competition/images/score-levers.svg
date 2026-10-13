@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 780 388" width="780" height="388" role="img" aria-labelledby="t d">
+<title id="t">Extra points per run from each improvement</title>
+<desc id="d">Starting from the guidebook example run of 724 points: running fully autonomously adds 1325 points; automating every cycle adds 925; using 10 Wh less energy adds 83; building 10 litres more berm adds 72; a 10 kg lighter robot adds 62; hitting no obstacles adds 50; turning off the arena camera adds 15.</desc>
+<rect x="0.5" y="0.5" width="779" height="387" rx="10" fill="#ffffff" stroke="#d9dee4"/>
+<text x="24" y="32" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="16" font-weight="700" fill="#1f2933">Extra points per run, starting from the guidebook's example</text>
+<line x1="230.0" y1="56" x2="230.0" y2="354" stroke="#e4e7eb" stroke-width="1"/>
+<text x="230.0" y="372" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#52606d" text-anchor="middle">0</text>
+<line x1="313.9" y1="56" x2="313.9" y2="354" stroke="#e4e7eb" stroke-width="1"/>
+<text x="313.9" y="372" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#52606d" text-anchor="middle">250</text>
+<line x1="397.9" y1="56" x2="397.9" y2="354" stroke="#e4e7eb" stroke-width="1"/>
+<text x="397.9" y="372" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#52606d" text-anchor="middle">500</text>
+<line x1="481.8" y1="56" x2="481.8" y2="354" stroke="#e4e7eb" stroke-width="1"/>
+<text x="481.8" y="372" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#52606d" text-anchor="middle">750</text>
+<line x1="565.7" y1="56" x2="565.7" y2="354" stroke="#e4e7eb" stroke-width="1"/>
+<text x="565.7" y="372" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#52606d" text-anchor="middle">1,000</text>
+<line x1="649.6" y1="56" x2="649.6" y2="354" stroke="#e4e7eb" stroke-width="1"/>
+<text x="649.6" y="372" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#52606d" text-anchor="middle">1,250</text>
+<text x="218" y="82.0" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="13.5" fill="#1f2933" text-anchor="end">Run fully autonomously</text>
+<path d="M230,64 h440.8 a4,4 0 0 1 4,4 v18 a4,4 0 0 1 -4,4 h-440.8 z" fill="#3949ab"/>
+<text x="682.8" y="82.0" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="13" font-weight="700" fill="#1f2933">+1,325</text>
+<text x="218" y="122.0" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="13.5" fill="#1f2933" text-anchor="end">Automate every cycle</text>
+<path d="M230,104 h306.5 a4,4 0 0 1 4,4 v18 a4,4 0 0 1 -4,4 h-306.5 z" fill="#3949ab"/>
+<text x="548.5" y="122.0" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="13" font-weight="700" fill="#1f2933">+925</text>
+<text x="218" y="162.0" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="13.5" fill="#1f2933" text-anchor="end">Use 10 Wh less energy</text>
+<path d="M230,144 h23.9 a4,4 0 0 1 4,4 v18 a4,4 0 0 1 -4,4 h-23.9 z" fill="#3949ab"/>
+<text x="265.9" y="162.0" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="13" font-weight="700" fill="#1f2933">+83</text>
+<text x="218" y="202.0" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="13.5" fill="#1f2933" text-anchor="end">Build 10 L more berm</text>
+<path d="M230,184 h20.2 a4,4 0 0 1 4,4 v18 a4,4 0 0 1 -4,4 h-20.2 z" fill="#3949ab"/>
+<text x="262.2" y="202.0" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="13" font-weight="700" fill="#1f2933">+72</text>
+<text x="218" y="242.0" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="13.5" fill="#1f2933" text-anchor="end">Make the robot 10 kg lighter</text>
+<path d="M230,224 h16.8 a4,4 0 0 1 4,4 v18 a4,4 0 0 1 -4,4 h-16.8 z" fill="#3949ab"/>
+<text x="258.8" y="242.0" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="13" font-weight="700" fill="#1f2933">+62</text>
+<text x="218" y="282.0" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="13.5" fill="#1f2933" text-anchor="end">Hit no obstacles</text>
+<path d="M230,264 h12.8 a4,4 0 0 1 4,4 v18 a4,4 0 0 1 -4,4 h-12.8 z" fill="#3949ab"/>
+<text x="254.8" y="282.0" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="13" font-weight="700" fill="#1f2933">+50</text>
+<text x="218" y="322.0" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="13.5" fill="#1f2933" text-anchor="end">Turn off the arena camera</text>
+<path d="M230,304 h2.5 a2.517857142857139,2.517857142857139 0 0 1 2.517857142857139,2.517857142857139 v20.964285714285722 a2.517857142857139,2.517857142857139 0 0 1 -2.517857142857139,2.517857142857139 h-2.5 z" fill="#3949ab"/>
+<text x="243.0" y="322.0" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="13" font-weight="700" fill="#1f2933">+15</text>
+<line x1="230" y1="56" x2="230" y2="354" stroke="#9aa5b1" stroke-width="1.5"/>
+</svg>

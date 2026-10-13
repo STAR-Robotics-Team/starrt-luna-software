@@ -26,7 +26,8 @@
 #   notes      What the team uses it for.
 #
 # PDFs are linked, never copied into the repository: they are the publishers' copyrighted
-# work, and the docs website is public.
+# work, and the docs website is public. A page may show a few credited figures from one;
+# see "Images" in docs/writing-docs.md.
 
 [[source]]
 id = "nasa-lunabotics-guidebook-2027"
@@ -38,8 +39,20 @@ version = "Revised 10/5/26"
 url = "https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf"
 format = "pdf"
 sha256 = "856e20b50acb0d39307bdb1b421862c9e2b5e03c8adeb4260cc2f4f50471d7ae"
-checked = 2026-10-07
-notes = "Run timing, the E-stop and energy logger rules, autonomy and bandwidth scoring, and the 80 kg mass limit."
+checked = 2026-10-12
+notes = "The competition pages (the mission, the season, the arena, a run, the robot and radio rules, and scoring), and the operating modes design's run timing, E-stop, energy logger, and bandwidth rules."
+
+[[source]]
+id = "amf-lunabotics-website"
+primary = true
+group = "Competition rules"
+title = "Lunabotics"
+publisher = "Astronauts Memorial Foundation"
+url = "https://www.amfcse.org/lunabotics"
+format = "web"
+expect = "Lunabotics 2027 - FAQ"
+checked = 2026-10-12
+notes = "Where teams apply and send in deliverables, and the official FAQ, which teams must read along with the guidebook."
 
 [[source]]
 id = "andymark-cim-curve"
