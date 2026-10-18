@@ -21,6 +21,10 @@ exclude_docs: |
 hooks:
   - scripts/docs_hooks.py
 
+# Colors text that is not settled yet; see "Mark what is not settled" in docs/writing-docs.md.
+extra_css:
+  - stylesheets/unsettled.css
+
 # Every page must be listed here. Add new pages in reading order.
 nav:
   - Home: README.md

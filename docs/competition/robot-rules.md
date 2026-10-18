@@ -148,11 +148,11 @@ In the arena, the robot runs on channel 1 only, and the team must be able to swi
 within 15 minutes of being told. Being on the wrong channel during a run means
 disqualification ([§14.4, pp. 49-50](../sources.md#nasa-lunabotics-guidebook-2027)).
 
-**A question to settle.** The guidebook also says teams "can elect to use 5 GHz Wi-Fi
+**A question to settle.** [TBD: The guidebook also says teams "can elect to use 5 GHz Wi-Fi
 during competition for WAP to robot communications", which NASA does not monitor for
 interference ([§14.1.17, p. 48](../sources.md#nasa-lunabotics-guidebook-2027)), but channel
 1 is a 2.4 GHz channel and section 14.4 says robot operations happen only on it. Ask in
-the FAQ before designing the link around 5 GHz.
+the FAQ before designing the link around 5 GHz.]
 
 The **communications check** before the first run takes up to 15 minutes, on channel 1.
 The team must show every radio on the robot, control the robot wirelessly, show that

@@ -57,12 +57,12 @@ each system in each test mode.
 | System | What crosses the line | Stand-ins below it | Design doc |
 | --- | --- | --- | --- |
 | Drivetrain | 4 wheel joints, 2 per side: a velocity command in; velocity and position out, and current where the controller measures it | Stub hardware, our plugin with a fake controller, Gazebo | `drivetrain.md` (3.1) |
-| Mechanism | Each mechanism joint's command and state, plus the limit switch and stowed signals | Stub hardware, our plugin with a fake controller | `mechanism.md` (4.2) |
+| Mechanism | Each mechanism joint's command and state, plus [TBD: the limit switch and stowed signals, which the mechanism doc defines (4.2)] | Stub hardware, our plugin with a fake controller | `mechanism.md` (4.2) |
 | Battery and power | `/power/battery` (`sensor_msgs/msg/BatteryState`, 10 Hz) and `/diagnostics` | A stub node, our panel reading with a fake | [Operating modes](operating-modes.md#3-interfaces) |
 | LiDAR | The Unitree L2's point cloud and its built-in IMU, as Unitree's driver publishes them: by default `unilidar/cloud` in frame `unilidar_lidar` and `unilidar/imu` in frame `unilidar_imu` ([unitree_lidar_ros2 launch file](../sources.md#unitree-lidar-ros2-launch)) | A stub node, a recording, Gazebo | `sensors.md` (6.2) |
 | Dedicated IMU | One `sensor_msgs/msg/Imu`: angular velocity from the gyroscope and linear acceleration from the accelerometer, in the IMU's own frame near the center of mass. No magnetometer. | A stub node, a recording, Gazebo | `sensors.md` (6.2) |
-| Cameras | The image and camera info topics and frames of the cameras chosen in 6.1 | A test-pattern stub, a recording, Gazebo | `sensors.md` (6.2) |
-| Gamepad | `/joy`, with the button and stick numbers from the gamepad's table (5.2) | A recording | `teleoperation.md` (5.1) |
+| Cameras | [TBD: the image and camera info topics and frames of the cameras chosen in 6.1] | A test-pattern stub, a recording, Gazebo | `sensors.md` (6.2) |
+| Gamepad | `/joy`, with [TBD: the button and stick numbers from the gamepad's table (5.2)] | A recording | `teleoperation.md` (5.1) |
 | Radio link | The ROS 2 topics that cross between the operator laptop and the robot: commands, the heartbeat, and telemetry | Both sides on one computer | `teleoperation.md` (5.1) |
 
 The design docs in code font are not written yet; the number after each is its
@@ -77,7 +77,7 @@ The robot has two IMUs, each fixed to what it measures:
   the LiDAR, so it measures the LiDAR's own motion, which is what LiDAR-inertial odometry
   needs.
 - **A dedicated IMU near the center of mass** feeds the robot's position estimate
-  (deliverable 7.5). The sensor suite evaluation (6.1) picks the part.
+  (deliverable 7.5). Which part: [TBD: the sensor suite evaluation (6.1) picks it].
 
 The gyroscope and the accelerometer stay together in one message, as ROS's convention for
 IMU drivers groups them in one `sensor_msgs/Imu` on `imu/data_raw`
@@ -111,20 +111,21 @@ stub, recording, and Gazebo modes, as [Testing layers](testing-layers.md) descri
 
 ## 4. Parameters
 
-The launch arguments that pick stand-ins or real hardware, one for the whole robot and one
-per system, are named in deliverable 1.4, by Oct 21. The conventions for topic names, QoS, frames, and parameter files come with the
-node graph, by Oct 28.
+- **Launch arguments** that pick stand-ins or real hardware, one for the whole robot and
+  one per system: [TBD: named in deliverable 1.4, by Oct 21].
+- **Conventions** for topic names, QoS, frames, and parameter files: [TBD: written with
+  the node graph, by Oct 28].
 
 ## 5. Libraries and hardware interfaces
 
 | Link | Between | What it carries | Decided in |
 | --- | --- | --- | --- |
-| CAN bus, 1 Mbit/s ([CAN bus](../can-bus.md)) | The Jetson, through the CANable USB adapter (`can0`), and the motor controllers and power distribution panel | Commands, status, and the enable | Controllers: 3.2 (drive), 4.3 (mechanism) |
-| Ethernet (UDP) or a serial port (TTL UART), one at a time ([Unitree L2 manual, p. 12](../sources.md#unitree-l2-manual)) | The Jetson and the Unitree L2 | The point cloud and its IMU | Ethernet on the bench (6.6); the robot's link in the sensors doc (6.2) |
-| To choose | The Jetson and the cameras and the dedicated IMU | Images and IMU data | 6.1 |
-| Wi-Fi | The team's access point and the robot's radio | ROS 2 topics both ways | 5.7 |
+| CAN bus, 1 Mbit/s ([CAN bus](../can-bus.md)) | The Jetson, through the CANable USB adapter (`can0`), and the motor controllers and power distribution panel | Commands, status, and the enable | [TBD: the controllers, in 3.2 (drive) and 4.3 (mechanism)] |
+| Ethernet (UDP) or a serial port (TTL UART), one at a time ([Unitree L2 manual, p. 12](../sources.md#unitree-l2-manual)) | The Jetson and the Unitree L2 | The point cloud and its IMU | Ethernet on the bench (6.6); [TBD: the robot's link, in the sensors doc (6.2)] |
+| [TBD] | The Jetson and the cameras and the dedicated IMU | Images and IMU data | 6.1 |
+| Wi-Fi | The team's access point and the robot's radio | ROS 2 topics both ways | [TBD: the parts, in 5.7] |
 | NASA's Ethernet cable | NASA's switch in Mission Control and the team's access point | ROS 2 topics both ways, past the judges' bandwidth recorder | Supplied by NASA |
-| To choose | The operator laptop and the gamepad | Stick and button input | 5.2 |
+| [TBD] | The operator laptop and the gamepad | Stick and button input | 5.2 |
 
 The power path, from the battery through the main breaker, energy logger, and E-stop, is
 in the [operating modes design](operating-modes.md#5-libraries-and-hardware-interfaces).
@@ -250,8 +251,8 @@ mode manager, drive, sensors`"]
   Router mode, the Beryl AX runs NAT and its own DHCP server, which hands out addresses; in
   Access Point mode it "disables its NAT and DHCP functions"
   ([GL.iNet network modes guide, section "For models with Wi-Fi"](../sources.md#glinet-network-modes)).
-  So either NASA's cable goes into one of its LAN ports, or it runs in Access Point mode
-  and every device gets a fixed address.
+  So [TBD: either NASA's cable goes into one of its LAN ports, or the Beryl AX runs in
+  Access Point mode and every device gets a fixed address; 5.7 decides].
 - **Deliverable 5.7 decides the parts and the network,** by Oct 28: the access point, the
   robot's radio and antennas, the addresses, and how ROS 2 crosses the link. It also
   settles whether the team's Open-Mesh OM5P-AC radio can be used, and asks the organizers
@@ -263,7 +264,7 @@ mode manager, drive, sensors`"]
 | --- | --- | --- |
 | The link drops: the access point, the robot's radio, or the cable | No operator heartbeat for `link_timeout` | The robot disables itself, as the [operating modes design](operating-modes.md#7-behavior-on-failure) says |
 | The CANable is unplugged or the CAN bus fails | Every controller's status goes missing | FAULT, as the operating modes design says |
-| A sensor stops publishing | To define in the sensors doc (6.2) | To define in the sensors doc |
+| A sensor stops publishing | [TBD: defined in the sensors doc (6.2)] | [TBD: defined in the sensors doc (6.2)] |
 | A stand-in no longer matches its real driver | The Bench run compares the driver's topics, message types, frames, and rates with the stub | The stub is fixed to match, in the pull request that records the Bench run |
 
 ## 8. Test plan

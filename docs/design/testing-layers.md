@@ -24,8 +24,8 @@ on macOS and Windows cannot reach USB devices, such as the CANable, and usually 
 reach other computers ([What works where](../development-environment.md#what-works-where)).
 
 **Every Bench run follows the testbed's safety checklist,** agreed with Electrical in
-deliverable 1.9: a current-limited supply, the E-stop in reach, the device clamped, and
-two people present.
+deliverable 1.9: [TBR: a current-limited supply, the E-stop in reach, the device clamped,
+and two people present].
 
 ### Stand-ins
 
@@ -96,8 +96,9 @@ something the stub does not, the stub is fixed to match.
 
 Each system picks what sits below its own line, so one run can mix them, such as the real
 drivetrain on the bench with every sensor on a stub. One launch argument sets every system
-at once, and each system's own argument overrides it. Deliverable 1.4 names the arguments;
-with the names these pages use as an example, that bench run would start like this:
+at once, and each system's own argument overrides it. The arguments' names are
+[TBD: chosen in deliverable 1.4]; with the names these pages use as an example, that bench
+run would start like this:
 
 ```bash
 ros2 launch luna_bringup robot.launch.py backend:=stub drivetrain:=real

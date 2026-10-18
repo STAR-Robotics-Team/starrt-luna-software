@@ -1,0 +1,44 @@
+/* Text that is not settled yet, written [TBD: ...] or [TBR: ...] in the Markdown and turned
+   into these spans by scripts/docs_hooks.py. See "Mark what is not settled" in
+   docs/writing-docs.md. Colors are set for both of Material's color schemes. */
+:root,
+[data-md-color-scheme="default"] {
+  --unsettled-tbd: #9a4d00;
+  --unsettled-tbd-tag: #fdebd3;
+  --unsettled-tbr: #00695c;
+  --unsettled-tbr-tag: #d7efeb;
+}
+
+[data-md-color-scheme="slate"] {
+  --unsettled-tbd: #ffb866;
+  --unsettled-tbd-tag: #ffb86626;
+  --unsettled-tbr: #6fd1c3;
+  --unsettled-tbr-tag: #6fd1c326;
+}
+
+.md-typeset .unsettled--tbd {
+  color: var(--unsettled-tbd);
+}
+
+.md-typeset .unsettled--tbr {
+  color: var(--unsettled-tbr);
+}
+
+.md-typeset .unsettled__tag {
+  display: inline-block;
+  padding: 0 0.35em;
+  border-radius: 0.2rem;
+  font-size: 0.7em;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  line-height: 1.5;
+  vertical-align: 0.1em;
+}
+
+.md-typeset .unsettled--tbd .unsettled__tag {
+  background: var(--unsettled-tbd-tag);
+}
+
+.md-typeset .unsettled--tbr .unsettled__tag {
+  background: var(--unsettled-tbr-tag);
+}

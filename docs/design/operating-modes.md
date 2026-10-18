@@ -115,7 +115,7 @@ points on: excavation automation, travel automation, and dump automation
 An enable request names the task mode to start in. After that, any task mode can follow
 any other, as long as the new mode's entry guard holds:
 
-| Task mode | Entry guard (proposed; confirm with mechanical) |
+| Task mode | Entry guard, proposed for mechanical to confirm [TBR] |
 | --- | --- |
 | TRAVEL | Excavator stowed and hatch closed |
 | EXCAVATE | Hatch closed |
@@ -142,7 +142,7 @@ budget workbook turns it into amps and watt-hours.
 | Drive motors (4 CIM) | No power | Neutral | Neutral | Active | Creep | Creep |
 | Excavator chain (775 RedLine) | No power | Neutral | Neutral | Off | Active | Off |
 | Depth actuators (2 Glideforce) | No power | Neutral | Neutral | Off, stowed | Active | Off |
-| Conveyor (NeveRest) | No power | Neutral | Neutral | Off | Active | Open question 3 |
+| Conveyor (NeveRest) | No power | Neutral | Neutral | Off | Active | [TBD: open question 3] |
 | Hatch (NeveRest) | No power | Neutral | Neutral | Off, closed | Off, closed | Active |
 | Motor controllers, PDP, regulators | No power | Standby | Standby | Standby | Standby | Standby |
 | Jetson | Off, unless on its own battery | Booting | On | On | On | On |
@@ -158,17 +158,17 @@ mode does not allow that load.
 
 Each task mode sets supply current limits that the motor controllers enforce. Every limit
 must be at or below its PDP channel's breaker, and each mode's total must stay under the
-main breaker (R7). These are starting values for the electrical lead to confirm; the
-power budget workbook checks them against a 150 A main breaker, where the worst mode,
+main breaker (R7). [TBR: These are starting values for the electrical lead to confirm];
+the power budget workbook checks them against a 150 A main breaker, where the worst mode,
 EXCAVATE, comes to about 135 A.
 
-| Actuator | Controller | TRAVEL | EXCAVATE | DUMP | SERVICE | PDP breaker |
+| Actuator | Controller | TRAVEL [TBR] | EXCAVATE [TBR] | DUMP [TBR] | SERVICE [TBR] | PDP breaker |
 | --- | --- | --- | --- | --- | --- | --- |
-| Drive, per motor | Talon SRX leader, Victor SPX follower | 30 A | Creep: 20% output, 15 A | Creep: 20% output, 15 A | 15 A | 40 A |
-| Excavator chain | Talon SRX (open question 5) | Off | 30 A | Off | 15 A | 40 A |
-| Depth actuators, each | Talon SRX (open question 5) | Off | 15 A | Off | 10 A | 20 A |
-| Conveyor | To decide | Off | Full (11.5 A at stall) | Open question 3 | Full | 20 A |
-| Hatch | To decide | Off | Off | Full (11.5 A at stall) | Full | 20 A |
+| Drive, per motor | [TBR: Talon SRX leader, Victor SPX follower (3.2)] | 30 A | Creep: 20% output, 15 A | Creep: 20% output, 15 A | 15 A | 40 A |
+| Excavator chain | [TBR: Talon SRX, open question 5] | Off | 30 A | Off | 15 A | 40 A |
+| Depth actuators, each | [TBR: Talon SRX, open question 5] | Off | 15 A | Off | 10 A | 20 A |
+| Conveyor | [TBD: open question 5] | Off | Full (11.5 A at stall) | [TBD: open question 3] | Full | 20 A |
+| Hatch | [TBD: open question 5] | Off | Off | Full (11.5 A at stall) | Full | 20 A |
 
 "Full" means no software limit is needed, because the motor cannot draw more than its
 channel breaker even when stalled at 12 V: a NeveRest stalls at 11.5 A
@@ -196,7 +196,7 @@ than 12 V on average.
 
 | Node | Package | Runs on | What it does |
 | --- | --- | --- | --- |
-| `mode_manager` | `luna_modes` (proposed) | Jetson | Owns the robot state and task mode, runs the boot self-test, watches the heartbeat, faults, and battery, and accepts or refuses mode requests |
+| `mode_manager` | `luna_modes` [TBR: proposed name] | Jetson | Owns the robot state and task mode, runs the boot self-test, watches the heartbeat, faults, and battery, and accepts or refuses mode requests |
 | Drivetrain node | `luna_drivetrain` | Jetson | Drives only when the mode allows it, within the mode's limits |
 | Mechanism node | `luna_mechanism` | Jetson | Runs each mechanism actuator only when the mode allows it, within the mode's limits; reports whether the excavator is stowed and the hatch is closed |
 | Teleop | `luna_teleop` | Operator laptop | Sends the heartbeat and mode requests, and gamepad commands while in TELEOP |
@@ -237,7 +237,7 @@ sequencer can change task mode but can never enable the robot or take control. T
 the robot, for example when it loses its position, the sequencer reports an ERROR on
 `/diagnostics`, which puts the robot in FAULT.
 
-Proposed `luna_interfaces/msg/RobotMode`:
+[TBR: Proposed] `luna_interfaces/msg/RobotMode`:
 
 ```text
 uint8 STATE_BOOT=0
@@ -262,7 +262,7 @@ string reason                   # why the robot is in this state, such as "link 
 builtin_interfaces/Time since   # when the robot entered this state
 ```
 
-Proposed `luna_interfaces/srv/RequestMode`, for the operator:
+[TBR: Proposed] `luna_interfaces/srv/RequestMode`, for the operator:
 
 ```text
 uint8 state    # RobotMode STATE_ENABLED or STATE_DISABLED; DISABLED while in FAULT clears the fault
@@ -273,7 +273,7 @@ bool accepted
 string reason  # why a request was refused, such as "excavator not stowed"
 ```
 
-Proposed `luna_interfaces/srv/RequestTask`, for the task sequencer:
+[TBR: Proposed] `luna_interfaces/srv/RequestTask`, for the task sequencer:
 
 ```text
 uint8 task     # RobotMode TASK_TRAVEL, TASK_EXCAVATE, or TASK_DUMP

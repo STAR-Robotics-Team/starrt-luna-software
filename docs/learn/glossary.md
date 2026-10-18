@@ -230,6 +230,11 @@ one links to the page that explains it properly.
   [ROS 2 basics](ros2-basics.md#nodes-topics-and-messages)
 - **`sudo`:** run a command as an administrator.
   [The command line](command-line.md#running-scripts-and-programs)
+- **TBD (to be determined):** marks something in the docs that is not decided or not
+  known yet. [Writing docs](../writing-docs.md#mark-what-is-not-settled)
+- **TBR (to be resolved):** marks something in the docs that is written down but not
+  confirmed yet, such as a proposal or a value nobody has tested.
+  [Writing docs](../writing-docs.md#mark-what-is-not-settled)
 - **Teleoperation:** driving the robot remotely, from Mission Control.
   [The Lunabotics competition](../competition/README.md#what-the-robot-does)
 - **Terminal:** a window where you type commands. [The command line](command-line.md)

@@ -23,8 +23,32 @@ Docs change in the same pull request as the code they describe. If your change a
 to set up, build, run, or use something, update the page that says so. A reviewer should
 be able to follow the docs and get the result they describe.
 
-When something in a doc has not been tested, say so, for example with the "not tested yet"
-marker in [What works where](development-environment.md#what-works-where).
+When something in a doc has not been decided, confirmed, or tested, mark it, as
+[Mark what is not settled](#mark-what-is-not-settled) explains.
+
+## Mark what is not settled
+
+Docs mix checked facts with plans, proposals, and guesses. Mark anything that is not
+settled, so nobody builds on it as if it were:
+
+| Marker | Means | Example | On the website |
+| --- | --- | --- | --- |
+| `[TBD: ...]` | To be determined: not decided or not known yet | `[TBD: the sensor suite evaluation (6.1) picks it]` | [TBD: the sensor suite evaluation (6.1) picks it] |
+| `[TBR: ...]` | To be resolved: written down, but not confirmed. A proposal, an estimate, an assumption, or something not tested yet. | `[TBR: 30 A, for the electrical lead to confirm]` | [TBR: 30 A, for the electrical lead to confirm] |
+
+- **Say who settles it,** such as a deliverable, an open question, or a person, so readers
+  know where to look.
+- **Use `[TBD]` or `[TBR]` alone** in a table cell that says nothing else, or after a
+  table column's name to mark every value in that column.
+- **Keep each marker inside one paragraph, list item, or table cell.** The website build
+  fails on a marker that is not closed there.
+- **Keep markers out of page headings and diagrams.** A heading appears in the page's
+  contents list as written, and a Mermaid diagram cannot be colored this way. In a diagram,
+  put the deliverable that decides a part in its label instead, such as "Robot radio (5.7)".
+- **Remove the marker in the same pull request that settles it.**
+
+On the website, TBD text is orange and TBR text is teal, each with a small tag, so it
+stands apart from settled text. GitHub shows the brackets as written.
 
 ## Where pages go
 

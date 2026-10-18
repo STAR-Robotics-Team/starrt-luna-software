@@ -36,16 +36,16 @@ line; this page draws each system in each mode.
   drivetrain, battery, gamepad, and radio link are tested on it this term. The mechanism
   and the sensors wait for the whole rover in spring.
 
-**Not decided yet.** The launch arguments are an example; deliverable 1.4 names the real
-ones by Oct 21. Each mode shows its system's own argument, such as `drivetrain:=stub`;
+**Not decided yet.** [TBD: The launch arguments are an example; deliverable 1.4 names the
+real ones by Oct 21.] Each mode shows its system's own argument, such as `drivetrain:=stub`;
 the other systems run on whatever the whole-robot argument (`backend:=`) picks, within
 the rules in
 [Choosing stand-ins per system](testing-layers.md#choosing-stand-ins-per-system).
 
-The drivetrain diagrams assume the drive controller decision (3.2) keeps the 2 Talon SRX
-and 2 Victor SPX. If it picks other controllers, only the motor controller interface's
-implementation and the hardware below it change. The mechanism's controllers are decided
-in 4.3.
+[TBR: The drivetrain diagrams assume the drive controller decision (3.2) keeps the 2 Talon
+SRX and 2 Victor SPX.] If it picks other controllers, only the motor controller interface's
+implementation and the hardware below it change. The mechanism's controllers are
+[TBD: decided in 4.3].
 
 ## Drivetrain
 
@@ -98,7 +98,7 @@ Replaces the drive plugin. Copies each command into the state.`"]
 
 - **Deliverable:** 3.3, Drivetrain on stub hardware
 - **Runs on:** Any laptop in the dev container, and CI
-- **Launch:** `drivetrain:=stub`
+- **Launch:** [TBD: `drivetrain:=stub`]
 - **Proves:** Everything above the line: modes, speed limits, the timeout, the operator view
 - **Can't catch:** Anything in our plugin, or about the motors
 
@@ -153,7 +153,7 @@ Same methods. Records every call and returns scripted feedback and faults.`"]
 
 - **Deliverable:** 3.5, Drive hardware plugin against a fake controller
 - **Runs on:** Any laptop in the dev container, and CI
-- **Launch:** `drivetrain:=fake`
+- **Launch:** [TBD: `drivetrain:=fake`]
 - **Proves:** Our plugin sends what we believe the Talons and Victors need
 - **Can't catch:** A belief about the hardware that is wrong
 
@@ -207,7 +207,7 @@ Replaces the motors and the floor: mass, friction, wheel slip, rocks`"]
 
 - **Deliverable:** 3.4, Drivetrain in Gazebo
 - **Runs on:** A laptop in the dev container; every node uses sim time
-- **Launch:** `drivetrain:=gazebo`
+- **Launch:** [TBD: `drivetrain:=gazebo`]
 - **Proves:** Driving with physics: wheel slip and odometry drift
 - **Can't catch:** Anything in our plugin, or about the motors
 
@@ -273,7 +273,7 @@ At least 1 Talon SRX and 1 CIM; all 4 controllers and CIMs if they are free`"]
 
 - **Deliverable:** 3.6, Drivetrain on the bench
 - **Runs on:** A Linux laptop or the Jetson
-- **Launch:** `drivetrain:=real`
+- **Launch:** [TBD: `drivetrain:=real`]
 - **Proves:** Our beliefs about the Talons hold; with all 4, each Victor follows its Talon
 - **Can't catch:** The chassis: weight, wheel slip, the floor
 
@@ -337,7 +337,7 @@ Plugged into the Jetson on the drive base`"]
 
 - **Deliverable:** 3.7, Drivetrain on the drive base
 - **Runs on:** The Jetson on the drive base
-- **Launch:** `drivetrain:=real`
+- **Launch:** [TBD: `drivetrain:=real`]
 - **Proves:** The whole drivetrain: wheel directions, every stop, odometry on the floor
 - **Needs first:** 3.6, and 1.18 on the same drive base
 
@@ -394,7 +394,7 @@ Replaces the mechanism plugin. A test flips the limit and stowed signals.`"]
 
 - **Deliverable:** 4.4, Mechanism on stub hardware
 - **Runs on:** Any laptop in the dev container, and CI
-- **Launch:** `mechanism:=stub`
+- **Launch:** [TBD: `mechanism:=stub`]
 - **Proves:** Joint limits and the mode check work with no hardware
 - **Can't catch:** Anything in our plugin, or about the actuators
 
@@ -449,7 +449,7 @@ Same methods. Records every call and returns scripted feedback and faults.`"]
 
 - **Deliverable:** 4.5, Mechanism hardware plugin against a fake controller
 - **Runs on:** Any laptop in the dev container, and CI
-- **Launch:** `mechanism:=fake`
+- **Launch:** [TBD: `mechanism:=fake`]
 - **Proves:** Our plugin turns commands into the right outputs and stops at the limit switches
 - **Can't catch:** A belief about the controllers that is wrong
 
@@ -515,7 +515,7 @@ Mechanism station on the testbed, through the E-stop`"]
 
 - **Deliverable:** 4.6, One actuator on the bench
 - **Runs on:** A Linux laptop or the Jetson
-- **Launch:** `mechanism:=real`
+- **Launch:** [TBD: `mechanism:=real`]
 - **Proves:** One actuator runs its full stroke and stops at its limits, on disable, and on link loss
 - **Can't catch:** The other joints, and the mechanism under load
 
@@ -755,7 +755,7 @@ A floor and three boxes as a cloud, and a still L2 IMU, on the driver's topics`"
 
 - **Deliverable:** 6.4, LiDAR stub, with the L2's built-in IMU
 - **Runs on:** Any laptop in the dev container, and CI
-- **Launch:** `lidar:=stub`
+- **Launch:** [TBD: `lidar:=stub`]
 - **Proves:** Our code reads the right topics and frames
 - **Can't catch:** Real noise, dust, and the real point pattern
 
@@ -834,7 +834,7 @@ Set from the L2 manual: 360 by 90 degrees (96 in its negative angle mode), 30 m,
 
 - **Deliverable:** 6.5, LiDAR in Gazebo, with the L2's built-in IMU
 - **Runs on:** A laptop in the dev container
-- **Launch:** `lidar:=gazebo`
+- **Launch:** [TBD: `lidar:=gazebo`]
 - **Proves:** The sensor sees the arena while the robot drives
 - **Can't catch:** The real driver's quirks
 
@@ -874,7 +874,7 @@ Over Ethernet to a Linux laptop, then the Jetson`"]
 
 - **Deliverable:** 6.6, Unitree L2 on the bench
 - **Runs on:** A Linux laptop, then the Jetson
-- **Launch:** `lidar:=real`
+- **Launch:** [TBD: `lidar:=real`]
 - **Proves:** The real driver publishes exactly what the stub does
 - **Can't catch:** The final mount and its vibration
 
@@ -920,7 +920,7 @@ A robot at rest: gravity on z, no turning, at 100 Hz until 6.1 picks the part`"]
 
 - **Deliverable:** 6.9, Dedicated IMU stub
 - **Runs on:** Any laptop in the dev container, and CI
-- **Launch:** `imu:=stub`
+- **Launch:** [TBD: `imu:=stub`]
 - **Proves:** Our code reads the right topic, frame, and units
 - **Can't catch:** Real noise, bias, and vibration
 
@@ -999,7 +999,7 @@ At the dedicated IMU's frame, with noise from the chosen part's datasheet`"]
 
 - **Deliverable:** 6.10, Dedicated IMU in Gazebo
 - **Runs on:** A laptop in the dev container
-- **Launch:** `imu:=gazebo`
+- **Launch:** [TBD: `imu:=gazebo`]
 - **Proves:** The estimate follows the robot as it drives and turns
 - **Can't catch:** The real driver and the mount's vibration
 
@@ -1039,7 +1039,7 @@ On a Linux laptop, then the Jetson, once it arrives`"]
 
 - **Deliverable:** 6.11, Dedicated IMU on the bench
 - **Runs on:** A Linux laptop, then the Jetson
-- **Launch:** `imu:=real`
+- **Launch:** [TBD: `imu:=real`]
 - **Proves:** Gravity, axes, and signs are right; the gyroscope's bias is measured
 - **Can't catch:** The final mount near the center of mass
 
@@ -1087,7 +1087,7 @@ At each camera's resolution and rate, on its topics and frame`"]
 
 - **Deliverable:** 6.7, Cameras on stubs and in Gazebo
 - **Runs on:** Any laptop in the dev container, and CI
-- **Launch:** `cameras:=stub`
+- **Launch:** [TBD: `cameras:=stub`]
 - **Proves:** The operator view and its bandwidth, with no camera bought
 - **Can't catch:** Real images, light, and dust
 
@@ -1166,7 +1166,7 @@ At each planned mount`"]
 
 - **Deliverable:** 6.7, Cameras on stubs and in Gazebo
 - **Runs on:** A laptop in the dev container
-- **Launch:** `cameras:=gazebo`
+- **Launch:** [TBD: `cameras:=gazebo`]
 - **Proves:** What each mount can see while the robot drives
 - **Can't catch:** The real driver and lens
 
@@ -1206,7 +1206,7 @@ On a Linux laptop, then the Jetson, once they arrive`"]
 
 - **Deliverable:** 6.8, Cameras on the bench
 - **Runs on:** A Linux laptop, then the Jetson
-- **Launch:** `cameras:=real`
+- **Launch:** [TBD: `cameras:=real`]
 - **Proves:** The real drivers publish what the stub does
 - **Can't catch:** The final mounts
 
