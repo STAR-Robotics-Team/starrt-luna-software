@@ -24,6 +24,13 @@ line; this page draws each system in each mode.
 
 - **A titled box around several boxes is one running program,** such as
   `ros2_control_node`.
+- **Two kinds of controller appear.** A *motor controller* is a hardware box, such as a
+  Talon SRX. A *ros2_control controller* is software, such as `diff_drive_controller`.
+- **Stub or fake motor controllers?** In a Stub mode, ROS's ready-made stand-in replaces
+  our hardware plugin, so none of our code below the line runs. In a Fake motor
+  controllers mode, our plugin runs as it will on the robot, and only the motor
+  controllers it talks to are pretend.
+  [Testing layers](testing-layers.md#stub-or-fake-motor-controllers) compares them.
 - **Arrows at both ends** carry commands down and feedback up. **Arrows pointing up**
   carry data up from a sensor.
 - **Things that move,** the drivetrain and the mechanism, go through ros2_control, so
@@ -68,9 +75,9 @@ Sends velocity commands`"]
 Passes commands on only when ENABLED`"]
   subgraph grp4["ros2_control_node"]
     direction TB
-    b3["`*ROS code · our settings*
+    b3["`*ROS code · a ros2_control controller, our settings*
 **diff_drive_controller**
-Left and right wheel speeds, each sent to both wheels on that side`"]
+Turns velocity commands into left and right wheel speeds, each sent to both wheels on that side`"]
     line5["`**Hardware line:** 4 wheel joints`"]
     b6["`*ROS code · stand-in*
 **mock_components/GenericSystem**
@@ -102,7 +109,7 @@ Replaces the drive plugin. Copies each command into the state.`"]
 - **Proves:** Everything above the line: modes, speed limits, the timeout, the operator view
 - **Can't catch:** Anything in our plugin, or about the motors
 
-### Drivetrain: Our code + fake (Sim)
+### Drivetrain: Fake motor controllers (Sim)
 
 ```mermaid
 ---
@@ -119,16 +126,16 @@ Sends velocity commands`"]
 Passes commands on only when ENABLED`"]
   subgraph grp4["ros2_control_node"]
     direction TB
-    b3["`*ROS code · our settings*
+    b3["`*ROS code · a ros2_control controller, our settings*
 **diff_drive_controller**
-Left and right wheel speeds, each sent to both wheels on that side`"]
+Turns velocity commands into left and right wheel speeds, each sent to both wheels on that side`"]
     line5["`**Hardware line:** 4 wheel joints`"]
     b6["`*Ours · C++ · 3.5*
 **Drive hardware plugin**
 Sends each side's speed to its Talon; each Victor follows its Talon. Feeds the enable and sets each mode's limits.`"]
     b7["`*Ours · test code · stand-in*
-**Motor controller interface: fake**
-Same methods. Records every call and returns scripted feedback and faults.`"]
+**Fake motor controllers**
+A test version of the motor controller interface: same methods, but it records every call and returns scripted feedback and faults.`"]
     b3 <--> line5
     line5 <--> b6
     b6 <--> b7
@@ -151,10 +158,10 @@ Same methods. Records every call and returns scripted feedback and faults.`"]
   style grp4 fill:#8b939c14,stroke:#8b939c80
 ```
 
-- **Deliverable:** 3.5, Drive hardware plugin against a fake controller
+- **Deliverable:** 3.5, Drive hardware plugin with fake motor controllers
 - **Runs on:** Any laptop in the dev container, and CI
-- **Launch:** [TBD: `drivetrain:=fake`]
-- **Proves:** Our plugin sends what we believe the Talons and Victors need
+- **Launch:** [TBD: `drivetrain:=fake_motor_controllers`]
+- **Proves:** Our plugin sends what we believe the Talon and Victor motor controllers need
 - **Can't catch:** A belief about the hardware that is wrong
 
 3.5's unit tests call the plugin directly, without the blocks above the line.
@@ -176,9 +183,9 @@ Sends velocity commands`"]
 Passes commands on only when ENABLED`"]
   subgraph grp4["Gazebo process"]
     direction TB
-    b3["`*ROS code · our settings*
+    b3["`*ROS code · a ros2_control controller, our settings*
 **diff_drive_controller**
-Left and right wheel speeds, each sent to both wheels on that side`"]
+Turns velocity commands into left and right wheel speeds, each sent to both wheels on that side`"]
     line5["`**Hardware line:** 4 wheel joints`"]
     b6["`*ROS code · stand-in*
 **gz_ros2_control/GazeboSimSystem**
@@ -230,9 +237,9 @@ Sends velocity commands`"]
 Passes commands on only when ENABLED`"]
   subgraph grp4["ros2_control_node"]
     direction TB
-    b3["`*ROS code · our settings*
+    b3["`*ROS code · a ros2_control controller, our settings*
 **diff_drive_controller**
-Left and right wheel speeds, each sent to both wheels on that side`"]
+Turns velocity commands into left and right wheel speeds, each sent to both wheels on that side`"]
     line5["`**Hardware line:** 4 wheel joints`"]
     b6["`*Ours · C++ · 3.5*
 **Drive hardware plugin**
@@ -253,7 +260,7 @@ Builds and reads the CAN frames`"]
 Needs Linux: a laptop or the Jetson`"]
   b10["`*Hardware*
 **1 to 4 motors, no chassis**
-At least 1 Talon SRX and 1 CIM; all 4 controllers and CIMs if they are free`"]
+At least 1 Talon SRX and 1 CIM; all 4 motor controllers and CIMs if they are free`"]
   b1 <--> b2
   b2 <--> grp4
   grp4 <--> b9
@@ -294,9 +301,9 @@ Sends velocity commands`"]
 Passes commands on only when ENABLED`"]
   subgraph grp4["ros2_control_node"]
     direction TB
-    b3["`*ROS code · our settings*
+    b3["`*ROS code · a ros2_control controller, our settings*
 **diff_drive_controller**
-Left and right wheel speeds, each sent to both wheels on that side`"]
+Turns velocity commands into left and right wheel speeds, each sent to both wheels on that side`"]
     line5["`**Hardware line:** 4 wheel joints`"]
     b6["`*Ours · C++ · 3.5*
 **Drive hardware plugin**
@@ -316,7 +323,7 @@ Builds and reads the CAN frames`"]
 **CANable USB adapter (can0)**
 Plugged into the Jetson on the drive base`"]
   b10["`*Hardware*
-**2 Talon SRX and 2 Victor SPX**
+**2 Talon SRX and 2 Victor SPX motor controllers**
 4 CIMs on the drive base: on blocks first, then on the floor`"]
   b1 <--> b2
   b2 <--> grp4
@@ -364,8 +371,8 @@ Sends mechanism commands`"]
 Passes commands on only when ENABLED`"]
   subgraph grp4["ros2_control_node"]
     direction TB
-    b3["`*ROS code · our settings*
-**A controller for each joint (4.2)**
+    b3["`*ROS code · ros2_control controllers, our settings*
+**A ros2_control controller per joint (4.2)**
 Position for the depth actuators; speed for the chain and conveyor`"]
     line5["`**Hardware line:** joints + signals`"]
     b6["`*ROS code · stand-in*
@@ -398,7 +405,7 @@ Replaces the mechanism plugin. A test flips the limit and stowed signals.`"]
 - **Proves:** Joint limits and the mode check work with no hardware
 - **Can't catch:** Anything in our plugin, or about the actuators
 
-### Mechanism: Our code + fake (Sim)
+### Mechanism: Fake motor controllers (Sim)
 
 ```mermaid
 ---
@@ -415,16 +422,16 @@ Sends mechanism commands`"]
 Passes commands on only when ENABLED`"]
   subgraph grp4["ros2_control_node"]
     direction TB
-    b3["`*ROS code · our settings*
-**A controller for each joint (4.2)**
+    b3["`*ROS code · ros2_control controllers, our settings*
+**A ros2_control controller per joint (4.2)**
 Position for the depth actuators; speed for the chain and conveyor`"]
     line5["`**Hardware line:** joints + signals`"]
     b6["`*Ours · C++ · 4.5*
 **Mechanism hardware plugin**
-Each joint to its controller; reads the limit switches and potentiometers`"]
+Each joint to its motor controller; reads the limit switches and potentiometers`"]
     b7["`*Ours · test code · stand-in*
-**Motor controller interface: fake**
-Same methods. Records every call and returns scripted feedback and faults.`"]
+**Fake motor controllers**
+A test version of the motor controller interface: same methods, but it records every call and returns scripted feedback and faults.`"]
     b3 <--> line5
     line5 <--> b6
     b6 <--> b7
@@ -447,13 +454,13 @@ Same methods. Records every call and returns scripted feedback and faults.`"]
   style grp4 fill:#8b939c14,stroke:#8b939c80
 ```
 
-- **Deliverable:** 4.5, Mechanism hardware plugin against a fake controller
+- **Deliverable:** 4.5, Mechanism hardware plugin with fake motor controllers
 - **Runs on:** Any laptop in the dev container, and CI
-- **Launch:** [TBD: `mechanism:=fake`]
+- **Launch:** [TBD: `mechanism:=fake_motor_controllers`]
 - **Proves:** Our plugin turns commands into the right outputs and stops at the limit switches
-- **Can't catch:** A belief about the controllers that is wrong
+- **Can't catch:** A belief about the motor controllers that is wrong
 
-If 4.3 picks the drivetrain's controller family, this reuses 3.5's interface and fake.
+If 4.3 picks the drivetrain's motor controller family, this reuses 3.5's motor controller interface and its fake.
 
 ### Mechanism: Bench
 
@@ -472,18 +479,18 @@ Sends mechanism commands`"]
 Passes commands on only when ENABLED`"]
   subgraph grp4["ros2_control_node"]
     direction TB
-    b3["`*ROS code · our settings*
-**A controller for each joint (4.2)**
+    b3["`*ROS code · ros2_control controllers, our settings*
+**A ros2_control controller per joint (4.2)**
 Position for the depth actuators; speed for the chain and conveyor`"]
     line5["`**Hardware line:** joints + signals`"]
     b6["`*Ours · C++ · 4.5*
 **Mechanism hardware plugin**
-Each joint to its controller; reads the limit switches and potentiometers`"]
+Each joint to its motor controller; reads the limit switches and potentiometers`"]
     b7["`*Ours · C++*
 **Motor controller interface: 4.3's**
-CTRE's class again if 4.3 picks the drivetrain's controller family`"]
+CTRE's class again if 4.3 picks the drivetrain's motor controller family`"]
     b8["`*Vendor code*
-**The controllers' library (4.3)**
+**The motor controllers' library (4.3)**
 Phoenix 5 if 4.3 picks CTRE`"]
     b3 <--> line5
     line5 <--> b6
@@ -492,9 +499,9 @@ Phoenix 5 if 4.3 picks CTRE`"]
   end
   b9["`*Hardware*
 **CAN or serial link**
-Whichever 4.3's controllers use`"]
+Whichever 4.3's motor controllers use`"]
   b10["`*Hardware*
-**1 depth actuator + controller**
+**1 depth actuator + its motor controller**
 Mechanism station on the testbed, through the E-stop`"]
   b1 <--> b2
   b2 <--> grp4
@@ -565,7 +572,7 @@ Publishes believable values; a test can set the voltage low`"]
 - **Proves:** The mode manager and operator view react to battery and faults
 - **Can't catch:** How we read the real panel
 
-### Battery and power: Our code + fake (Sim)
+### Battery and power: Fake power panel (Sim)
 
 ```mermaid
 ---
@@ -582,8 +589,8 @@ A low battery halves every current limit; the operator sees voltage and faults`"
 **Power panel reading**
 In the node that owns CTRE access (modes doc, open question 6)`"]
   b4["`*Ours · test code · stand-in*
-**Motor controller interface: fake**
-Answers the panel's reads with scripted voltages and currents`"]
+**Fake power panel**
+A test version of the motor controller interface that answers the panel's reads with scripted voltages and currents`"]
   none5["No hardware"]
   line2 --> b1
   b3 --> line2
@@ -601,7 +608,7 @@ Answers the panel's reads with scripted voltages and currents`"]
   class none5 ghost
 ```
 
-- **Deliverable:** 3.5, Drive hardware plugin against a fake controller
+- **Deliverable:** 3.5, Drive hardware plugin with fake motor controllers
 - **Runs on:** Any laptop in the dev container, and CI
 - **Proves:** Our panel reading turns raw values into the right /power/battery
 - **Can't catch:** What the real panel reports
@@ -1350,7 +1357,6 @@ Only if the drive base is ready by Nov 22; otherwise this moves to spring. It ru
 
 Other modes:
 
-- **Our code + fake (Sim):** Not needed: the recording is the stand-in.
 - **Gazebo (Sim):** The same recording drives the robot in Gazebo (with 3.4).
 
 ## Radio link
@@ -1477,5 +1483,4 @@ Only if the drive base is ready by Nov 22; otherwise this moves to spring. It ru
 
 Other modes:
 
-- **Our code + fake (Sim):** Not needed.
 - **Gazebo (Sim):** Not needed.

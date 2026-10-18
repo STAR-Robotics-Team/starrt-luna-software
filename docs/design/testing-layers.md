@@ -10,13 +10,18 @@ lets the same code run in all of them, the gate to move up a layer, and how Benc
 Robot runs are logged (deliverable 1.3). [Hardware test modes](hardware-test-modes.md)
 draws every hardware system in every mode.
 
+**Two kinds of controller.** A *motor controller* is a hardware box, such as a Talon SRX,
+that sets how much power a motor gets. A *ros2_control controller* is software, such as
+`diff_drive_controller`, that turns a command like "drive forward at 0.5 m/s" into a speed
+for each wheel. These pages always say which one they mean.
+
 ## The layers
 
 | Layer | What runs | Where | Drivetrain example |
 | --- | --- | --- | --- |
-| Unit | Tests of one function or class, with no ROS graph and no hardware. Written with the code, at every layer. | Any laptop, and CI on every pull request | The drive hardware plugin's tests call it directly, against a fake motor controller (3.5) |
-| Sim | The real nodes, with every device replaced by a [stand-in](#stand-ins). Always the first layer a component reaches. | Any laptop in the dev container, and CI | The drivetrain on stub hardware (3.3), against a fake controller (3.5), and in Gazebo (3.4) |
-| Bench | The real device on the bench testbed (1.9) | A Linux laptop or the Jetson | 1 to 4 drive motors and their controllers, with no chassis (3.6) |
+| Unit | Tests of one function or class, with no ROS graph and no hardware. Written with the code, at every layer. | Any laptop, and CI on every pull request | The drive hardware plugin's tests call it directly, with fake motor controllers (3.5) |
+| Sim | The real nodes, with every device replaced by a [stand-in](#stand-ins). Always the first layer a component reaches. | Any laptop in the dev container, and CI | The drivetrain on stub hardware (3.3), with fake motor controllers (3.5), and in Gazebo (3.4) |
+| Bench | The real device on the bench testbed (1.9) | A Linux laptop or the Jetson | 1 to 4 drive motors and their motor controllers, with no chassis (3.6) |
 | Robot | The rover: on blocks first, then on the floor | The Jetson on the robot | The drive base, if it is ready by Nov 22 (3.7); the whole rover in spring |
 
 **Bench and Robot work needs Linux,** on the Jetson or a Linux laptop. The dev container
@@ -30,14 +35,26 @@ and two people present].
 ### Stand-ins
 
 In the Sim layer, a stand-in sits where the hardware would be and meets the same
-[hardware line](#the-hardware-line):
+[hardware line](#the-hardware-line). All the code above the line runs with every stand-in;
+they differ in how much of the system's own code below the line runs:
 
-| Stand-in | What it is | Used for |
+| Stand-in | What it replaces | Used for |
 | --- | --- | --- |
-| Stub | A fake that takes the same commands and answers the way the device would. For things that move, ros2_control's `mock_components/GenericSystem`, which mirrors each command to its state ([ros2_control mock components, section "Mock Components"](../sources.md#ros2-control-mock-components)). For sensors, a small node of ours that publishes on the real driver's topics. | Every system, first |
-| Our code with a fake | Our own hardware plugin, running against a fake motor controller that records every call and returns scripted feedback and faults | The drivetrain, the mechanism, and the battery reading |
+| Stub | Everything below the line. For things that move, ros2_control's `mock_components/GenericSystem` takes the place of our hardware plugin and mirrors each command into its state ([ros2_control mock components, section "Mock Components"](../sources.md#ros2-control-mock-components)), so none of our code below the line runs. For sensors, a small node of ours publishes made-up data on the real driver's topics. | Every system, first |
+| Fake motor controllers | Only the motor controllers. Our own hardware plugin runs, the same code as on the robot, and talks to a test version of our motor controller interface: same methods, but it records every call and returns scripted feedback and faults instead of reaching Phoenix 5 and the CAN bus. For the battery reading, the same idea is a fake power panel. | The drivetrain, the mechanism, and the battery reading |
 | Recording | `ros2 bag play` of data recorded from the real device on the bench, on the same topics | Sensors and the gamepad, once the device has been recorded |
 | Gazebo | The simulator, where motion or the world matters. For things that move, `gz_ros2_control` runs the controller manager inside Gazebo ([gz_ros2_control, section "gz_ros2_control"](../sources.md#gz-ros2-control)) and applies each command to a simulated joint ([gz_ros2_control, section "Notes on the command interface"](../sources.md#gz-ros2-control)). Sensors publish through `ros_gz_bridge` on the real driver's topics. | Driving with physics, and what each sensor sees |
+
+### Stub or fake motor controllers?
+
+What runs below the drivetrain's line in each mode:
+
+| Below the hardware line | Stub | Fake motor controllers | Bench and Robot |
+| --- | --- | --- | --- |
+| Our drive hardware plugin: wheel speeds to motor controller outputs, current limits, the enable | No: ROS's ready-made stub runs instead | Yes | Yes |
+| Our motor controller interface for CTRE, the only code that calls Phoenix 5 | No | No: the fake runs instead | Yes |
+| Phoenix 5, the CANable, the motor controllers, and the motors | No | No | Yes |
+| What a test can catch | Mistakes above the line | Also mistakes in our plugin | Also wrong beliefs about the hardware |
 
 ## The hardware line
 
@@ -66,15 +83,18 @@ config:
 ---
 flowchart TB
   above["`**Above the line, the same in every mode**
-teleop or autonomy, the mode manager, and diff_drive_controller`"] <--> line["`**Hardware line:** 4 wheel joints`"]
+teleop or autonomy, the mode manager, and diff_drive_controller (a ros2_control controller)`"] <--> line["`**Hardware line:** 4 wheel joints`"]
   line <--> below
   subgraph below["Below the line: one of these, picked at launch"]
     direction TB
     stub["`**Stub hardware** (Sim)
-mock_components/GenericSystem`"]
-    fake["`**Our drive plugin with a fake motor controller** (Sim)`"]
-    gz["`**gz_ros2_control and Gazebo's physics** (Sim)`"]
-    real["`**Our drive plugin, Phoenix 5, and the real controllers and motors** (Bench and Robot)`"]
+mock_components/GenericSystem, in place of our drive plugin`"]
+    fake["`**Fake motor controllers** (Sim)
+our drive plugin, talking to fake motor controllers`"]
+    gz["`**Gazebo** (Sim)
+gz_ros2_control and Gazebo's physics`"]
+    real["`**Real hardware** (Bench and Robot)
+our drive plugin, Phoenix 5, and the real motor controllers and motors`"]
     stub ~~~ fake ~~~ gz ~~~ real
   end
   classDef ours fill:#4c669026,stroke:#4c6690
@@ -108,8 +128,8 @@ ros2 launch luna_bringup robot.launch.py backend:=stub drivetrain:=real
   `<ros2_control>` tag in the robot description, each with its own plugin
   ([ros2_control getting started, section "Hardware Description in URDF"](../sources.md#ros2-control-getting-started)).
   The drivetrain and the mechanism are separate components, so each one's argument picks
-  its plugin: stub hardware, our plugin with a fake, Gazebo's, or our plugin with the real
-  controllers.
+  its plugin: stub hardware, our plugin with fake motor controllers, Gazebo's, or our
+  plugin with the real motor controllers.
 - **Things that report:** each sensor's argument picks which node the launch file starts on
   that sensor's topics: its stub, its real driver, or its Gazebo sensor.
 
@@ -153,4 +173,4 @@ records:
 | Question | Owner | Due |
 | --- | --- | --- |
 | 1. Where do bench procedures, robot procedures, and test logs live: beside each package's code, or in one folder? The answer becomes a template. | Software lead | 2026-10-28 |
-| 2. The launch arguments' names and values (1.4). These pages use `backend` for the whole robot and each system's name, such as `drivetrain`, for one system, with the values `stub`, `fake`, `gazebo`, and `real`, as an example. | Software lead | 2026-10-21 |
+| 2. The launch arguments' names and values (1.4). These pages use `backend` for the whole robot and each system's name, such as `drivetrain`, for one system, with the values `stub`, `fake_motor_controllers`, `gazebo`, and `real`, as an example. | Software lead | 2026-10-21 |

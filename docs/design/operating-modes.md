@@ -150,7 +150,8 @@ budget workbook turns it into amps and watt-hours.
 | Radio | No power | On | On | On | On | On |
 | Energy logger | On | On | On | On | On | On |
 
-Neutral and Off draw the same current: zero, plus each controller's small standby draw.
+Neutral and Off draw the same current: zero, plus each motor controller's small standby
+draw.
 They differ only in why: Neutral because the robot is not enabled, Off because the task
 mode does not allow that load.
 
@@ -162,7 +163,7 @@ main breaker (R7). [TBR: These are starting values for the electrical lead to co
 the power budget workbook checks them against a 150 A main breaker, where the worst mode,
 EXCAVATE, comes to about 135 A.
 
-| Actuator | Controller | TRAVEL [TBR] | EXCAVATE [TBR] | DUMP [TBR] | SERVICE [TBR] | PDP breaker |
+| Actuator | Motor controller | TRAVEL [TBR] | EXCAVATE [TBR] | DUMP [TBR] | SERVICE [TBR] | PDP breaker |
 | --- | --- | --- | --- | --- | --- | --- |
 | Drive, per motor | [TBR: Talon SRX leader, Victor SPX follower (3.2)] | 30 A | Creep: 20% output, 15 A | Creep: 20% output, 15 A | 15 A | 40 A |
 | Excavator chain | [TBR: Talon SRX, open question 5] | Off | 30 A | Off | 15 A | 40 A |
@@ -188,9 +189,9 @@ a motor carries more current than it draws from the battery. A CIM stalls at 131
 supply limit on a 14.8 V battery still carries about 70 A, and the drivetrain and mechanism docs need their own
 stall detection.
 
-Every controller also runs voltage compensation at 12 V, so a motor behaves the same on a
-full battery as on a nearly empty one, and the 12 V motors and actuators never see more
-than 12 V on average.
+Every motor controller also runs voltage compensation at 12 V, so a motor behaves the same
+on a full battery as on a nearly empty one, and the 12 V motors and actuators never see
+more than 12 V on average.
 
 ## 2. Nodes
 
@@ -207,8 +208,8 @@ than 12 V on average.
 | Node | BOOT | DISABLED | ENABLED, TELEOP | ENABLED, AUTO | FAULT |
 | --- | --- | --- | --- | --- | --- |
 | `mode_manager` | Self-test | Watches heartbeat, faults, battery | Same | Same | Same; waits for a clear |
-| Drivetrain node | Output zero; checks its controllers | Output zero; telemetry | Follows `/cmd_vel` within task limits | Same | Output zero |
-| Mechanism node | Output zero; checks its controllers | Output zero; telemetry | Follows operator commands within task limits | Follows sequencer commands within task limits | Output zero |
+| Drivetrain node | Output zero; checks its motor controllers | Output zero; telemetry | Follows `/cmd_vel` within task limits | Same | Output zero |
+| Mechanism node | Output zero; checks its motor controllers | Output zero; telemetry | Follows operator commands within task limits | Follows sequencer commands within task limits | Output zero |
 | Teleop (operator laptop) | Heartbeat | Heartbeat; mode requests | Gamepad commands | Heartbeat and mode requests only; gamepad ignored | Heartbeat; clear request |
 | Sensor drivers | Starting | Running | Running | Running | Running |
 | Localization and mapping | Starting | Running, so AUTO needs no warm-up | Running | Running | Running |
@@ -290,10 +291,10 @@ string reason
 | `mode_timeout` | Drivetrain and mechanism nodes | double | 0.3 | s | If the last `/robot/mode` is older than this, act as DISABLED |
 | `allow_service` | `mode_manager` | bool | false | | Allow the SERVICE task mode. False at competition. |
 | `selftest_timeout` | `mode_manager` | double | 60.0 | s | Time BOOT waits for every check before entering FAULT |
-| `expected_can_devices` | `mode_manager` | string array | | | The controllers and PDP the self-test requires |
+| `expected_can_devices` | `mode_manager` | string array | | | The motor controllers and PDP the self-test requires |
 | `creep_output` | Drivetrain node | double | 0.2 | fraction | Largest drive output in EXCAVATE and DUMP |
 | `current_limit.<actuator>.<task>` | Drivetrain and mechanism nodes | double | See [Current limits per mode](#current-limits-per-mode) | A | Supply current limit for each actuator in each task mode |
-| `voltage_compensation` | Drivetrain and mechanism nodes | double | 12.0 | V | Controllers scale their output to this voltage |
+| `voltage_compensation` | Drivetrain and mechanism nodes | double | 12.0 | V | Motor controllers scale their output to this voltage |
 | `battery_cells` | `mode_manager` | int | 4 | | Cells in series in the main battery |
 | `cell_warn_v` | `mode_manager` | double | 3.5 | V | Below this per cell, warn the operator (4S LiPo value) |
 | `cell_critical_v` | `mode_manager` | double | 3.3 | V | Below this per cell for `low_voltage_hold`, halve every current limit (4S LiPo value) |
@@ -309,15 +310,15 @@ The battery thresholds are for LiPo cells and change if the battery does (open q
   ([Phoenix C++ API, section "FeedEnable()"](../sources.md#ctre-phoenix5-unmanaged-api)).
   Our code passes 100 ms. The enable frame (`000401BF` in
   `candump`, see [CAN bus](../can-bus.md)) carries no device number, so it looks like it
-  enables every CTRE controller on the bus, whichever process sends it. Exactly one
+  enables every CTRE motor controller on the bus, whichever process sends it. Exactly one
   process may feed it, and only while ENABLED (open question 6).
 - **PDP over CAN.** The PDP reports battery voltage, the current on each channel, and the
   energy used ([PDP User's Guide, pp. 17-20](../sources.md#ctre-pdp-guide)), which feed
   `/power/battery`. Logging them by mode checks the power budget
   against real runs, and shows the energy score before the judges' logger does.
-- **Controller settings.** Each node sets its controllers' current limits, voltage
-  compensation, and neutral mode from parameters at startup: brake for the drive motors
-  and hatch, so they hold still when disabled, and coast for the excavator chain.
+- **Motor controller settings.** Each node sets its motor controllers' current limits,
+  voltage compensation, and neutral mode from parameters at startup: brake for the drive
+  motors and hatch, so they hold still when disabled, and coast for the excavator chain.
 - **E-stop, main breaker, and energy logger.** Hardware only, with no software interface.
   The power path, with the Jetson fed straight from the battery (its carrier takes 9 to
   20 V, [carrier board specification, p. 7](../sources.md#nvidia-orin-nano-carrier-spec)):
@@ -346,7 +347,7 @@ flowchart TB
   mm -.-> seq
   mm -.-> hw[drivetrain and mechanism nodes]
   hw -- "/diagnostics, /power/battery" --> mm
-  hw -- FeedEnable, only while ENABLED --> ctre[CTRE controllers]
+  hw -- FeedEnable, only while ENABLED --> ctre[CTRE motor controllers]
 ```
 
 The dotted arrows are `/robot/mode`, which every node follows.
@@ -357,12 +358,12 @@ The dotted arrows are `/robot/mode`, which every node follows.
 | --- | --- | --- |
 | Operator link lost | No heartbeat for `link_timeout` | ENABLED becomes DISABLED with the reason "link lost". The operator enables again once the link is back. This applies in AUTO too, because while the link is down the robot cannot hear the power-off command ([§13.9.19, p. 45](../sources.md#nasa-lunabotics-guidebook-2027)). |
 | `mode_manager` stops | `/robot/mode` older than `mode_timeout` | Each actuator node sets its outputs to zero and the enable stops being fed |
-| The node feeding the enable stops | The Phoenix enable times out | Controllers disable themselves within 100 ms |
+| The node feeding the enable stops | The Phoenix enable times out | Motor controllers disable themselves within 100 ms |
 | Drive commands stop | `/cmd_vel` older than the drivetrain's timeout (drivetrain doc) | Drive output zero; mode unchanged |
-| A controller or the PDP is missing or faulted | Missing CAN status, or an ERROR on `/diagnostics` | FAULT |
+| A motor controller or the PDP is missing or faulted | Missing CAN status, or an ERROR on `/diagnostics` | FAULT |
 | E-stop pressed | Hardware cuts power | Everything stops. After the reset, the robot boots, or enters FAULT if the Jetson stayed up; the operator clears and enables. |
 | Battery low | `/power/battery` below `cell_critical_v` per cell for `low_voltage_hold` | Every current limit halves and the operator is warned. The robot keeps running. |
-| Jetson browns out | The Jetson resets | The enable stops, so controllers disable within 100 ms; the robot boots to DISABLED. Current limits prevent this by keeping the battery above the Jetson's and VRM's minimum inputs. |
+| Jetson browns out | The Jetson resets | The enable stops, so motor controllers disable within 100 ms; the robot boots to DISABLED. Current limits prevent this by keeping the battery above the Jetson's and VRM's minimum inputs. |
 | A mode request breaks a guard | `mode_manager` checks guards | Refused with a reason; the mode does not change |
 | A guard sensor fails | Mechanism status missing or implausible | Modes guarded by it are refused. The team uses SERVICE in the pits to fix it. |
 
@@ -376,7 +377,7 @@ The dotted arrows are `/robot/mode`, which every node follows.
 | R4 | Press and reset the E-stop while ENABLED; nothing moves until clear and enable | Robot | Not run |
 | R5 | Inspection checklist ([§12.1, p. 40](../sources.md#nasa-lunabotics-guidebook-2027)); with the E-stop pressed, measure every rail at zero except the logger and any compute battery | Robot | Not run |
 | R6 | Read the logger, press and reset the E-stop, read it again: unchanged | Robot | Not run |
-| R7 | The budget workbook's Protection sheet passes for every mode, and each limit read back from its controller matches the parameter | Bench | Not run |
+| R7 | The budget workbook's Protection sheet passes for every mode, and each limit read back from its motor controller matches the parameter | Bench | Not run |
 | R8 | Switch TELEOP to AUTO and back while driving on fake planner output; gamepad input in AUTO has no effect | Laptop | Not run |
 | R9 | Disable from every state and task mode | Bench | Not run |
 | R10 | Measure average bandwidth in each mode with `ros2 topic bw` | Bench | Not run |
@@ -389,8 +390,8 @@ The dotted arrows are `/robot/mode`, which every node follows.
 | 2. Does the robot drive while digging? A comment on the Spring 2026 power budget (cell M3) asks the same. If not, EXCAVATE allows no drive. | Mechanical lead | 2026-10-25 |
 | 3. Does the conveyor run during DUMP? | Mechanical lead | 2026-10-25 |
 | 4. Which sensors tell software that the excavator is stowed and the hatch is closed? The entry guards need them. | Mechanical and electrical leads | 2026-11-01 |
-| 5. Which controller runs each mechanism motor? Motors that need a current limit must be on a Talon SRX: the excavator's 775 RedLine (130 A stall, [test report, p. 1](../sources.md#andymark-775-redline-report)) and the depth actuators (about 50 A stall, [Pololu product page, section "Using the actuator"](../sources.md#pololu-lact18-500apl)). | Electrical lead | 2026-11-01 |
-| 6. Does one process's Phoenix enable keep another process's controllers enabled? This decides which node feeds the enable and owns CTRE access. Test on the bench. | Drivetrain owner | 2026-10-25 |
+| 5. Which motor controller runs each mechanism motor? Motors that need a current limit must be on a Talon SRX: the excavator's 775 RedLine (130 A stall, [test report, p. 1](../sources.md#andymark-775-redline-report)) and the depth actuators (about 50 A stall, [Pololu product page, section "Using the actuator"](../sources.md#pololu-lact18-500apl)). | Electrical lead | 2026-11-01 |
+| 6. Does one process's Phoenix enable keep another process's motor controllers enabled? This decides which node feeds the enable and owns CTRE access. Test on the bench. | Drivetrain owner | 2026-10-25 |
 | 7. Give the Jetson its own battery ([§13.2.11, p. 42](../sources.md#nasa-lunabotics-guidebook-2027)), so an E-stop does not reboot it or cut its logs? | Electrical lead and software lead | 2026-11-01 |
 | 8. Ask the organizers: does energy used during the 10-minute setup count, and does a separate compute battery have to go through the energy logger? | Software lead | 2026-10-25 |
 | 9. Should `link_timeout` be longer in AUTO, to ride through Wi-Fi dropouts? Measure dropouts in the pits first. | Teleop owner | 2026-11-08 |

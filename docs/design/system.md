@@ -56,9 +56,9 @@ each system in each test mode.
 
 | System | What crosses the line | Stand-ins below it | Design doc |
 | --- | --- | --- | --- |
-| Drivetrain | 4 wheel joints, 2 per side: a velocity command in; velocity and position out, and current where the controller measures it | Stub hardware, our plugin with a fake controller, Gazebo | `drivetrain.md` (3.1) |
-| Mechanism | Each mechanism joint's command and state, plus [TBD: the limit switch and stowed signals, which the mechanism doc defines (4.2)] | Stub hardware, our plugin with a fake controller | `mechanism.md` (4.2) |
-| Battery and power | `/power/battery` (`sensor_msgs/msg/BatteryState`, 10 Hz) and `/diagnostics` | A stub node, our panel reading with a fake | [Operating modes](operating-modes.md#3-interfaces) |
+| Drivetrain | 4 wheel joints, 2 per side: a velocity command in; velocity and position out, and current where the motor controller measures it | Stub hardware, fake motor controllers, Gazebo | `drivetrain.md` (3.1) |
+| Mechanism | Each mechanism joint's command and state, plus [TBD: the limit switch and stowed signals, which the mechanism doc defines (4.2)] | Stub hardware, fake motor controllers | `mechanism.md` (4.2) |
+| Battery and power | `/power/battery` (`sensor_msgs/msg/BatteryState`, 10 Hz) and `/diagnostics` | A stub node, a fake power panel | [Operating modes](operating-modes.md#3-interfaces) |
 | LiDAR | The Unitree L2's point cloud and its built-in IMU, as Unitree's driver publishes them: by default `unilidar/cloud` in frame `unilidar_lidar` and `unilidar/imu` in frame `unilidar_imu` ([unitree_lidar_ros2 launch file](../sources.md#unitree-lidar-ros2-launch)) | A stub node, a recording, Gazebo | `sensors.md` (6.2) |
 | Dedicated IMU | One `sensor_msgs/msg/Imu`: angular velocity from the gyroscope and linear acceleration from the accelerometer, in the IMU's own frame near the center of mass. No magnetometer. | A stub node, a recording, Gazebo | `sensors.md` (6.2) |
 | Cameras | [TBD: the image and camera info topics and frames of the cameras chosen in 6.1] | A test-pattern stub, a recording, Gazebo | `sensors.md` (6.2) |
@@ -263,7 +263,7 @@ mode manager, drive, sensors`"]
 | Failure | How it is detected | What happens |
 | --- | --- | --- |
 | The link drops: the access point, the robot's radio, or the cable | No operator heartbeat for `link_timeout` | The robot disables itself, as the [operating modes design](operating-modes.md#7-behavior-on-failure) says |
-| The CANable is unplugged or the CAN bus fails | Every controller's status goes missing | FAULT, as the operating modes design says |
+| The CANable is unplugged or the CAN bus fails | Every motor controller's status goes missing | FAULT, as the operating modes design says |
 | A sensor stops publishing | [TBD: defined in the sensors doc (6.2)] | [TBD: defined in the sensors doc (6.2)] |
 | A stand-in no longer matches its real driver | The Bench run compares the driver's topics, message types, frames, and rates with the stub | The stub is fixed to match, in the pull request that records the Bench run |
 

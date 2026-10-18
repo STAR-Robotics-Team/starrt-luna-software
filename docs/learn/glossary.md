@@ -83,6 +83,9 @@ one links to the page that explains it properly.
   [The arena and a run](../competition/arena-and-runs.md#the-arenas-layout)
 - **Executable:** a program a package provides, started with `ros2 run`.
   [ROS 2 basics](ros2-basics.md#packages-and-the-workspace)
+- **Fake motor controllers:** a test stand-in for the motor controllers only. Our own
+  hardware code runs as it will on the robot, but talks to pretend motor controllers that
+  record every command and answer with scripted feedback. [Testing layers](../design/testing-layers.md#stand-ins)
 - **Feedback:** the progress reports an action server sends while it works on a goal.
   [Services, actions, and parameters](ros2-services-actions-parameters.md#three-ways-to-talk)
 - **Fingerprint (SHA-256):** a code computed from every byte of a file. If the file
@@ -99,6 +102,10 @@ one links to the page that explains it properly.
 - **Goal:** the job an action client asks an action server to do. [Services, actions, and parameters](ros2-services-actions-parameters.md#three-ways-to-talk)
 - **Hands-free:** nobody touching the controls, so the robot is working autonomously.
   [How scoring works](../competition/scoring.md#the-cycle-segments)
+- **Hardware line:** the contract between a hardware system and the code above it, such
+  as its topics or joints. Every stand-in and the real driver must meet it, so the code
+  above runs the same in every test.
+  [Testing layers](../design/testing-layers.md#the-hardware-line)
 - **Heartbeat:** a small message the operator laptop sends many times a second so the
   robot knows the link is alive. If it stops arriving, the robot stops.
   [Operating modes](../design/operating-modes.md)
@@ -135,6 +142,9 @@ one links to the page that explains it properly.
 - **Mission cycle:** the robot's repeating job: dig, carry the regolith across the
   obstacles, dump it on the berm, and drive back.
   [The Lunabotics competition](../competition/README.md#what-the-robot-does)
+- **Motor controller:** a hardware box, such as a Talon SRX, that sets how much power a
+  motor gets when the computer tells it to. Not the same as a ros2_control controller.
+  [CAN bus](../can-bus.md)
 - **Mount:** sharing a folder from your computer into a container. The dev container
   mounts your clone at `/ws`, so both see the same files.
   [Containers](containers.md#mounting-how-your-files-get-into-the-container)
@@ -198,6 +208,10 @@ one links to the page that explains it properly.
 - **Result:** what an action server sends back when it finishes a goal. [Services, actions, and parameters](ros2-services-actions-parameters.md#three-ways-to-talk)
 - **ROS 2:** Robot Operating System 2, the framework that lets the robot's programs talk
   to each other. [ROS 2 basics](ros2-basics.md)
+- **ros2_control controller:** software in ros2_control, such as `diff_drive_controller`,
+  that turns a command like "drive forward at 0.5 m/s" into a command for each joint.
+  Not the same as a motor controller.
+  [Testing layers](../design/testing-layers.md#testing-layers)
 - **rosdep:** the tool that installs the system software each package says it needs. Our
   `scripts/install_deps.sh` runs it. [Everyday workflow](../everyday-workflow.md#what-to-do-after-a-change)
 - **rqt:** a set of small ROS tools with windows, such as `rqt_graph` and `rqt_console`.
@@ -224,8 +238,13 @@ one links to the page that explains it properly.
   events arrive, until you press Ctrl+C. [Write your first node](ros2-first-node.md#what-each-part-does)
 - **Staging:** choosing which changes go into your next Git commit, with `git add`.
   [Git and GitHub](git-and-github.md#save-a-snapshot-git-add-and-git-commit)
+- **Stand-in:** anything that takes the place of a real device in a test, such as a stub,
+  fake motor controllers, a recording, or Gazebo. [Testing layers](../design/testing-layers.md#stand-ins)
 - **Starting zone:** the 2 m by 2 m corner of the arena where the robot begins each run.
   [The arena and a run](../competition/arena-and-runs.md#the-arenas-layout)
+- **Stub:** a stand-in for everything below a system's hardware line, so none of that
+  system's own hardware code runs: ros2_control's ready-made stub for things that move,
+  or a small node that publishes made-up data for a sensor. [Testing layers](../design/testing-layers.md#stand-ins)
 - **Subscribe:** receive messages from a ROS topic.
   [ROS 2 basics](ros2-basics.md#nodes-topics-and-messages)
 - **`sudo`:** run a command as an administrator.
