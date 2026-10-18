@@ -409,6 +409,18 @@ checked = 2026-10-18
 notes = "The default topic and frame names of the L2's ROS 2 driver."
 
 [[source]]
+id = "ros2-control-getting-started"
+primary = true
+group = "Software references"
+title = "ros2_control: Getting Started"
+publisher = "ros-controls"
+url = "https://control.ros.org/jazzy/doc/getting_started/getting_started.html"
+format = "web"
+expect = "Hardware Description in URDF"
+checked = 2026-10-18
+notes = "How ros2_control is put together, and how a robot description lists each hardware component with its own plugin."
+
+[[source]]
 id = "ros2-control-mock-components"
 primary = true
 group = "Software references"

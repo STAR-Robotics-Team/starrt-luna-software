@@ -16,8 +16,11 @@ by Oct 28.
 - R1. Every hardware system has one hardware line, which its stand-ins and its real driver
   all meet, so the code above the line runs unchanged in every test mode
   ([Testing layers](testing-layers.md#the-hardware-line)).
-- R2. One launch argument picks stand-ins or real hardware for the whole robot, with no
-  code change. Deliverable 1.4 decides how.
+- R2. Launch arguments pick stand-ins or real hardware with no code change: one for the
+  whole robot, and one per system that overrides it, so a run can mix a real drivetrain
+  with stubs for everything else
+  ([Testing layers](testing-layers.md#choosing-stand-ins-per-system)). Deliverable 1.4
+  decides how.
 - R3. The operator station reaches the robot only through the team's access point and
   NASA's cable. A back channel, such as a phone or laptop connecting to the access point
   directly, means disqualification ([§14.5, p. 50](../sources.md#nasa-lunabotics-guidebook-2027)).
@@ -108,8 +111,8 @@ stub, recording, and Gazebo modes, as [Testing layers](testing-layers.md) descri
 
 ## 4. Parameters
 
-The launch argument that picks stand-ins or real hardware is named in deliverable 1.4, by
-Oct 21. The conventions for topic names, QoS, frames, and parameter files come with the
+The launch arguments that pick stand-ins or real hardware, one for the whole robot and one
+per system, are named in deliverable 1.4, by Oct 21. The conventions for topic names, QoS, frames, and parameter files come with the
 node graph, by Oct 28.
 
 ## 5. Libraries and hardware interfaces
@@ -268,7 +271,7 @@ mode manager, drive, sensors`"]
 | Requirement | Test | Where | Result |
 | --- | --- | --- | --- |
 | R1 | Each system's Bench log shows the real driver providing exactly what its stub does | Bench | Not run |
-| R2 | The whole robot launches on stubs, then on real hardware, by changing only the launch argument (deliverable 1.11) | Sim, then Robot | Not run |
+| R2 | The whole robot launches on stubs from the whole-robot argument (deliverable 1.11). Then one system's own argument switches it to real hardware while the rest stay on stubs, and a mix that breaks the rules is refused. | Sim, then Bench | Not run |
 | R3 | Communications check rehearsal: control the robot through the access point, with every other radio off | Robot | Not run |
 | R4 | Measure the average bandwidth of a practice run at the access point's cable | Bench | Not run |
 | R5 | `ros2 topic list` on the running robot shows no magnetometer topic, and the dedicated IMU's driver settings leave the magnetometer out | Robot | Not run |
@@ -282,7 +285,7 @@ mode manager, drive, sensors`"]
 | 2. Which dedicated IMU and cameras, and how does each connect to the Jetson? (6.1) | Sensor suite evaluation owner | 2026-10-27 |
 | 3. Which drive motor controllers? (3.2) | Drivetrain owner, with the electrical lead | 2026-10-28 |
 | 4. Which mechanism motor controllers? (4.3) | Mechanism owner, with the electrical lead | 2026-11-01 |
-| 5. How do stand-ins swap in for hardware, and what is the launch argument called? (1.4) | Software lead | 2026-10-21 |
+| 5. How do stand-ins swap in for hardware, system by system, and what are the launch arguments called? (1.4) | Software lead | 2026-10-21 |
 | 6. May the robot use 5 GHz during runs? The guidebook's §14.1.17 and §14.4 disagree ([Rules the robot must follow](../competition/robot-rules.md#communications)). Ask the organizers. | Radio link evaluation owner | 2026-10-21 |
 
 ## Handoff

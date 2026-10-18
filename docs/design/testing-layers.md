@@ -49,10 +49,10 @@ real driver all meet:
 - **For sensors and the gamepad,** it is the topics, message types, frames, and rates the
   real driver publishes.
 
-Code above the line is the same in every mode; only what sits below it changes. A launch
-argument picks what sits below the line for the whole robot, with no code change
-(deliverable 1.4 decides how). Each system's design doc states its line, and the
-[system design](system.md#hardware-lines) lists them all.
+Code above the line is the same in every mode; only what sits below it changes, picked at
+launch for each system on its own (see
+[Choosing stand-ins per system](#choosing-stand-ins-per-system)). Each system's design doc
+states its line, and the [system design](system.md#hardware-lines) lists them all.
 
 The drivetrain's line, with the four things that can sit below it. Exactly one of them
 runs at a time:
@@ -92,6 +92,35 @@ mock_components/GenericSystem`"]
 two keep meeting the same line. When a Bench run finds the real driver publishing
 something the stub does not, the stub is fixed to match.
 
+## Choosing stand-ins per system
+
+Each system picks what sits below its own line, so one run can mix them, such as the real
+drivetrain on the bench with every sensor on a stub. One launch argument sets every system
+at once, and each system's own argument overrides it. Deliverable 1.4 names the arguments;
+with the names these pages use as an example, that bench run would start like this:
+
+```bash
+ros2 launch luna_bringup robot.launch.py backend:=stub drivetrain:=real
+```
+
+- **Things that move:** ros2_control describes each hardware component in its own
+  `<ros2_control>` tag in the robot description, each with its own plugin
+  ([ros2_control getting started, section "Hardware Description in URDF"](../sources.md#ros2-control-getting-started)).
+  The drivetrain and the mechanism are separate components, so each one's argument picks
+  its plugin: stub hardware, our plugin with a fake, Gazebo's, or our plugin with the real
+  controllers.
+- **Things that report:** each sensor's argument picks which node the launch file starts on
+  that sensor's topics: its stub, its real driver, or its Gazebo sensor.
+
+Not every mix works. The launch file refuses one that breaks these rules, and says which:
+
+| Rule | Why |
+| --- | --- |
+| Real hardware never runs with Gazebo or a recording | Every node must run on one clock. A real driver stamps its data with the computer's clock, while Gazebo, and a recording played with its clock, run the robot on a simulated one. Data on two clocks breaks transforms and timeouts. |
+| Gazebo and a recording never run together | Each brings its own simulated clock. |
+| Stubs run with anything | A stub stamps its data with whichever clock the robot runs on. |
+| Systems that share a driver switch together | If the power panel reading lives in the drive plugin ([operating modes design](operating-modes.md#9-open-questions), open question 6), battery and power follow the drivetrain. |
+
 ## Gates
 
 A component moves up a layer only when it passes that layer's gate:
@@ -123,4 +152,4 @@ records:
 | Question | Owner | Due |
 | --- | --- | --- |
 | 1. Where do bench procedures, robot procedures, and test logs live: beside each package's code, or in one folder? The answer becomes a template. | Software lead | 2026-10-28 |
-| 2. The launch argument's name and values (1.4). The [hardware test modes](hardware-test-modes.md) use `backend` with `stub`, `fake`, `gazebo`, and `real` as an example. | Software lead | 2026-10-21 |
+| 2. The launch arguments' names and values (1.4). These pages use `backend` for the whole robot and each system's name, such as `drivetrain`, for one system, with the values `stub`, `fake`, `gazebo`, and `real`, as an example. | Software lead | 2026-10-21 |

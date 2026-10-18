@@ -14,7 +14,7 @@ the doc, and cite the page.
   primary source wins.
 - **To cite a source or add one,** see [Cite sources](writing-docs.md#cite-sources).
 
-34 sources, 31 of them primary, cited 237 times. PDF page
+35 sources, 32 of them primary, cited 238 times. PDF page
 numbers are the ones a PDF viewer shows, so each link opens the PDF at the cited page. This
 page is generated from `docs/sources.toml` by `scripts/sources render`.
 
@@ -324,6 +324,16 @@ Open Robotics, *REP 2000: ROS 2 Releases and Target Platforms*. [Open the web pa
 - **Used for:** Which operating systems each ROS 2 release supports, and at which tier.
 - **Cited at:**
     - [Development environment](development-environment.md): [section "Jazzy Jalisco (May 2024 - May 2029)"](https://www.ros.org/reps/rep-2000.html#:~:text=Jazzy%20Jalisco%20%28May%202024%20%2D%20May%202029%29)
+
+### `ros2-control-getting-started`
+
+ros-controls, *ros2_control: Getting Started*. [Open the web page](https://control.ros.org/jazzy/doc/getting_started/getting_started.html).
+
+- **Primary source.**
+- **Checked:** 2026-10-18
+- **Used for:** How ros2_control is put together, and how a robot description lists each hardware component with its own plugin.
+- **Cited at:**
+    - [Testing Layers](design/testing-layers.md): [section "Hardware Description in URDF"](https://control.ros.org/jazzy/doc/getting_started/getting_started.html#:~:text=Hardware%20Description%20in%20URDF)
 
 ### `ros2-control-mock-components`
 
