@@ -2,7 +2,7 @@
 
 Why a build only runs where it was built for, and how code gets built for the robot's
 NVIDIA Jetson. Which approach the robot uses is still being decided: the platform
-workstream chooses one in deliverables 2.4 (Jetson bring-up) and 2.5 (robot deployment)
+workstream chooses one in deliverables 2.9 (Jetson bring-up) and 2.10 (robot deployment)
 and records it in the platform design doc.
 
 ## Why a build is tied to its environment

@@ -7,8 +7,8 @@
 This doc defines every mode the robot can be in: what has power, what may move, which
 software runs, and how the robot moves between modes. Software enforces these modes, and
 the power budget computes one load case per mode, so both describe the same robot. The
-system design doc's stop behavior (deliverable 1.2) builds on it, and the drivetrain,
-mechanism, teleoperation, and autonomy docs follow it.
+[system design](system.md) (deliverable 1.5) builds on it, and the drivetrain, mechanism,
+teleoperation, and autonomy docs follow it.
 
 ## 1. Purpose and requirements
 

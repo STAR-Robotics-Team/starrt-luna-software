@@ -14,7 +14,7 @@ the doc, and cite the page.
   primary source wins.
 - **To cite a source or add one,** see [Cite sources](writing-docs.md#cite-sources).
 
-29 sources, 26 of them primary, cited 221 times. PDF page
+34 sources, 31 of them primary, cited 237 times. PDF page
 numbers are the ones a PDF viewer shows, so each link opens the PDF at the cited page. This
 page is generated from `docs/sources.toml` by `scripts/sources render`.
 
@@ -44,6 +44,7 @@ NASA and the Astronauts Memorial Foundation, *NASA Lunabotics Challenge Guideboo
     - [Rules the robot must follow](competition/robot-rules.md): [p. 15](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=15), [p. 30](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=30), [pp. 31-32](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=31), [p. 32](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=32), [p. 40](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=40), [p. 41](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=41), [pp. 41-42](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=41), [pp. 41-44](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=41), [p. 42](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=42), [pp. 42-43](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=42), [p. 43](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=43), [pp. 43-44](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=43), [p. 44](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=44), [pp. 44-45](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=44), [p. 45](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=45), [pp. 47-48](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=47), [p. 48](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=48), [pp. 48-49](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=48), [p. 49](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=49), [pp. 49-50](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=49), [p. 52](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=52), [p. 55](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=55), [p. 56](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=56), [p. 59](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=59)
     - [How scoring works](competition/scoring.md): [p. 13](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=13), [p. 17](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=17), [pp. 36-37](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=36), [p. 41](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=41), [p. 48](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=48), [pp. 48-49](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=48), [p. 53](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=53), [p. 54](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=54), [p. 55](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=55), [pp. 55-56](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=55), [pp. 55-59](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=55), [p. 56](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=56), [pp. 56-57](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=56), [p. 57](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=57), [p. 58](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=58), [pp. 58-59](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=58), [p. 59](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=59), [pp. 59-61](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=59), [pp. 59-62](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=59), [p. 60](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=60), [pp. 60-61](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=60), [p. 61](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=61), [pp. 61-62](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=61), [p. 62](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=62), [p. 66](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=66), [p. 69](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=69), [p. 77](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=77), [p. 78](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=78)
     - [Operating Modes Design](design/operating-modes.md): [p. 7](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=7), [p. 40](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=40), [p. 41](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=41), [pp. 41-42](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=41), [p. 42](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=42), [p. 45](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=45), [p. 48](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=48), [p. 54](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=54), [p. 55](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=55), [pp. 55-56](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=55), [pp. 55-57](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=55), [p. 60](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=60)
+    - [System Design](design/system.md): [p. 43](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=43), [pp. 47-48](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=47), [p. 48](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=48), [p. 49](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=49), [p. 50](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=50)
 
 ## Datasheets and manuals
 
@@ -151,7 +152,9 @@ Unitree, *Unitree 4D LiDAR L2 User Manual* (As downloaded 2026-10-07). [Open the
 - **Primary source.**
 - **Fingerprint:** SHA-256 `95a3e52ce5fa1cc9`, checked 2026-10-07.
 - **Used for:** Supply voltage and power, including the self-heating peak.
-- **Cited at:** not cited in these docs yet
+- **Cited at:**
+    - [Hardware Test Modes](design/hardware-test-modes.md): [p. 17](https://oss-global-cdn.unitree.com/static/Unitree%204D%20LiDAR%20L2%20User%20Manual.pdf#page=17)
+    - [System Design](design/system.md): [p. 12](https://oss-global-cdn.unitree.com/static/Unitree%204D%20LiDAR%20L2%20User%20Manual.pdf#page=12), [p. 17](https://oss-global-cdn.unitree.com/static/Unitree%204D%20LiDAR%20L2%20User%20Manual.pdf#page=17)
 
 ## Vendor and product pages
 
@@ -173,6 +176,16 @@ AndyMark, *NeveRest Series Motor Only*. [Open the web page](https://www.andymark
 - **Used for:** Conveyor and hatch motor specifications.
 - **Cited at:**
     - [Operating Modes Design](design/operating-modes.md): [whole source](https://www.andymark.com/products/neverest-series-motor-only)
+
+### `glinet-network-modes`
+
+GL.iNet, *Network Mode*. [Open the web page](https://docs.gl-inet.com/router/en/4/interface_guide/network_mode/).
+
+- **Primary source.**
+- **Checked:** 2026-10-18
+- **Used for:** What the team's Beryl AX (GL-MT3000) access point does in Router mode and in Access Point mode.
+- **Cited at:**
+    - [System Design](design/system.md): [section "For models with Wi-Fi"](https://docs.gl-inet.com/router/en/4/interface_guide/network_mode/#:~:text=For%20models%20with%20Wi%2DFi)
 
 ### `liperior-16000-4s-page`
 
@@ -242,6 +255,16 @@ CTRE, *CTRE Phoenix C++: ctre::phoenix::unmanaged::Unmanaged Class Reference*. [
 - **Cited at:**
     - [Operating Modes Design](design/operating-modes.md): [section "FeedEnable()"](https://api.ctr-electronics.com/phoenix/stable/cpp/classctre_1_1phoenix_1_1unmanaged_1_1_unmanaged.html#:~:text=FeedEnable%28%29)
 
+### `gz-ros2-control`
+
+ros-controls, *gz_ros2_control*. [Open the web page](https://control.ros.org/jazzy/doc/gz_ros2_control/doc/index.html).
+
+- **Primary source.**
+- **Checked:** 2026-10-18
+- **Used for:** How ros2_control runs inside Gazebo: the controller manager in the simulator, and commands applied to simulated joints.
+- **Cited at:**
+    - [Testing Layers](design/testing-layers.md): [section "Notes on the command interface"](https://control.ros.org/jazzy/doc/gz_ros2_control/doc/index.html#:~:text=Notes%20on%20the%20command%20interface), [section "gz_ros2_control"](https://control.ros.org/jazzy/doc/gz_ros2_control/doc/index.html#:~:text=gz_ros2_control)
+
 ### `nvidia-jetson-can-r38-4`
 
 NVIDIA, *Jetson Linux Developer Guide r38.4: Controller Area Network (CAN)*. [Open the web page](https://docs.nvidia.com/jetson/archives/r38.4/DeveloperGuide/HR/ControllerAreaNetworkCan.html).
@@ -282,6 +305,16 @@ Open Robotics, *REP 105: Coordinate Frames for Mobile Platforms*. [Open the web 
 - **Cited at:**
     - [Frames, tf2, and RViz](learn/ros2-frames-and-rviz.md): [whole source](https://www.ros.org/reps/rep-0105.html), [section "Relationship between Frames"](https://www.ros.org/reps/rep-0105.html#:~:text=Relationship%20between%20Frames), [section "base_link"](https://www.ros.org/reps/rep-0105.html#:~:text=base_link), [section "map"](https://www.ros.org/reps/rep-0105.html#:~:text=map), [section "odom"](https://www.ros.org/reps/rep-0105.html#:~:text=odom)
 
+### `ros-rep-145`
+
+Open Robotics, *REP 145: Conventions for IMU Sensor Drivers*. [Open the web page](https://www.ros.org/reps/rep-0145.html).
+
+- **Primary source.**
+- **Checked:** 2026-10-18
+- **Used for:** How IMU drivers group gyroscope and accelerometer data in one message, where magnetometer data goes, and how to name a second IMU's topics. Still a draft REP.
+- **Cited at:**
+    - [System Design](design/system.md): [section "Namespacing"](https://www.ros.org/reps/rep-0145.html#:~:text=Namespacing), [section "Topics"](https://www.ros.org/reps/rep-0145.html#:~:text=Topics)
+
 ### `ros-rep-2000`
 
 Open Robotics, *REP 2000: ROS 2 Releases and Target Platforms*. [Open the web page](https://www.ros.org/reps/rep-2000.html).
@@ -291,6 +324,26 @@ Open Robotics, *REP 2000: ROS 2 Releases and Target Platforms*. [Open the web pa
 - **Used for:** Which operating systems each ROS 2 release supports, and at which tier.
 - **Cited at:**
     - [Development environment](development-environment.md): [section "Jazzy Jalisco (May 2024 - May 2029)"](https://www.ros.org/reps/rep-2000.html#:~:text=Jazzy%20Jalisco%20%28May%202024%20%2D%20May%202029%29)
+
+### `ros2-control-mock-components`
+
+ros-controls, *ros2_control: Mock Components*. [Open the web page](https://control.ros.org/jazzy/doc/ros2_control/hardware_interface/doc/mock_components_userdoc.html).
+
+- **Primary source.**
+- **Checked:** 2026-10-18
+- **Used for:** The stub hardware ros2_control provides: what GenericSystem does with commands and states.
+- **Cited at:**
+    - [Testing Layers](design/testing-layers.md): [section "Mock Components"](https://control.ros.org/jazzy/doc/ros2_control/hardware_interface/doc/mock_components_userdoc.html#:~:text=Mock%20Components)
+
+### `unitree-lidar-ros2-launch`
+
+Unitree, *unilidar_sdk2: unitree_lidar_ros2 launch file (launch.py)* (main branch at commit 0e3c51f, 2025-03-10). [Open the web page](https://github.com/unitreerobotics/unilidar_sdk2/blob/main/unitree_lidar_ros2/src/unitree_lidar_ros2/launch/launch.py).
+
+- **Primary source.**
+- **Checked:** 2026-10-18
+- **Used for:** The default topic and frame names of the L2's ROS 2 driver.
+- **Cited at:**
+    - [System Design](design/system.md): [whole source](https://github.com/unitreerobotics/unilidar_sdk2/blob/main/unitree_lidar_ros2/src/unitree_lidar_ros2/launch/launch.py)
 
 ## Engineering practice
 
