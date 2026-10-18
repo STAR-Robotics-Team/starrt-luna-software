@@ -4,7 +4,7 @@
 #   base  ROS 2 plus the tools to build and run the workspace, no GUI
 #   dev   base plus desktop tools (RViz, rqt, demos); the dev container uses it
 #
-# CI and the Jetson can build from "base" (deliverables 2.3 and 2.4).
+# CI and the Jetson can build from "base" (deliverables 2.5 and 2.9).
 
 FROM ros:jazzy-ros-base AS base
 

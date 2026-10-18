@@ -129,14 +129,16 @@ later, see [One clone, one environment](#one-clone-one-environment).
 
 | | Dev container on Linux | Dev container on macOS or Windows | Ubuntu 24.04 without a container |
 | --- | --- | --- | --- |
-| Build, test, and run nodes | Yes | Yes\* | Yes |
-| Programs with windows (RViz, rqt) | VNC desktop, or native windows | VNC desktop through an editor\*, or native windows with XQuartz on macOS (not RViz) | Normal windows |
+| Build, test, and run nodes | Yes | [TBR: yes, not tested yet] | Yes |
+| Programs with windows (RViz, rqt) | VNC desktop, or native windows | [TBR: VNC desktop through an editor, not tested yet], or native windows with XQuartz on macOS (not RViz) | Normal windows |
 | CANable USB adapter | Yes | No; Docker Desktop cannot pass USB devices through | Yes |
-| Virtual CAN bus (`vcan`) | Yes | Not tested | Yes |
+| Virtual CAN bus (`vcan`) | Yes | [TBD: not tested] | Yes |
 | ROS 2 with the robot or other computers | Yes | Usually not; see [ROS 2 networking](ros-networking.md) | Yes |
-| Gamepad | Not set up yet (deliverable 5.2) | Not set up yet | Yes, with ROS's `joy` package\* |
+| Gamepad | [TBD: not set up yet (deliverable 5.2)] | [TBD: not set up yet] | [TBR: yes, with ROS's `joy` package; not tested yet] |
 
-\* Expected but not tested yet. Update this table when you test one of these.
+TBR marks what should work but has not been tested yet, and TBD what nobody has tried
+(see [Mark what is not settled](writing-docs.md#mark-what-is-not-settled)). When you test
+one, update its cell and remove the marker.
 
 ## One clone, one environment
 

@@ -9,7 +9,7 @@ code. The software sections of the team's Lunabotics design reports are drawn fr
 
 | Doc | Subsystem | Status |
 | --- | --- | --- |
-| `system.md` | Architecture and integration: how every subsystem fits together | Not started |
+| [`system.md`](system.md) | Architecture and integration: how every subsystem fits together | Draft |
 | [`operating-modes.md`](operating-modes.md) | Operating modes and power states: what is on and what may move in each mode, for the whole robot | Draft |
 | `platform.md` | Platform and dev environment | Not started |
 | `drivetrain.md` | Drivetrain | Not started |
@@ -19,6 +19,11 @@ code. The software sections of the team's Lunabotics design reports are drawn fr
 | `autonomy.md` | Autonomy | Not started |
 
 When you add a doc, link it in this table and keep its status current.
+
+Two more pages apply to every subsystem: [Testing layers](testing-layers.md) defines how
+each component is tested, from stand-ins on a laptop up to the rover, and
+[Hardware test modes](hardware-test-modes.md) draws every hardware system in each test
+mode.
 
 ## Start a design doc
 

@@ -283,6 +283,18 @@ checked = 2026-10-07
 notes = "A retailer's chart of copper wire ampacity, used in the power budget. Check against the wire maker's rating for how the wire is run."
 
 [[source]]
+id = "glinet-network-modes"
+primary = true
+group = "Vendor and product pages"
+title = "Network Mode"
+publisher = "GL.iNet"
+url = "https://docs.gl-inet.com/router/en/4/interface_guide/network_mode/"
+format = "web"
+expect = "Access Point mode"
+checked = 2026-10-18
+notes = "What the team's Beryl AX (GL-MT3000) access point does in Router mode and in Access Point mode."
+
+[[source]]
 id = "ros-rep-2000"
 primary = true
 group = "Software references"
@@ -368,6 +380,69 @@ format = "web"
 expect = "Timeout before disabling"
 checked = 2026-10-07
 notes = "FeedEnable(timeoutMs): the controllers disable themselves when the enable is not fed again within the timeout."
+
+[[source]]
+id = "ros-rep-145"
+primary = true
+group = "Software references"
+title = "REP 145: Conventions for IMU Sensor Drivers"
+publisher = "Open Robotics"
+url = "https://www.ros.org/reps/rep-0145.html"
+fetch_url = "https://raw.githubusercontent.com/ros-infrastructure/rep/master/rep-0145.rst"
+format = "web"
+expect = "Conventions for IMU Sensor Drivers"
+checked = 2026-10-18
+notes = "How IMU drivers group gyroscope and accelerometer data in one message, where magnetometer data goes, and how to name a second IMU's topics. Still a draft REP."
+
+[[source]]
+id = "unitree-lidar-ros2-launch"
+primary = true
+group = "Software references"
+title = "unilidar_sdk2: unitree_lidar_ros2 launch file (launch.py)"
+publisher = "Unitree"
+version = "main branch at commit 0e3c51f, 2025-03-10"
+url = "https://github.com/unitreerobotics/unilidar_sdk2/blob/main/unitree_lidar_ros2/src/unitree_lidar_ros2/launch/launch.py"
+fetch_url = "https://raw.githubusercontent.com/unitreerobotics/unilidar_sdk2/main/unitree_lidar_ros2/src/unitree_lidar_ros2/launch/launch.py"
+format = "web"
+expect = "unilidar/cloud"
+checked = 2026-10-18
+notes = "The default topic and frame names of the L2's ROS 2 driver."
+
+[[source]]
+id = "ros2-control-getting-started"
+primary = true
+group = "Software references"
+title = "ros2_control: Getting Started"
+publisher = "ros-controls"
+url = "https://control.ros.org/jazzy/doc/getting_started/getting_started.html"
+format = "web"
+expect = "Hardware Description in URDF"
+checked = 2026-10-18
+notes = "How ros2_control is put together, and how a robot description lists each hardware component with its own plugin."
+
+[[source]]
+id = "ros2-control-mock-components"
+primary = true
+group = "Software references"
+title = "ros2_control: Mock Components"
+publisher = "ros-controls"
+url = "https://control.ros.org/jazzy/doc/ros2_control/hardware_interface/doc/mock_components_userdoc.html"
+format = "web"
+expect = "Mock Components"
+checked = 2026-10-18
+notes = "The stub hardware ros2_control provides: what GenericSystem does with commands and states."
+
+[[source]]
+id = "gz-ros2-control"
+primary = true
+group = "Software references"
+title = "gz_ros2_control"
+publisher = "ros-controls"
+url = "https://control.ros.org/jazzy/doc/gz_ros2_control/doc/index.html"
+format = "web"
+expect = "gz_ros2_control"
+checked = 2026-10-18
+notes = "How ros2_control runs inside Gazebo: the controller manager in the simulator, and commands applied to simulated joints."
 
 [[source]]
 id = "esa-margin-philosophy"
