@@ -6,22 +6,24 @@
 > (replaced; link the replacement). [Design docs](README.md#status) explains each one.
 
 | Owner | Pair | Status | Last reviewed |
-| Aadhav | --- | Draft | --- |
-| [name] | [name] | Draft | [YYYY-MM-DD] |
+| --- | --- | --- | --- |
+| [Aadhav] | [name] | Draft | [2026-10-18] |
 
 ## 1. Purpose and requirements
 
-> **Delete this:** say what this subsystem does for the robot and what it must achieve.
-> Number the requirements so tests and reviews can refer to them.
-
-- R1. [requirement]
-- R2. [requirement]
+- R1. [The robot stays in drivetrain mode]
+- R2. [Nothing moves unless the robot is ENABLED and drivetrain mode is actuated. The robot is DISABLED after boot and after a fault is cleared, and it never enables itself]
+- R3. [drivetrain mode is zero within 100 ms of a disable command, and within link_timeout plus 100 ms of the last operator heartbeat]
+- R4. [After a fault or an E-stop, moving again takes two deliberate operator actions: clear the fault, then enable]
+- R5. [In drivetrain mode, the current limits of the actuators it allows, plus the electronics, add up to less than the main breaker's rating. The power budget relies on this]
+- R6. [One control on the operator station disables the robot from drivetrain mode, to obey the power-off command and the end-of-run inhibit]
+- R7. [Link to operator station must have a total average of 4,000 kbit/s or less across all modes]
 
 ## 2. Nodes
 
 | Node | Package | Runs on | What it does |
 | --- | --- | --- | --- |
-| [node] | [package] | [Jetson or operator laptop] | [what it does] |
+| [drivetrain_node] | [luna_drivetrain] | [Jetson] | [Owns the robot state and task mode, runs the boot self-test, watches the heartbeat, faults, and battery, and accepts or refuses mode requests] |
 
 ## 3. Interfaces
 
@@ -29,19 +31,19 @@ This table is the contract between this subsystem and the rest of the robot. The
 match it exactly, and a pull request that changes an interface updates this table in the
 same pull request.
 
-> **Delete this:** list every topic, service, and action. Kind is topic, service, or
-> action. Use standard message types where they fit; custom types go in
-> `luna_interfaces`. The row below is an example; replace it.
-
 | Name | Kind | Type | Rate | Publisher or server | Subscriber or client | QoS |
 | --- | --- | --- | --- | --- | --- | --- |
-| `/example_topic` | topic | `geometry_msgs/msg/Twist` | 20 Hz | `example_publisher` | `example_subscriber` | reliable, depth 10 |
+| `/robot/mode` | topic | `luna_interfaces/msg/RobotMode` | 10 Hz and on change | `mode_manager` | `luna_drivetrain` | reliable, transient, local, depth 1 |
+
+| --- | --- | --- | --- | --- | --- | --- |
 
 ## 4. Parameters
 
 | Parameter | Node | Type | Default | Units | Meaning |
 | --- | --- | --- | --- | --- | --- |
-| [parameter] | [node] | [type] | [default] | [units] | [meaning] |
+| [mode_timeout] | [luna_drivetrain] | [double] | [0.3] | [s] | [If the last /robot/mode is older than this, act as DISABLED] |
+| [creep_output] | [luna_drivetrain] | [double] | [0.2] | [fraction] | [Largest drive output in EXCAVATE and DUMP] |
+| [current_limit.<actuator>.<task>]| [lune_drivetrain] | [double] | --- | --- | --- |
 
 ## 5. Libraries and hardware interfaces
 
