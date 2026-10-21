@@ -43,14 +43,25 @@ same pull request.
 | --- | --- | --- | --- | --- | --- |
 | [mode_timeout] | [luna_drivetrain] | [double] | [0.3] | [s] | [If the last /robot/mode is older than this, act as DISABLED] |
 | [creep_output] | [luna_drivetrain] | [double] | [0.2] | [fraction] | [Largest drive output in EXCAVATE and DUMP] |
-| [current_limit.<actuator>.<task>]| [lune_drivetrain] | [double] | --- | --- | --- |
+| [current_limit.<drive>.<travel>]| [luna_drivetrain] | [double] | [30] | [A] | Current limit for travel |
+| [current_limit.<drive>.<excavate>]| [luna_drivetrain] | [double] | [15] | [A] | Current limit for excavate |
+| [current_limit.<drive>.<dump>]| [luna_drivetrain] | [double] | [15] | [A] | Current limit for dump |
+| [current_limit.<drive>.<service>]| [luna_drivetrain] | [double] | [15] | [A] | Current limit for service |
+| [voltage_compensation]| [luna_drivetrain] | [double] | [12.0] | [V] | Motor controllers scale their output to this voltage |
 
 ## 5. Libraries and hardware interfaces
 
-> **Delete this:** list the libraries and drivers this subsystem uses, and the hardware it
-> talks to: buses, CAN IDs, USB devices, serial ports, and wiring. Cite every hardware
-> value and competition rule from its primary source, as
-> [Cite sources](../writing-docs.md#cite-sources) explains.
+- **Phoenix 5 enable.** 
+    The motor controllers run only while some process calls `ctre::phoenix::unmanaged::Unmanaged::FeedEnable(timeoutMs)`; they disable themselves when `timeoutMs` passes without another call ([Phoenix C++ API, section "FeedEnable()"](../sources.md#ctre-phoenix5-unmanaged-api)). Our code passes 100 ms, which matches R3. The enable frame (`000401BF` in `candump`, see [CAN bus](../can-bus.md)) carries no device number, so it looks like it enables every CTRE motor controller on the bus, whichever process sends it. Exactly one process may feed it, and only while ENABLED (see open question in section 9).
+- **PDP over CAN.** 
+    The PDP reports battery voltage, the current on each channel, and the energy used ([PDP User's Guide, pp. 17-20](../sources.md#ctre-pdp-guide)), which feed `/power/battery`. Logging them by mode checks the power budget (R5) against real runs.
+- **Motor controller settings.** 
+    `drivetrain_node` sets each drive motor controller's current limit, voltage    compensation, and neutral mode at startup from the parameters in section 4. Neutral mode is brake, so the robot holds still when disabled.
+- **E-stop, main breaker, and energy logger.** 
+    Hardware only, with no software interface. The Jetson is fed straight from the battery (its carrier takes 9 to 20 V, 
+[carrier board specification, p. 7](../sources.md#nvidia-orin-nano-carrier-spec)).
+
+
 
 ## 6. Block diagram
 
@@ -72,7 +83,11 @@ flowchart LR
 
 | Failure | How it is detected | What the subsystem does |
 | --- | --- | --- |
-| [failure] | [detection] | [response] |
+| [Operator link lost] | [No heartbeat detected for link_timeout] | [ENABLED becomes DISABLED with the reason "link lost". The operator enables again once the link is back. This applies in AUTO too, because while the link is down the robot cannot hear the power-off command] |
+| [mode_manager stops] | [/robot/mode older than mode_timeout] | [Each actuator node sets its outputs to zero and the enable stops being fed] |
+| [The node feeding the enable stops] | [The Phoenix enable times out] | [Motor controllers disable themselves within 100 ms] |
+| [Drive commands stop] | [/cmd_vel older than the drivetrain's timeout] | [Drive output zero; mode unchanged] |
+| --- | --- | --- |
 
 ## 8. Test plan
 
