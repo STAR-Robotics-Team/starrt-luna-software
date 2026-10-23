@@ -61,6 +61,7 @@ nav:
       - Testing layers: design/testing-layers.md
       - Hardware test modes: design/hardware-test-modes.md
       - Design doc template: design/template.md
+      - Teleoperation: design/teleoperation.md
   - Sources: sources.md
   - Team process:
       - Contributing: contributing.md
