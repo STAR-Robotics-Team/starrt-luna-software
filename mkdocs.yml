@@ -60,6 +60,7 @@ nav:
       - Operating modes: design/operating-modes.md
       - Testing layers: design/testing-layers.md
       - Hardware test modes: design/hardware-test-modes.md
+      - Sensors and robot model: design/sensors.md
       - Design doc template: design/template.md
   - Sources: sources.md
   - Team process:
