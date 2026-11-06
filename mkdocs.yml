@@ -25,17 +25,18 @@ hooks:
 # Colors text that is not settled yet; see "Mark what is not settled" in docs/writing-docs.md.
 extra_css:
   - stylesheets/unsettled.css
+  - stylesheets/navigation.css
 
 # Every page must be listed here. Add new pages in reading order.
 nav:
   - Home: README.md
   - The competition:
-      - competition/README.md
+      - Overview: competition/README.md
       - The arena and a run: competition/arena-and-runs.md
       - Rules the robot must follow: competition/robot-rules.md
       - How scoring works: competition/scoring.md
   - Learning guide:
-      - learn/README.md
+      - Overview: learn/README.md
       - 1. The command line: learn/command-line.md
       - 2. Git and GitHub: learn/git-and-github.md
       - 3. Containers and the dev container: learn/containers.md
@@ -55,18 +56,23 @@ nav:
       - CAN bus: can-bus.md
       - ROS 2 networking: ros-networking.md
       - Building for the robot: building-for-the-robot.md
-  - Design docs:
-      - design/README.md
-      - System: design/system.md
-      - Operating modes: design/operating-modes.md
-      - Autonomy: design/autonomy.md
-      - Testing layers: design/testing-layers.md
-      - Hardware test modes: design/hardware-test-modes.md
-      - Interfaces: design/interfaces.md
-      - Performance budgets: design/performance-budgets.md
-      - End-to-end test procedures: design/end-to-end-tests.md
-      - Open items: design/open-items.md
-      - Design doc template: design/template.md
+  - Design:
+      - Overview: design/README.md
+      - Subsystems:
+          - System: design/system.md
+          - Operating modes: design/operating-modes.md
+          - Autonomy: design/autonomy.md
+      - Testing:
+          - Testing layers: design/testing-layers.md
+          - Hardware test modes: design/hardware-test-modes.md
+          - End-to-end test procedures: design/end-to-end-tests.md
+      # Generated from every design doc's registry by scripts/design.
+      - Across all docs:
+          - Interfaces: design/interfaces.md
+          - Performance budgets: design/performance-budgets.md
+          - Open items: design/open-items.md
+      - Writing a doc:
+          - Design doc template: design/template.md
   - Sources: sources.md
   - Team process:
       - Contributing: contributing.md
@@ -88,7 +94,6 @@ theme:
     - content.action.edit
     - navigation.tabs
     - navigation.sections
-    - navigation.indexes
     - navigation.footer
     - navigation.top
     - search.suggest

@@ -50,8 +50,8 @@ Four pages are generated from the docs' [registries](#registries):
 4. Fill in every section. Write "None" rather than deleting a section, so readers know it
    was considered.
 5. Delete every quote block in the template that starts with **Delete this**.
-6. Add the doc to the `Design docs` section of the `nav` list in `mkdocs.yml`, in the same
-   order as the table above, so it appears on the website.
+6. Add the doc to the `Subsystems` group of the `Design` section in the `nav` list in
+   `mkdocs.yml`, in the same order as the table above, so it appears on the website.
 7. Open a pull request. Design docs get the same review as code, plus the software lead's.
 
 ## Status

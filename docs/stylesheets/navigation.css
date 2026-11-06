@@ -1,0 +1,8 @@
+/* With the tabs showing (wide screens), the sidebar's first label repeats the active tab's
+   name right under it, so hide that one label. On narrow screens the tabs fold into the
+   menu, where the label is the only place the section is named, so it stays. */
+@media screen and (min-width: 76.25em) {
+  .md-tabs ~ .md-main .md-nav--primary > .md-nav__list > .md-nav__item--section > .md-nav__link {
+    display: none;
+  }
+}
