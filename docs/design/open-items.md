@@ -124,6 +124,15 @@ that uses them; each is listed here once.
 | interface wheel-odometry | rate | [TBD: drivetrain doc (3.1)] |
 | interface wheel-odometry | qos | [TBD: drivetrain doc (3.1)] |
 
+### `end-to-end-tests.toml`
+
+| Entry | Field | Value |
+| --- | --- | --- |
+| procedure stick-drives-wheels | pass 3 | [TBD: a pass line for button-to-motor latency, from the teleop draft's tc netem test, teleoperation doc (5.1)] |
+| procedure link-loss | pass 3 | [TBD: no false disables in a 10-minute tc netem run, at a packet loss rate the radio link evaluation (5.7) sets] |
+| procedure battery-low | step 4 | Halves its current limits [TBD: how it learns to, drivetrain doc (3.1)] |
+| procedure battery-low | step 5 | Halves its current limits [TBD: how it learns to, mechanism doc (4.2)] |
+
 ### `mechanism.toml`
 
 | Entry | Field | Value |

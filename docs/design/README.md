@@ -25,11 +25,16 @@ each component is tested, from stand-ins on a laptop up to the rover, and
 [Hardware test modes](hardware-test-modes.md) draws every hardware system in each test
 mode.
 
-Three pages are generated from the docs' [registries](#registries):
-[Interfaces](interfaces.md) lists every node and every topic, service, and action,
-[Performance budgets](performance-budgets.md) lists the technical performance measures
-and how each is split across the software, and [Open items](open-items.md) lists
-everything not settled yet, from open questions to each `[TBD]` and `[TBR]` in the docs.
+Four pages are generated from the docs' [registries](#registries):
+
+- [Interfaces](interfaces.md) lists every node and every topic, service, and action.
+- [Performance budgets](performance-budgets.md) lists the technical performance measures,
+  how each is split across the software, and what the tests have measured.
+- [End-to-end test procedures](end-to-end-tests.md) follow one thing the robot does
+  through every node it crosses, with the interface and budget each step relies on. The
+  design review walks them on paper, and then they run at Sim, Bench, and Robot.
+- [Open items](open-items.md) lists everything not settled yet, from open questions to
+  each `[TBD]` and `[TBR]` in the docs.
 
 ## Start a design doc
 
@@ -147,6 +152,10 @@ text = "Which access point and robot radio?"
 | `[[question]]` | Each doc's registry | A question in the doc's section 9, open or decided |
 | `[[tpm]]` | `performance-budgets.toml` | A technical performance measure and its budget |
 | `[[tpm.row]]` | Under its `[[tpm]]` | One part of the TPM's budget |
+| `[[procedure]]` | `end-to-end-tests.toml` | An end-to-end test procedure: one thing the robot does, through every node it crosses |
+| `[[procedure.step]]` | Under its `[[procedure]]` | One step, in order |
+| `[[procedure.pass]]` | Under its `[[procedure]]` | A line a run must meet to pass |
+| `[[procedure.run]]` | Under its `[[procedure]]` | One run of the procedure, and its result |
 
 | Entry | Field | Required | What it holds |
 | --- | --- | --- | --- |
@@ -212,6 +221,9 @@ text = "Which access point and robot radio?"
 | `[[tpm]]` | `total_label` | No | The total row's label, when it is not Total |
 | `[[tpm]]` | `total_role` | No | The element that owns the total |
 | `[[tpm]]` | `none` | No | Why it has no budget, shown instead of one |
+| `[[tpm]]` | `better` | No | `lower` or `higher`: which way is better, so a measurement can be judged |
+| `[[tpm]]` | `threshold_value` | No | The threshold as a number in its unit, to judge measurements against |
+| `[[tpm]]` | `goal_value` | No | The goal as a number in its unit, to judge measurements against |
 | `[[tpm.row]]` | `part` | Yes | This part of the budget |
 | `[[tpm.row]]` | `elements` | No | IDs of the elements it falls to; each doc's Budgets table shows the rows that name its elements |
 | `[[tpm.row]]` | `role` | No | What each element does for this part, shown instead of the IDs |
@@ -220,6 +232,23 @@ text = "Which access point and robot radio?"
 | `[[tpm.row]]` | `amounts` | No | One number per case, for a TPM with cases |
 | `[[tpm.row]]` | `basis` | No | Where the value comes from |
 | `[[tpm.row]]` | `unit` | No | This row's unit, when it differs from the TPM's |
+| `[[procedure]]` | `id` | Yes | A short key, such as `link-loss` |
+| `[[procedure]]` | `title` | Yes | What happens, such as The operator link drops |
+| `[[procedure]]` | `purpose` | Yes | What it checks, and the requirements it comes from |
+| `[[procedure]]` | `measures` | No | IDs of the TPMs a run of it measures |
+| `[[procedure.step]]` | `does` | Yes | What happens in this step |
+| `[[procedure.step]]` | `node` | No | The ID of the node that acts |
+| `[[procedure.step]]` | `actor` | No | Who acts, when it is not a node or as well as one: the operator, a tester, or hardware |
+| `[[procedure.step]]` | `interface` | No | The ID of the interface the step uses |
+| `[[procedure.step]]` | `budget` | No | The ID of the TPM whose budget the step spends |
+| `[[procedure.pass]]` | `text` | Yes | What must be true |
+| `[[procedure.pass]]` | `tpm` | No | The ID of the TPM it checks, which the procedure measures |
+| `[[procedure.run]]` | `layer` | Yes | `Sim`, `Bench`, or `Robot` |
+| `[[procedure.run]]` | `date` | Yes | When it ran, such as 2026-12-02 |
+| `[[procedure.run]]` | `result` | Yes | `pass` or `fail` |
+| `[[procedure.run]]` | `log` | Yes | Where its test log is |
+| `[[procedure.run]]` | `measured` | No | What it measured, in each TPM's unit, such as `[{tpm = "TPM-8", value = 420}]` |
+| `[[procedure.run]]` | `note` | No | Anything else about the run |
 
 <!-- /design -->
 

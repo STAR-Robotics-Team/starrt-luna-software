@@ -23,21 +23,41 @@ This page is generated from `docs/design/performance-budgets.toml` by
 
 ## Measures
 
-| ID | Measure | Unit | Source | Threshold | Goal | Budget |
-| --- | --- | --- | --- | --- | --- | --- |
-| TPM-1 | Autonomous cycles completed per run (excavate, travel, dump, travel, with no operator input) | cycles per run | PMP: Excavation/dump cycles; Autonomous capabilities. Guidebook §16.4, §16.5 | ≥1 | ≥2, starting in the starting zone (full autonomy) | [Which elements make each task autonomous](#tpm-1-autonomous-cycles-completed-per-run) |
-| TPM-2 | Autonomous cycle time | min per cycle | PMP: Excavation/dump cycles. Guidebook §12 (15-minute runs) | ≤7.0 [TBR: proposed in the PDR (1.6)] | ≤6.0 [TBR: proposed in the PDR (1.6)] | [Budget for the 6.0 min (360 s) goal](#tpm-2-autonomous-cycle-time) |
-| TPM-3 | Time from run start to the first cycle starting | s | Guidebook §15.3.1 (a cycle must start within 5 minutes or the run ends); §13.9.3 (random start position and direction) | ≤300 | ≤60 [TBR: proposed in the PDR (1.6)] | [Budget for the 60 s goal](#tpm-3-time-from-run-start-to-the-first-cycle-starting) |
-| TPM-4 | Obstacle contacts per run | contacts per run | PMP: Navigation and obstacles. Guidebook §17.1.8 (−50 points, then −25 each, up to −100) | ≤1 [TBR: proposed in the PDR (1.6)] | 0 | [Clearance budget and detection](#tpm-4-obstacle-contacts-per-run) |
-| TPM-5 | Position error after a 2-minute drive | m | PMP: Navigation and obstacles. Guidebook §13.7 (no GPS or compass), §16.3 (no prior knowledge of the arena) | ≤0.20 [TBR: proposed in the PDR (1.6)] | ≤0.10 [TBR: proposed in the PDR (1.6)] | [Error budget for the 0.10 m goal](#tpm-5-position-error-after-a-2-minute-drive) |
-| TPM-6 | Average link bandwidth over a run | kbit/s | PMP: Communications bandwidth. Guidebook §14.1.19 (4,000 kbit/s average limit), §17.1.4 (score) | ≤4,000 | ≤1,000, which scores 90 of 120 [TBR: proposed in the PDR (1.6)] | [Budget by sending element (kbit/s)](#tpm-6-average-link-bandwidth-over-a-run) |
-| TPM-7 | Stop time after a disable command (request received on the robot, to zero output at every motor controller) | ms | Guidebook §13.9.19 (power-off command), §15.4.1 (stop when time is up) | ≤100 | ≤100 | [Delay budget (ms)](#tpm-7-stop-time-after-a-disable-command) |
-| TPM-8 | Stop time after link loss (last heartbeat received, to zero output) | ms | Guidebook §13.9.19 (without the link, the robot can't hear the power-off command) | ≤600 | ≤600 | [Delay budget (ms)](#tpm-8-stop-time-after-link-loss) |
-| TPM-9 | Peak current in the worst task mode (EXCAVATE) | A | PMP: Berm and energy productivity (power). Main breaker in Electrical's power budget | Below the main breaker rating, 150 A in operating modes [TBR: Electrical's power budget workbook sizes it at 170 to 175 A] | ≤135 | [Allocation in EXCAVATE, the worst mode (A)](#tpm-9-peak-current-in-the-worst-task-mode) |
-| TPM-10 | Energy used per autonomous cycle | Wh per cycle | PMP: Berm and energy productivity. Guidebook §17.1.3 (points = 1.5 × berm cm³ ÷ run minutes ÷ Wh) | A baseline [TBD: measured on the first full robot cycle] | Below the baseline (PMP: improve) | [Allocation by phase (Wh)](#tpm-10-energy-used-per-autonomous-cycle) |
-| TPM-11 | Robot computer processor load, averaged over a run | % of all CPU cores | Derived: protects PMP Autonomous capabilities and Navigation and obstacles, since all robot software shares one computer | ≤85 [TBR: proposed in the PDR (1.6)] | ≤70 [TBR: proposed in the PDR (1.6)] | [Allocation (% of all CPU cores)](#tpm-11-robot-computer-processor-load-averaged-over-a-run) |
-| TPM-12 | Restart time (power-on to DISABLED with position known) | s | Derived: Guidebook §15.3.3 and §15.3.4 (a long restart can look like a dead robot); §15.3.1 | ≤180 [TBR: proposed in the PDR (1.6)] | ≤120 [TBR: proposed in the PDR (1.6)] | [Budget for the 120 s goal](#tpm-12-restart-time) |
-| TPM-13 | Mass | kg | PMP: Weight | 0 | 0 | 0 kg for every software element, at every level |
+| ID | Measure | Unit | Source | Threshold | Goal | Budget | Measured by |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| TPM-1 | Autonomous cycles completed per run (excavate, travel, dump, travel, with no operator input) | cycles per run | PMP: Excavation/dump cycles; Autonomous capabilities. Guidebook §16.4, §16.5 | ≥1 | ≥2, starting in the starting zone (full autonomy) | [Which elements make each task autonomous](#tpm-1-autonomous-cycles-completed-per-run) | [One AUTO cycle](end-to-end-tests.md#one-auto-cycle) |
+| TPM-2 | Autonomous cycle time | min per cycle | PMP: Excavation/dump cycles. Guidebook §12 (15-minute runs) | ≤7.0 [TBR: proposed in the PDR (1.6)] | ≤6.0 [TBR: proposed in the PDR (1.6)] | [Budget for the 6.0 min (360 s) goal](#tpm-2-autonomous-cycle-time) | [One AUTO cycle](end-to-end-tests.md#one-auto-cycle) |
+| TPM-3 | Time from run start to the first cycle starting | s | Guidebook §15.3.1 (a cycle must start within 5 minutes or the run ends); §13.9.3 (random start position and direction) | ≤300 | ≤60 [TBR: proposed in the PDR (1.6)] | [Budget for the 60 s goal](#tpm-3-time-from-run-start-to-the-first-cycle-starting) | [One AUTO cycle](end-to-end-tests.md#one-auto-cycle) |
+| TPM-4 | Obstacle contacts per run | contacts per run | PMP: Navigation and obstacles. Guidebook §17.1.8 (−50 points, then −25 each, up to −100) | ≤1 [TBR: proposed in the PDR (1.6)] | 0 | [Clearance budget and detection](#tpm-4-obstacle-contacts-per-run) | [One AUTO cycle](end-to-end-tests.md#one-auto-cycle) |
+| TPM-5 | Position error after a 2-minute drive | m | PMP: Navigation and obstacles. Guidebook §13.7 (no GPS or compass), §16.3 (no prior knowledge of the arena) | ≤0.20 [TBR: proposed in the PDR (1.6)] | ≤0.10 [TBR: proposed in the PDR (1.6)] | [Error budget for the 0.10 m goal](#tpm-5-position-error-after-a-2-minute-drive) | None yet |
+| TPM-6 | Average link bandwidth over a run | kbit/s | PMP: Communications bandwidth. Guidebook §14.1.19 (4,000 kbit/s average limit), §17.1.4 (score) | ≤4,000 | ≤1,000, which scores 90 of 120 [TBR: proposed in the PDR (1.6)] | [Budget by sending element (kbit/s)](#tpm-6-average-link-bandwidth-over-a-run) | [The stick moves the wheels](end-to-end-tests.md#the-stick-moves-the-wheels), [One AUTO cycle](end-to-end-tests.md#one-auto-cycle) |
+| TPM-7 | Stop time after a disable command (request received on the robot, to zero output at every motor controller) | ms | Guidebook §13.9.19 (power-off command), §15.4.1 (stop when time is up) | ≤100 | ≤100 | [Delay budget (ms)](#tpm-7-stop-time-after-a-disable-command) | None yet |
+| TPM-8 | Stop time after link loss (last heartbeat received, to zero output) | ms | Guidebook §13.9.19 (without the link, the robot can't hear the power-off command) | ≤600 | ≤600 | [Delay budget (ms)](#tpm-8-stop-time-after-link-loss) | [The operator link drops](end-to-end-tests.md#the-operator-link-drops) |
+| TPM-9 | Peak current in the worst task mode (EXCAVATE) | A | PMP: Berm and energy productivity (power). Main breaker in Electrical's power budget | Below the main breaker rating, 150 A in operating modes [TBR: Electrical's power budget workbook sizes it at 170 to 175 A] | ≤135 | [Allocation in EXCAVATE, the worst mode (A)](#tpm-9-peak-current-in-the-worst-task-mode) | None yet |
+| TPM-10 | Energy used per autonomous cycle | Wh per cycle | PMP: Berm and energy productivity. Guidebook §17.1.3 (points = 1.5 × berm cm³ ÷ run minutes ÷ Wh) | A baseline [TBD: measured on the first full robot cycle] | Below the baseline (PMP: improve) | [Allocation by phase (Wh)](#tpm-10-energy-used-per-autonomous-cycle) | [One AUTO cycle](end-to-end-tests.md#one-auto-cycle) |
+| TPM-11 | Robot computer processor load, averaged over a run | % of all CPU cores | Derived: protects PMP Autonomous capabilities and Navigation and obstacles, since all robot software shares one computer | ≤85 [TBR: proposed in the PDR (1.6)] | ≤70 [TBR: proposed in the PDR (1.6)] | [Allocation (% of all CPU cores)](#tpm-11-robot-computer-processor-load-averaged-over-a-run) | [One AUTO cycle](end-to-end-tests.md#one-auto-cycle) |
+| TPM-12 | Restart time (power-on to DISABLED with position known) | s | Derived: Guidebook §15.3.3 and §15.3.4 (a long restart can look like a dead robot); §15.3.1 | ≤180 [TBR: proposed in the PDR (1.6)] | ≤120 [TBR: proposed in the PDR (1.6)] | [Budget for the 120 s goal](#tpm-12-restart-time) | None yet |
+| TPM-13 | Mass | kg | PMP: Weight | 0 | 0 | 0 kg for every software element, at every level | None yet |
+
+## Measurements
+
+The latest value each TPM measured at each layer, from the runs recorded in
+`end-to-end-tests.toml`, judged against its threshold and goal.
+
+| TPM | Sim | Bench | Robot |
+| --- | --- | --- | --- |
+| TPM-1 | Not measured | Not measured | Not measured |
+| TPM-2 | Not measured | Not measured | Not measured |
+| TPM-3 | Not measured | Not measured | Not measured |
+| TPM-4 | Not measured | Not measured | Not measured |
+| TPM-5 | Not measured | Not measured | Not measured |
+| TPM-6 | Not measured | Not measured | Not measured |
+| TPM-7 | Not measured | Not measured | Not measured |
+| TPM-8 | Not measured | Not measured | Not measured |
+| TPM-9 | Not measured | Not measured | Not measured |
+| TPM-10 | Not measured | Not measured | Not measured |
+| TPM-11 | Not measured | Not measured | Not measured |
+| TPM-12 | Not measured | Not measured | Not measured |
 
 ## Budgets
 

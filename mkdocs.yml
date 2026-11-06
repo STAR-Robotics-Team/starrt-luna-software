@@ -64,6 +64,7 @@ nav:
       - Hardware test modes: design/hardware-test-modes.md
       - Interfaces: design/interfaces.md
       - Performance budgets: design/performance-budgets.md
+      - End-to-end test procedures: design/end-to-end-tests.md
       - Open items: design/open-items.md
       - Design doc template: design/template.md
   - Sources: sources.md
