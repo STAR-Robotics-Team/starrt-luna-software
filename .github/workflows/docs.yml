@@ -13,6 +13,8 @@ on:
 
 permissions:
   contents: read
+  # The build lists each design doc's reviewers and commenters (scripts/docs_hooks.py).
+  pull-requests: read
 
 env:
   # Hides a notice about MkDocs 2.0 that does not apply; see mkdocs.yml.
@@ -27,6 +29,9 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
+        with:
+          # Every commit, so each design doc's contributors come from its whole history.
+          fetch-depth: 0
       - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
@@ -34,6 +39,8 @@ jobs:
           cache-dependency-path: docs/requirements.txt
       - run: pip install -r docs/requirements.txt
       - run: mkdocs build --strict
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - uses: actions/upload-pages-artifact@v5
         if: github.ref == 'refs/heads/main'
         with:

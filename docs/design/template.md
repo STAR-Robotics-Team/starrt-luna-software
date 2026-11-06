@@ -20,9 +20,9 @@
 > `In progress` (code being written to match), `Current` (code matches), or `Superseded`
 > (replaced; link the replacement). [Design docs](README.md#status) explains each one.
 
-| Owner | Pair | Status | Last reviewed |
-| --- | --- | --- | --- |
-| [name] | [name] | Draft | [YYYY-MM-DD] |
+| Owner | Status | Last reviewed |
+| --- | --- | --- |
+| [name] | Draft | [YYYY-MM-DD] |
 
 ## 1. Purpose and requirements
 

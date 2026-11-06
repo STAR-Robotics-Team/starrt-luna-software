@@ -1,8 +1,8 @@
 # Autonomy Subsystem Design
 
-| Owner | Pair | Status | Last reviewed |
-| --- | --- | --- | --- |
-| Adam | Jason | Draft | 2026-10-26 |
+| Owner | Status | Last reviewed |
+| --- | --- | --- |
+| Adam | Draft | 2026-10-26 |
 
 ## Scoring
 
