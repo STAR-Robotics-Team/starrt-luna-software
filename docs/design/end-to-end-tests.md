@@ -49,7 +49,7 @@ Follows a TELEOP drive command from the gamepad to the drive motors: through the
 - With the TELEOP default view, camera on, the link averages under 1,000 kbit/s (TPM-6).
 - [TBD: a pass line for button-to-motor latency, from the teleop draft's tc netem test, teleoperation doc (5.1)]
 
-**Runs,** from [its tab in the test-run sheet](https://docs.google.com/spreadsheets/d/1qYh5hzQPgHA6WQpqN9SrjHDDrfeMzqhxvYa_3uOBYCk/edit#gid=1956880291):
+**Runs,** from [its tab in the test-run sheet](https://docs.google.com/spreadsheets/d/1qYh5hzQPgHA6WQpqN9SrjHDDrfeMzqhxvYa_3uOBYCk/edit#gid=273900859):
 
 <!-- test-runs: stick-drives-wheels -->
 
@@ -75,7 +75,7 @@ Follows the loss of the operator's heartbeat to zero output at every motor, in T
 - When the link comes back, nothing moves until the operator enables the robot again, and a burst of late heartbeats does not enable it (teleop draft R4).
 - [TBD: no false disables in a 10-minute tc netem run, at a packet loss rate the radio link evaluation (5.7) sets]
 
-**Runs,** from [its tab in the test-run sheet](https://docs.google.com/spreadsheets/d/1qYh5hzQPgHA6WQpqN9SrjHDDrfeMzqhxvYa_3uOBYCk/edit#gid=1577951575):
+**Runs,** from [its tab in the test-run sheet](https://docs.google.com/spreadsheets/d/1qYh5hzQPgHA6WQpqN9SrjHDDrfeMzqhxvYa_3uOBYCk/edit#gid=1450027895):
 
 <!-- test-runs: link-loss -->
 
@@ -96,7 +96,7 @@ Follows a sagging battery voltage to halved current limits, with the robot still
 
 - The operator is warned at 14.0 V, every current limit halves after 2.0 s below 13.2 V, a dip shorter than 2 s changes nothing, and the robot stays ENABLED.
 
-**Runs,** from [its tab in the test-run sheet](https://docs.google.com/spreadsheets/d/1qYh5hzQPgHA6WQpqN9SrjHDDrfeMzqhxvYa_3uOBYCk/edit#gid=1381483783):
+**Runs,** from [its tab in the test-run sheet](https://docs.google.com/spreadsheets/d/1qYh5hzQPgHA6WQpqN9SrjHDDrfeMzqhxvYa_3uOBYCk/edit#gid=1527623844):
 
 <!-- test-runs: battery-low -->
 
@@ -119,7 +119,7 @@ Follows an E-stop press with no software in its path, and shows that moving agai
 - With the E-stop pressed, every rail reads zero except the energy loggers and the robot computer's battery.
 - The energy logger's reading is the same before the press and after the reset.
 
-**Runs,** from [its tab in the test-run sheet](https://docs.google.com/spreadsheets/d/1qYh5hzQPgHA6WQpqN9SrjHDDrfeMzqhxvYa_3uOBYCk/edit#gid=2106263910):
+**Runs,** from [its tab in the test-run sheet](https://docs.google.com/spreadsheets/d/1qYh5hzQPgHA6WQpqN9SrjHDDrfeMzqhxvYa_3uOBYCk/edit#gid=10490958):
 
 <!-- test-runs: e-stop -->
 
@@ -155,6 +155,6 @@ Follows a full autonomous cycle, dig, travel loaded, dump, and travel back, with
 - The energy the cycle uses is recorded, as the baseline for later runs (TPM-10).
 - The robot computer's processor load averages under 70% (TPM-11).
 
-**Runs,** from [its tab in the test-run sheet](https://docs.google.com/spreadsheets/d/1qYh5hzQPgHA6WQpqN9SrjHDDrfeMzqhxvYa_3uOBYCk/edit#gid=1139756209):
+**Runs,** from [its tab in the test-run sheet](https://docs.google.com/spreadsheets/d/1qYh5hzQPgHA6WQpqN9SrjHDDrfeMzqhxvYa_3uOBYCk/edit#gid=1483942929):
 
 <!-- test-runs: auto-cycle -->
