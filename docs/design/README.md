@@ -158,7 +158,7 @@ text = "Which access point and robot radio?"
 | `[[procedure]]` | `end-to-end-tests.toml` | An end-to-end test procedure: one thing the robot does, through every node it crosses |
 | `[[procedure.step]]` | Under its `[[procedure]]` | One step, in order |
 | `[[procedure.pass]]` | Under its `[[procedure]]` | A line a run must meet to pass |
-| `[[procedure.run]]` | Under its `[[procedure]]` | One run of the procedure, and its result |
+| `[[sheet]]` | `end-to-end-tests.toml` | The Google Sheet that records test runs, one tab per procedure |
 
 | Entry | Field | Required | What it holds |
 | --- | --- | --- | --- |
@@ -239,6 +239,7 @@ text = "Which access point and robot radio?"
 | `[[procedure]]` | `title` | Yes | What happens, such as The operator link drops |
 | `[[procedure]]` | `purpose` | Yes | What it checks, and the requirements it comes from |
 | `[[procedure]]` | `measures` | No | IDs of the TPMs a run of it measures |
+| `[[procedure]]` | `sheet_gid` | No | Its tab in the test-run sheet: the number after gid= in the tab's address |
 | `[[procedure.step]]` | `does` | Yes | What happens in this step |
 | `[[procedure.step]]` | `node` | No | The ID of the node that acts |
 | `[[procedure.step]]` | `actor` | No | Who acts, when it is not a node or as well as one: the operator, a tester, or hardware |
@@ -246,12 +247,8 @@ text = "Which access point and robot radio?"
 | `[[procedure.step]]` | `budget` | No | The ID of the TPM whose budget the step spends |
 | `[[procedure.pass]]` | `text` | Yes | What must be true |
 | `[[procedure.pass]]` | `tpm` | No | The ID of the TPM it checks, which the procedure measures |
-| `[[procedure.run]]` | `layer` | Yes | `Sim`, `Bench`, or `Robot` |
-| `[[procedure.run]]` | `date` | Yes | When it ran, such as 2026-12-02 |
-| `[[procedure.run]]` | `result` | Yes | `pass` or `fail` |
-| `[[procedure.run]]` | `log` | Yes | Where its test log is |
-| `[[procedure.run]]` | `measured` | No | What it measured, in each TPM's unit, such as `[{tpm = "TPM-8", value = 420}]` |
-| `[[procedure.run]]` | `note` | No | Anything else about the run |
+| `[[sheet]]` | `edit_url` | Yes | The sheet's address, where testers record runs |
+| `[[sheet]]` | `published` | No | Its published address (File, Share, Publish to web), ending in /pub; the website reads runs from it |
 
 <!-- /design -->
 

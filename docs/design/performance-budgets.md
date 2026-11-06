@@ -41,23 +41,11 @@ This page is generated from `docs/design/performance-budgets.toml` by
 
 ## Measurements
 
-The latest value each TPM measured at each layer, from the runs recorded in
-`end-to-end-tests.toml`, judged against its threshold and goal.
+The latest value each TPM measured at each layer, from the runs in the
+[test-run sheet](end-to-end-tests.md#recording-a-run), judged against its threshold
+and goal. The website reads the sheet when it builds.
 
-| TPM | Sim | Bench | Robot |
-| --- | --- | --- | --- |
-| TPM-1 | Not measured | Not measured | Not measured |
-| TPM-2 | Not measured | Not measured | Not measured |
-| TPM-3 | Not measured | Not measured | Not measured |
-| TPM-4 | Not measured | Not measured | Not measured |
-| TPM-5 | Not measured | Not measured | Not measured |
-| TPM-6 | Not measured | Not measured | Not measured |
-| TPM-7 | Not measured | Not measured | Not measured |
-| TPM-8 | Not measured | Not measured | Not measured |
-| TPM-9 | Not measured | Not measured | Not measured |
-| TPM-10 | Not measured | Not measured | Not measured |
-| TPM-11 | Not measured | Not measured | Not measured |
-| TPM-12 | Not measured | Not measured | Not measured |
+<!-- test-runs: measurements -->
 
 ## Budgets
 

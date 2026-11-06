@@ -4,11 +4,16 @@
 # catches a step that names something no registry defines. See "Registries" in README.md,
 # then run scripts/design render.
 #
-# Record each run as a [[procedure.run]]: its layer, date, result, log, and the value it
-# measured for each TPM. The performance budgets page computes each TPM's status from them.
+# Runs are recorded in the test-run sheet, one tab per procedure, not here: the website
+# reads the sheet when it builds. sheet_gid names each procedure's tab, and
+# scripts/design sheet prints the first column each tab needs.
+
+[[sheet]]
+edit_url = "https://docs.google.com/spreadsheets/d/1qYh5hzQPgHA6WQpqN9SrjHDDrfeMzqhxvYa_3uOBYCk/edit"
 
 [[procedure]]
 id = "stick-drives-wheels"
+sheet_gid = 1956880291
 title = "The stick moves the wheels"
 purpose = "Follows a TELEOP drive command from the gamepad to the drive motors: through the operator frontend, rosbridge, teleop_node, command selection, and the drivetrain."
 measures = ["TPM-6"]
@@ -69,6 +74,7 @@ text = "[TBD: a pass line for button-to-motor latency, from the teleop draft's t
 
 [[procedure]]
 id = "link-loss"
+sheet_gid = 1577951575
 title = "The operator link drops"
 purpose = "Follows the loss of the operator's heartbeat to zero output at every motor, in TELEOP and in AUTO (operating modes R3)."
 measures = ["TPM-8"]
@@ -122,6 +128,7 @@ text = "[TBD: no false disables in a 10-minute tc netem run, at a packet loss ra
 
 [[procedure]]
 id = "battery-low"
+sheet_gid = 1381483783
 title = "The battery runs low"
 purpose = "Follows a sagging battery voltage to halved current limits, with the robot still running (operating modes R7 and section 7)."
 
@@ -157,6 +164,7 @@ text = "The operator is warned at 14.0 V, every current limit halves after 2.0 s
 
 [[procedure]]
 id = "e-stop"
+sheet_gid = 2106263910
 title = "The E-stop is pressed"
 purpose = "Follows an E-stop press with no software in its path, and shows that moving again takes two operator actions (operating modes R4 to R6)."
 
@@ -199,6 +207,7 @@ text = "The energy logger's reading is the same before the press and after the r
 
 [[procedure]]
 id = "auto-cycle"
+sheet_gid = 1139756209
 title = "One AUTO cycle"
 purpose = "Follows a full autonomous cycle, dig, travel loaded, dump, and travel back, with no operator input after AUTO is enabled."
 measures = ["TPM-1", "TPM-2", "TPM-3", "TPM-4", "TPM-6", "TPM-10", "TPM-11"]

@@ -22,9 +22,18 @@ username in the header), everyone who committed to it (with Co-authored-by trail
 when a GitHub token is set, everyone who reviewed or commented on a pull request that
 changed it, each with their role. CI sets the token, so the published site shows reviewers
 and names; a local build shows committers only.
+
+The end-to-end test procedures page and the performance budgets page show test runs, which
+testers record in a Google Sheet, one tab per procedure. The build reads each tab's
+published CSV (the [[sheet]] in docs/design/end-to-end-tests.toml) and fills in the
+<!-- test-runs: ... --> markers that scripts/design writes.
 """
 
+import csv
 import html
+import importlib.machinery
+import importlib.util
+import io
 import json
 import logging
 import os
@@ -66,7 +75,60 @@ REPO = Path(__file__).resolve().parent.parent
 NOT_DESIGN_DOCS = {"design/README.md", "design/template.md", "design/interfaces.md",
                    "design/open-items.md", "design/performance-budgets.md", "design/end-to-end-tests.md"}
 GITHUB_API = "https://api.github.com"
+TEST_RUN_PAGES = {"design/end-to-end-tests.md", "design/performance-budgets.md"}
 _cache = {}
+_design = {}  # the registries and test runs, read once per build
+
+
+def on_pre_build(config, **kwargs):
+    _design.clear()
+
+
+def design():
+    """scripts/design as a module, and the registries it loads."""
+    if "module" not in _design:
+        loader = importlib.machinery.SourceFileLoader("design_registries", str(REPO / "scripts" / "design"))
+        spec = importlib.util.spec_from_loader(loader.name, loader)
+        module = importlib.util.module_from_spec(spec)
+        loader.exec_module(module)
+        problems = module.Problems()
+        reg = module.load(problems)
+        module.validate(problems, reg)
+        if problems.errors:
+            raise ValueError("the design registries do not check out: run scripts/design check")
+        _design["module"], _design["reg"] = module, reg
+    return _design["module"], _design["reg"]
+
+
+def test_runs():
+    """(runs, problems, note) from the published test-run sheet: runs and problems by
+    procedure, and a note to show instead when there are none to read."""
+    if "runs" in _design:
+        return _design["runs"]
+    module, reg = design()
+    published = (reg.sheet or {}).get("published", "")
+    runs, problems, note = {}, {}, ""
+    if not published:
+        note = ("No runs to show yet: the test-run sheet is not published "
+                "[TBD: publish it and add its address to end-to-end-tests.toml].")
+    else:
+        try:
+            for proc in reg.procedures:
+                if "sheet_gid" not in proc:
+                    continue
+                url = f"{published}?gid={proc['sheet_gid']}&single=true&output=csv"
+                request = urllib.request.Request(url, headers={"User-Agent": "starrt-luna-software docs build"})
+                with urllib.request.urlopen(request, timeout=30) as response:
+                    rows = list(csv.reader(io.StringIO(response.read().decode("utf-8"))))
+                runs[proc["id"]], problems[proc["id"]] = module.parse_tab(reg, proc, rows)
+        except (OSError, ValueError) as error:
+            # In CI a page without its runs is broken, so the build fails; locally it is a note.
+            report = log.warning if os.environ.get("CI") else log.info
+            report("could not read the test-run sheet: %s", error)
+            runs, problems = {}, {}
+            note = f"No runs to show: this build could not read the test-run sheet ({error})."
+    _design["runs"] = (runs, problems, note)
+    return _design["runs"]
 
 
 def on_page_markdown(markdown, page, **kwargs):
@@ -74,6 +136,10 @@ def on_page_markdown(markdown, page, **kwargs):
         page.meta["template"] = "home.html"
     if page.file.src_uri.startswith("design/") and page.file.src_uri not in NOT_DESIGN_DOCS:
         markdown = add_contributors(markdown, page.file.src_uri)
+    if page.file.src_uri in TEST_RUN_PAGES:
+        module, reg = design()
+        runs, problems, note = test_runs()
+        markdown = module.fill_test_runs(reg, markdown, runs, problems, note)
     return markdown
 
 

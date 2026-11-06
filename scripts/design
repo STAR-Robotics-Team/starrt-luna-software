@@ -21,6 +21,7 @@ end-to-end-tests.toml), and docs/design/open-items.md (every open question, and 
     scripts/design render   Rewrite every generated table and page.
     scripts/design check    Check the registries, and that every generated table and page
                             is up to date. Offline; CI runs it on every pull request.
+    scripts/design sheet    Print each procedure's first column for the test-run sheet.
 
 Needs only Python 3.11 or newer. See "Registries" in docs/design/README.md.
 """
@@ -127,6 +128,7 @@ SCHEMA = {
         ("title", True, "What happens, such as The operator link drops"),
         ("purpose", True, "What it checks, and the requirements it comes from"),
         ("measures", False, "IDs of the TPMs a run of it measures"),
+        ("sheet_gid", False, "Its tab in the test-run sheet: the number after gid= in the tab's address"),
     ]),
     "procedure.step": (("Under its `[[procedure]]`", "One step, in order"), [
         ("does", True, "What happens in this step"),
@@ -139,17 +141,13 @@ SCHEMA = {
         ("text", True, "What must be true"),
         ("tpm", False, "The ID of the TPM it checks, which the procedure measures"),
     ]),
-    "procedure.run": (("Under its `[[procedure]]`", "One run of the procedure, and its result"), [
-        ("layer", True, "`Sim`, `Bench`, or `Robot`"),
-        ("date", True, "When it ran, such as 2026-12-02"),
-        ("result", True, "`pass` or `fail`"),
-        ("log", True, "Where its test log is"),
-        ("measured", False, "What it measured, in each TPM's unit, such as `[{tpm = \"TPM-8\", value = 420}]`"),
-        ("note", False, "Anything else about the run"),
+    "sheet": (("`end-to-end-tests.toml`", "The Google Sheet that records test runs, one tab per procedure"), [
+        ("edit_url", True, "The sheet's address, where testers record runs"),
+        ("published", False, "Its published address (File, Share, Publish to web), ending in /pub; the website reads runs from it"),
     ]),
 }
 # Tables written under an entry: (parent kind, key) -> schema name.
-SUBTABLES = {"row": "tpm.row", "step": "procedure.step", "pass": "procedure.pass", "run": "procedure.run"}
+SUBTABLES = {"row": "tpm.row", "step": "procedure.step", "pass": "procedure.pass"}
 
 
 def fields(table):
@@ -160,12 +158,12 @@ def fields(table):
 
 # The interfaces a node defines, under it, and the kind each one is.
 NESTED = {"publishes": "topic", "serves": "service", "serves_actions": "action"}
-FIELDS = {t: fields(t) for t in ("element", "node", "shared", "question", "tpm", "procedure")}
+FIELDS = {t: fields(t) for t in ("element", "node", "shared", "question", "tpm", "procedure", "sheet")}
 FIELDS["node"][1].extend(NESTED)
 FIELDS["tpm"][1].append("row")
-FIELDS["procedure"][1].extend(["step", "pass", "run"])
+FIELDS["procedure"][1].extend(["step", "pass"])
 LISTS = {"subscribes", "calls", "publishes_shared", "turgor", "elements", "cases", "notes", "measures"}
-NUMBERS = {"limit", "amount", "threshold_value", "goal_value"}
+NUMBERS = {"limit", "amount", "threshold_value", "goal_value", "sheet_gid"}
 TURGOR = re.compile(r"\d+\.\d+")
 
 START = re.compile(r"<!-- design: ([a-z]+)((?: [a-z]+)*)(?: \([^)]*\))? -->")
@@ -224,6 +222,7 @@ class Registry:
         self.questions = {}   # doc stem -> [entries]
         self.tpms = []        # entries, in order
         self.procedures = []  # entries, in order
+        self.sheet = None     # the test-run sheet, if one is set
         self.home = {}        # id(entry) -> doc stem of the registry that defines it
 
     def doc_of(self, entry):
@@ -269,12 +268,6 @@ def check_value(problems, where, key, value):
             return
         for n, row in enumerate(value, 1):
             check_entry(problems, f"{where}, {key} {n}", row, *fields(name))
-        return
-    elif key == "measured":
-        if not isinstance(value, list) or not all(
-                isinstance(v, dict) and set(v) == {"tpm", "value"} and isinstance(v["value"], (int, float))
-                for v in value):
-            problems.error(f"{where}: measured must be a list such as [{{tpm = \"TPM-8\", value = 420}}]")
         return
     elif key in NESTED:
         if not isinstance(value, list) or not all(isinstance(v, dict) for v in value):
@@ -368,6 +361,11 @@ def load(problems):
                     continue
                 if kind == "procedure":
                     reg.procedures.append(entry)
+                    continue
+                if kind == "sheet":
+                    if reg.sheet is not None:
+                        problems.error(f"{where}: there is one test-run sheet; this is a second [[sheet]]")
+                    reg.sheet = entry
                     continue
                 store = {"element": reg.elements, "node": reg.nodes}[kind]
                 key = entry.get("id", "")
@@ -463,15 +461,16 @@ def validate(problems, reg):
             if "tpm" in line and line["tpm"] not in measures:
                 problems.error(f"{where}, pass {n} checks {line['tpm']}, which the procedure does not list "
                                "under measures")
-        for n, run in enumerate(proc.get("run", []), 1):
-            if run.get("layer") not in LAYERS:
-                problems.error(f"{where}, run {n}: layer must be {', '.join(LAYERS)}")
-            if run.get("result") not in ("pass", "fail"):
-                problems.error(f"{where}, run {n}: result must be pass or fail")
-            for m in run.get("measured", []):
-                if isinstance(m, dict) and m.get("tpm") not in measures:
-                    problems.error(f"{where}, run {n} measured {m.get('tpm')!r}, which the procedure does "
-                                   "not list under measures")
+        if "sheet_gid" in proc and not isinstance(proc["sheet_gid"], int):
+            problems.error(f"{where}: sheet_gid is the whole number after gid= in the tab's address")
+    gids = [proc["sheet_gid"] for proc in reg.procedures if "sheet_gid" in proc]
+    for gid in {g for g in gids if gids.count(g) > 1}:
+        problems.error(f"end-to-end-tests.toml: two procedures use the sheet tab gid {gid}")
+    if reg.sheet:
+        for key, start in (("edit_url", "https://docs.google.com/spreadsheets/d/"),
+                           ("published", "https://docs.google.com/spreadsheets/d/e/")):
+            if key in reg.sheet and not str(reg.sheet[key]).startswith(start):
+                problems.error(f"end-to-end-tests.toml: the sheet's {key} must start with {start}")
     measured = {tid for proc in reg.procedures for tid in proc.get("measures", [])}
     for tpm in reg.tpms:
         if tpm.get("id") not in measured and not tpm.get("none"):
@@ -798,20 +797,9 @@ def render_budgets_page(reg):
                      ", ".join(by) or "None yet"])
     out += table(["ID", "Measure", "Unit", "Source", "Threshold", "Goal", "Budget", "Measured by"], rows)
     out += ["", "## Measurements", "",
-            "The latest value each TPM measured at each layer, from the runs recorded in",
-            "`end-to-end-tests.toml`, judged against its threshold and goal.", ""]
-    found = measurements(reg)
-    rows = []
-    for tpm in reg.tpms:
-        if tpm.get("none"):
-            continue
-        cells = []
-        for layer in LAYERS:
-            got = found.get(tpm["id"], {}).get(layer)
-            cells.append(f"{number(got[1])} {tpm['unit']}, {got[0].isoformat()}: {judge(tpm, got[1])}"
-                         if got else "Not measured")
-        rows.append([tpm["id"], *cells])
-    out += table(["TPM", *LAYERS], rows)
+            "The latest value each TPM measured at each layer, from the runs in the",
+            f"[test-run sheet]({PROCEDURES_PAGE.name}#recording-a-run), judged against its threshold",
+            "and goal. The website reads the sheet when it builds.", "", TEST_RUNS.format("measurements")]
     out += ["", "## Budgets"]
     for tpm in reg.tpms:
         if not tpm.get("row"):
@@ -859,15 +847,86 @@ def proc_link(proc, page=""):
     return f"[{proc['title']}]({page}#{slugify(proc['title'])})"
 
 
-def measurements(reg):
+TEST_RUNS = "<!-- test-runs: {} -->"
+SHEET_LAYERS = {layer.lower(): layer for layer in LAYERS}
+
+
+def checkable(proc):
+    """The pass lines a tester can tick: those that are not still [TBD]."""
+    return [line for line in proc.get("pass", []) if not line["text"].startswith("[TBD")]
+
+
+def sheet_labels(reg, proc):
+    """The first column of a procedure's tab in the test-run sheet, top to bottom."""
+    tpms = {tpm["id"]: tpm for tpm in reg.tpms}
+    return (["Layer", "Date"] + [plain(line["text"]) for line in checkable(proc)]
+            + [f"{tid} ({tpms[tid]['unit']})" for tid in proc.get("measures", [])] + ["Log", "Notes"])
+
+
+def parse_tab(reg, proc, rows):
+    """(runs, problems) from a procedure's tab, given as CSV rows. A run is a column with a
+    layer and a date: {layer, date, passes {line text: ticked}, values {tpm: number}, log, notes}."""
+    import datetime
+    problems, labels = [], {}
+    for row in rows:
+        if row and row[0].strip():
+            labels[re.sub(r"\s+", " ", row[0]).strip()] = row[1:]
+    expected = sheet_labels(reg, proc)
+    missing = [label for label in expected if label not in labels]
+    extra = [label for label in labels if label not in expected]
+    if missing:
+        problems.append("the tab has no row for " + "; ".join(f'"{m}"' for m in missing))
+    if extra:
+        problems.append("the tab has rows the procedure no longer has: " + "; ".join(f'"{e}"' for e in extra))
+    width = max((len(cells) for cells in labels.values()), default=0)
+    runs = []
+    for col in range(width):
+        cell = lambda label: (labels.get(label, []) + [""] * width)[col].strip()
+        layer, when = cell("Layer"), cell("Date")
+        if not layer and not when:
+            continue
+        date_value = None
+        for fmt in ("%Y-%m-%d", "%m/%d/%Y", "%m/%d/%y"):
+            try:
+                date_value = datetime.datetime.strptime(when, fmt).date()
+                break
+            except ValueError:
+                pass
+        if SHEET_LAYERS.get(layer.lower()) is None or date_value is None:
+            problems.append(f"run column {col + 2} needs a layer ({', '.join(LAYERS)}) and a date such as "
+                            f"2026-12-02, not {layer or 'nothing'!r} and {when or 'nothing'!r}")
+            continue
+        run = {"layer": SHEET_LAYERS[layer.lower()], "date": date_value, "passes": {}, "values": {},
+               "log": cell("Log"), "notes": cell("Notes")}
+        for line in checkable(proc):
+            run["passes"][line["text"]] = cell(plain(line["text"])).upper() == "TRUE"
+        for tid in proc.get("measures", []):
+            label = next(label for label in expected if label.startswith(f"{tid} ("))
+            text = cell(label).replace(",", "")
+            if text:
+                try:
+                    run["values"][tid] = float(text)
+                except ValueError:
+                    problems.append(f"run column {col + 2}: {tid} must be a number, not {text!r}")
+        runs.append(run)
+    return runs, problems
+
+
+def run_result(proc, run):
+    lines = checkable(proc)
+    ticked = sum(run["passes"].get(line["text"], False) for line in lines)
+    return "Pass" if ticked == len(lines) else f"{ticked} of {len(lines)} pass lines"
+
+
+def measurements(reg, runs):
     """{tpm id: {layer: (date, value, procedure)}}: the latest measurement at each layer."""
     found = {}
     for proc in reg.procedures:
-        for run in proc.get("run", []):
-            for m in run.get("measured", []):
-                layers = found.setdefault(m["tpm"], {})
+        for run in runs.get(proc["id"], []):
+            for tid, value in run["values"].items():
+                layers = found.setdefault(tid, {})
                 if run["layer"] not in layers or run["date"] >= layers[run["layer"]][0]:
-                    layers[run["layer"]] = (run["date"], m["value"], proc)
+                    layers[run["layer"]] = (run["date"], value, proc)
     return found
 
 
@@ -884,17 +943,73 @@ def judge(tpm, value):
     return "misses the threshold" if threshold is not None else "misses the goal"
 
 
-def latest_runs(proc):
-    """{layer: the latest run at that layer}"""
-    found = {}
-    for run in proc.get("run", []):
-        if run["layer"] not in found or run["date"] >= found[run["layer"]]["date"]:
-            found[run["layer"]] = run
-    return found
+def fill_test_runs(reg, markdown, runs, problems, note=""):
+    """The page with each test-runs marker replaced by tables of the runs read from the sheet.
+    runs: {procedure id: [run]}; problems: {procedure id: [text]}; note: why there are none."""
+    tpms = {tpm["id"]: tpm for tpm in reg.tpms}
+    procs = {proc["id"]: proc for proc in reg.procedures}
+
+    def summary():
+        rows = []
+        for proc in reg.procedures:
+            latest = {}
+            for run in runs.get(proc["id"], []):
+                if run["layer"] not in latest or run["date"] >= latest[run["layer"]]["date"]:
+                    latest[run["layer"]] = run
+            rows.append([proc_link(proc), *[f"{run_result(proc, latest[l])}, {latest[l]['date'].isoformat()}"
+                                            if l in latest else "Not run" for l in LAYERS]])
+        return table(["Procedure", *LAYERS], rows)
+
+    def one(proc):
+        out = [f"> **The sheet's tab:** {p}." for p in problems.get(proc["id"], [])]
+        found = sorted(runs.get(proc["id"], []), key=lambda r: (r["date"], LAYERS.index(r["layer"])))
+        if not found:
+            return out + (["", "None yet."] if out else ["None yet."])
+        rows = []
+        for run in found:
+            got = ", ".join(f"{tid} {number(v)} {tpms[tid]['unit']}" for tid, v in run["values"].items())
+            rows.append([run["date"].isoformat(), run["layer"], run_result(proc, run), got or "None",
+                         run["log"] or "None", run["notes"]])
+        return out + ([""] if out else []) + table(["Date", "Layer", "Result", "Measured", "Log", "Notes"], rows)
+
+    def measured():
+        found = measurements(reg, runs)
+        rows = []
+        for tpm in reg.tpms:
+            if tpm.get("none"):
+                continue
+            cells = []
+            for layer in LAYERS:
+                got = found.get(tpm["id"], {}).get(layer)
+                cells.append(f"{number(got[1])} {tpm['unit']}, {got[0].isoformat()}: {judge(tpm, got[1])}"
+                             if got else "Not measured")
+            rows.append([tpm["id"], *cells])
+        return table(["TPM", *LAYERS], rows)
+
+    def replace(match):
+        what = match.group(1)
+        if note:
+            return f"> {note}"
+        if what == "summary":
+            body = summary()
+        elif what == "measurements":
+            body = measured()
+        elif what in procs:
+            body = one(procs[what])
+        else:
+            return match.group(0)
+        return "\n".join(body)
+
+    return re.sub(r"<!-- test-runs: ([\w-]+) -->", replace, markdown)
+
+
+def proc_link(proc, page=""):
+    return f"[{proc['title']}]({page}#{slugify(proc['title'])})"
 
 
 def render_procedures_page(reg):
     tpms = {tpm["id"]: tpm for tpm in reg.tpms}
+    sheet = (reg.sheet or {}).get("edit_url", "")
     out = [
         "# End-to-end test procedures",
         "",
@@ -907,21 +1022,28 @@ def render_procedures_page(reg):
         "  whoever works on each step explaining it. A step nobody can explain, or a name still",
         "  `[TBD]`, is a gap to settle.",
         "- **Then each one runs at Sim, Bench, and Robot,** as [Testing layers](testing-layers.md)",
-        "  describes. Each run is recorded in `end-to-end-tests.toml` with its result and log,",
-        "  and what it measured sets each TPM's status on the",
-        "  [performance budgets](performance-budgets.md#measurements) page.",
+        "  describes, and each run is recorded in the test-run sheet.",
         "",
         "This page is generated from `docs/design/end-to-end-tests.toml` by",
-        "`scripts/design render`.",
+        "`scripts/design render`. The results come from the test-run sheet when the website builds.",
         "",
+        "## Recording a run",
+        "",
+        (f"Open the procedure's tab in the [test-run sheet]({sheet}). " if sheet else
+         "Open the procedure's tab in the test-run sheet [TBD: the sheet's address, end-to-end-tests.toml]. ")
+        + "In the first empty column, write the layer (Sim, Bench, or Robot) and the date, such as "
+        "2026-12-02. Tick each pass line the run met, type each value it measured, and link the log. "
+        "Leave the first column alone: it must match each procedure's pass lines here, and the "
+        "website flags any row that drifts. `scripts/design sheet` prints the first column for "
+        "every procedure, for a new tab.",
+        "",
+        "## Results",
+        "",
+        "The latest run of each procedure at each layer. A run passes when every pass line is",
+        "ticked.",
+        "",
+        TEST_RUNS.format("summary"),
     ]
-    rows = []
-    for proc in reg.procedures:
-        runs = latest_runs(proc)
-        cells = [f"{runs[layer]['result'].capitalize()}, {runs[layer]['date'].isoformat()}" if layer in runs
-                 else "Not run" for layer in LAYERS]
-        rows.append([proc_link(proc), ", ".join(proc.get("measures", [])) or "None", *cells])
-    out += table(["Procedure", "Measures", *LAYERS], rows)
     for proc in reg.procedures:
         out += ["", f"## {proc['title']}", "", proc["purpose"]]
         if proc.get("measures"):
@@ -946,16 +1068,10 @@ def render_procedures_page(reg):
                 if line.get("tpm"):
                     text = f"{text.rstrip('.')} ({line['tpm']})."
                 out.append(f"- {text}")
-        runs = sorted(proc.get("run", []), key=lambda r: (r["date"], LAYERS.index(r["layer"])))
-        out += ["", "**Runs:**" if runs else "**Runs:** none yet."]
-        if runs:
-            rows = []
-            for run in runs:
-                got = ", ".join(f"{m['tpm']} {number(m['value'])} {tpms[m['tpm']]['unit']}"
-                                for m in run.get("measured", []))
-                rows.append([run["date"].isoformat(), run["layer"], run["result"].capitalize(), got or "None",
-                             run["log"], run.get("note", "")])
-            out += [""] + table(["Date", "Layer", "Result", "Measured", "Log", "Note"], rows)
+        tab = f"{sheet}#gid={proc['sheet_gid']}" if sheet and "sheet_gid" in proc else ""
+        out += ["", f"**Runs,** from [its tab in the test-run sheet]({tab}):" if tab else
+                "**Runs,** from its tab in the test-run sheet [TBD: the tab, end-to-end-tests.toml]:", "",
+                TEST_RUNS.format(proc["id"])]
     return "\n".join(out) + "\n"
 
 
@@ -1155,7 +1271,7 @@ def registry_markers(reg):
             if isinstance(v, str) and re.search(r"\[(TBD|TBR)\b", v):
                 found.append((reg.doc_of(tpm), tpm["id"], key, plain(v)))
     for proc in reg.procedures:
-        fields = [(key, v) for key, v in proc.items() if key not in ("step", "pass", "run")]
+        fields = [(key, v) for key, v in proc.items() if key not in ("step", "pass")]
         fields += [(f"step {n}", s["does"]) for n, s in enumerate(proc.get("step", []), 1)]
         fields += [(f"pass {n}", line["text"]) for n, line in enumerate(proc.get("pass", []), 1)]
         for key, v in fields:
@@ -1296,12 +1412,28 @@ def cmd_check(_args):
     return problems.report()
 
 
+def cmd_sheet(_args):
+    problems = Problems()
+    reg = load(problems)
+    if not problems.errors:
+        validate(problems, reg)
+    if problems.errors:
+        return problems.report()
+    for proc in reg.procedures:
+        gid = proc.get("sheet_gid", "no tab yet")
+        print(f"# {proc['title']} (tab gid {gid})")
+        print("\n".join(sheet_labels(reg, proc)))
+        print()
+    return problems.report()
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0],
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
     commands = parser.add_subparsers(dest="command", required=True)
     commands.add_parser("render", help="Rewrite every generated table and page.").set_defaults(run=cmd_render)
     commands.add_parser("check", help="Check the registries and that everything generated is current.").set_defaults(run=cmd_check)
+    commands.add_parser("sheet", help="Print each procedure's first column for the test-run sheet.").set_defaults(run=cmd_sheet)
     args = parser.parse_args()
     return args.run(args)
 

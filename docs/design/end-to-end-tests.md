@@ -9,20 +9,21 @@ interface it uses, and the budget it spends, and the pass lines come from the
   whoever works on each step explaining it. A step nobody can explain, or a name still
   `[TBD]`, is a gap to settle.
 - **Then each one runs at Sim, Bench, and Robot,** as [Testing layers](testing-layers.md)
-  describes. Each run is recorded in `end-to-end-tests.toml` with its result and log,
-  and what it measured sets each TPM's status on the
-  [performance budgets](performance-budgets.md#measurements) page.
+  describes, and each run is recorded in the test-run sheet.
 
 This page is generated from `docs/design/end-to-end-tests.toml` by
-`scripts/design render`.
+`scripts/design render`. The results come from the test-run sheet when the website builds.
 
-| Procedure | Measures | Sim | Bench | Robot |
-| --- | --- | --- | --- | --- |
-| [The stick moves the wheels](#the-stick-moves-the-wheels) | TPM-6 | Not run | Not run | Not run |
-| [The operator link drops](#the-operator-link-drops) | TPM-8 | Not run | Not run | Not run |
-| [The battery runs low](#the-battery-runs-low) | None | Not run | Not run | Not run |
-| [The E-stop is pressed](#the-e-stop-is-pressed) | None | Not run | Not run | Not run |
-| [One AUTO cycle](#one-auto-cycle) | TPM-1, TPM-2, TPM-3, TPM-4, TPM-6, TPM-10, TPM-11 | Not run | Not run | Not run |
+## Recording a run
+
+Open the procedure's tab in the [test-run sheet](https://docs.google.com/spreadsheets/d/1qYh5hzQPgHA6WQpqN9SrjHDDrfeMzqhxvYa_3uOBYCk/edit). In the first empty column, write the layer (Sim, Bench, or Robot) and the date, such as 2026-12-02. Tick each pass line the run met, type each value it measured, and link the log. Leave the first column alone: it must match each procedure's pass lines here, and the website flags any row that drifts. `scripts/design sheet` prints the first column for every procedure, for a new tab.
+
+## Results
+
+The latest run of each procedure at each layer. A run passes when every pass line is
+ticked.
+
+<!-- test-runs: summary -->
 
 ## The stick moves the wheels
 
@@ -48,7 +49,9 @@ Follows a TELEOP drive command from the gamepad to the drive motors: through the
 - With the TELEOP default view, camera on, the link averages under 1,000 kbit/s (TPM-6).
 - [TBD: a pass line for button-to-motor latency, from the teleop draft's tc netem test, teleoperation doc (5.1)]
 
-**Runs:** none yet.
+**Runs,** from [its tab in the test-run sheet](https://docs.google.com/spreadsheets/d/1qYh5hzQPgHA6WQpqN9SrjHDDrfeMzqhxvYa_3uOBYCk/edit#gid=1956880291):
+
+<!-- test-runs: stick-drives-wheels -->
 
 ## The operator link drops
 
@@ -72,7 +75,9 @@ Follows the loss of the operator's heartbeat to zero output at every motor, in T
 - When the link comes back, nothing moves until the operator enables the robot again, and a burst of late heartbeats does not enable it (teleop draft R4).
 - [TBD: no false disables in a 10-minute tc netem run, at a packet loss rate the radio link evaluation (5.7) sets]
 
-**Runs:** none yet.
+**Runs,** from [its tab in the test-run sheet](https://docs.google.com/spreadsheets/d/1qYh5hzQPgHA6WQpqN9SrjHDDrfeMzqhxvYa_3uOBYCk/edit#gid=1577951575):
+
+<!-- test-runs: link-loss -->
 
 ## The battery runs low
 
@@ -91,7 +96,9 @@ Follows a sagging battery voltage to halved current limits, with the robot still
 
 - The operator is warned at 14.0 V, every current limit halves after 2.0 s below 13.2 V, a dip shorter than 2 s changes nothing, and the robot stays ENABLED.
 
-**Runs:** none yet.
+**Runs,** from [its tab in the test-run sheet](https://docs.google.com/spreadsheets/d/1qYh5hzQPgHA6WQpqN9SrjHDDrfeMzqhxvYa_3uOBYCk/edit#gid=1381483783):
+
+<!-- test-runs: battery-low -->
 
 ## The E-stop is pressed
 
@@ -112,7 +119,9 @@ Follows an E-stop press with no software in its path, and shows that moving agai
 - With the E-stop pressed, every rail reads zero except the energy loggers and the robot computer's battery.
 - The energy logger's reading is the same before the press and after the reset.
 
-**Runs:** none yet.
+**Runs,** from [its tab in the test-run sheet](https://docs.google.com/spreadsheets/d/1qYh5hzQPgHA6WQpqN9SrjHDDrfeMzqhxvYa_3uOBYCk/edit#gid=2106263910):
+
+<!-- test-runs: e-stop -->
 
 ## One AUTO cycle
 
@@ -146,4 +155,6 @@ Follows a full autonomous cycle, dig, travel loaded, dump, and travel back, with
 - The energy the cycle uses is recorded, as the baseline for later runs (TPM-10).
 - The robot computer's processor load averages under 70% (TPM-11).
 
-**Runs:** none yet.
+**Runs,** from [its tab in the test-run sheet](https://docs.google.com/spreadsheets/d/1qYh5hzQPgHA6WQpqN9SrjHDDrfeMzqhxvYa_3uOBYCk/edit#gid=1139756209):
+
+<!-- test-runs: auto-cycle -->
