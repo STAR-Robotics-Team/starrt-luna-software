@@ -45,6 +45,14 @@ by `scripts/design render`.
 | --- | --- |
 | 1. I added an extra section for scoring, is that fine? | None |
 
+### `teleoperation.md`, not written yet (5.1)
+
+| Question | Turgor |
+| --- | --- |
+| 3. What topics and message types carry movement commands, and which code selects TELEOP or AUTO commands? | None |
+| 4. What final network settings and frontend delivery will be used: HTTPS and secure WebSockets served from the robot computer, or a packaged desktop app? | 5.7 |
+| 5. What command and telemetry interfaces let teleop expose any combination of functions? The draft proposes one command topic per function that moves on its own (drive, coordinated depth raise and lower, excavator, conveyor, hatch) and one telemetry topic per source, not per motor or button. | None |
+
 ### [Testing Layers](testing-layers.md#open-questions)
 
 | Question | Turgor |
@@ -202,16 +210,17 @@ that uses them; each is listed here once.
 
 | Entry | Field | Value |
 | --- | --- | --- |
-| node operator_frontend | package | [TBD: teleoperation doc (5.1)] |
-| interface /joy | rate | 20 Hz and on change [TBR: teleop draft, PR #14] |
+| node operator_frontend | package | Custom frontend with `roslibjs` [TBR: teleop draft, PR #14] |
+| node teleop_node | package | `luna_teleop` [TBR: teleop draft, PR #14] |
+| interface /joy | rate | `autorepeat_rate`, 20 Hz, and on change [TBR: teleop draft, PR #14] |
 | interface /joy | qos | [TBD: as rosbridge publishes it, teleoperation doc (5.1)] |
-| interface /operator/heartbeat | qos | best effort, depth 1 [TBR: as rosbridge publishes it, teleoperation doc (5.1)] |
-| interface /teleop/cmd_vel | rate | [TBD: teleoperation doc (5.1)] |
-| interface /teleop/cmd_vel | qos | [TBD: teleoperation doc (5.1)] |
+| interface /teleop/cmd_vel | type | geometry_msgs/msg/TwistStamped [TBR: teleop draft, PR #14] |
+| interface /teleop/cmd_vel | rate | `command_rate`, 20 Hz [TBR: teleop draft, PR #14] |
+| interface /teleop/cmd_vel | qos | best effort, volatile, depth 1 [TBR: teleop draft, PR #14] |
 | interface /teleop/cmd_vel | note | The name comes from the teleop draft (PR #14) [TBR: teleop open question 3, which decides how TELEOP and AUTO commands reach the drivetrain]. |
-| interface teleop-mechanism-command | name | [TBD: teleop's mechanism command topic, teleop open question 3] |
+| interface teleop-mechanism-command | name | [TBD: teleop's mechanism command topics, teleop open questions 3 and 5] |
 | interface teleop-mechanism-command | type | [TBD: mechanism doc (4.2)] |
-| interface teleop-mechanism-command | rate | [TBD: teleoperation doc (5.1)] |
+| interface teleop-mechanism-command | rate | `command_rate`, 20 Hz [TBR: teleop draft, PR #14, for the mechanism doc (4.2) to confirm] |
 | interface teleop-mechanism-command | qos | [TBD: teleoperation doc (5.1)] |
 
 ## Marked in the docs

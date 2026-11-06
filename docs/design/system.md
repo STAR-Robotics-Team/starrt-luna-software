@@ -124,6 +124,7 @@ flowchart LR
   nmode_manager -->|"/robot/mode"| noperator_frontend
   nmode_manager -->|"/robot/mode"| nteleop_node
   noperator_frontend -.->|"/robot/request_mode"| nmode_manager
+  nteleop_node -.->|"/robot/request_mode"| nmode_manager
   ntask_sequencer -.->|"/robot/request_task"| nmode_manager
   npower_panel -->|"/power/battery"| nmode_manager
   npower_panel -->|"/power/battery"| noperator_frontend
@@ -144,7 +145,7 @@ flowchart LR
   noperator_frontend -->|"/joy"| nteleop_node
   noperator_frontend -->|"/operator/heartbeat"| nmode_manager
   nteleop_node -->|"/teleop/cmd_vel"| ncommand_selection
-  nteleop_node -->|"teleop's mechanism command topic (TBD)"| ncommand_selection
+  nteleop_node -->|"teleop's mechanism command topics (TBD)"| ncommand_selection
 ```
 
 <!-- /design -->
@@ -179,8 +180,8 @@ ours that can fail publishes `/diagnostics`, so both are defined here.
 | `/robot/mode` | topic | `luna_interfaces/msg/RobotMode` | 10 Hz and on change | `mode_manager` | Drivetrain node, Mechanism node, Command selection node, Path planning and following, Task sequencer, Operator frontend, `teleop_node` | reliable, transient local, depth 1 |
 | [TBD: AUTO drive command topic, teleop open question 3] | topic | geometry_msgs/msg/TwistStamped [TBR: matches /cmd_vel] | [TBD: autonomy doc (7.2)] | Path planning and following | Command selection node | [TBD: autonomy doc (7.2)] |
 | [TBD: AUTO mechanism command topic, teleop open question 3] | topic | [TBD: mechanism doc (4.2)] | [TBD: autonomy doc (7.2)] | Task sequencer | Command selection node | [TBD: autonomy doc (7.2)] |
-| `/teleop/cmd_vel` | topic | `geometry_msgs/msg/TwistStamped` | [TBD: teleoperation doc (5.1)] | `teleop_node` | Command selection node | [TBD: teleoperation doc (5.1)] |
-| [TBD: teleop's mechanism command topic, teleop open question 3] | topic | [TBD: mechanism doc (4.2)] | [TBD: teleoperation doc (5.1)] | `teleop_node` | Command selection node | [TBD: teleoperation doc (5.1)] |
+| `/teleop/cmd_vel` | topic | geometry_msgs/msg/TwistStamped [TBR: teleop draft, PR #14] | `command_rate`, 20 Hz [TBR: teleop draft, PR #14] | `teleop_node` | Command selection node | best effort, volatile, depth 1 [TBR: teleop draft, PR #14] |
+| [TBD: teleop's mechanism command topics, teleop open questions 3 and 5] | topic | [TBD: mechanism doc (4.2)] | `command_rate`, 20 Hz [TBR: teleop draft, PR #14, for the mechanism doc (4.2) to confirm] | `teleop_node` | Command selection node | [TBD: teleoperation doc (5.1)] |
 
 <!-- /design -->
 

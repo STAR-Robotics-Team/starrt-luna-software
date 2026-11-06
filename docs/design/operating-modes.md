@@ -232,8 +232,8 @@ This doc's share of each technical performance measure, from the
 | Localization and mapping | [TBD: its nodes, autonomy doc (7.2)] | Robot computer | SW.2.2 Localization and mapping | [Autonomy Subsystem Design](autonomy.md) | Finds the robot's position and heading from the random start, and builds the obstacle map, from the LiDAR, the IMUs, and the wheels |
 | Path planning and following | [TBD: its nodes, autonomy doc (7.2)] | Robot computer | SW.2.3 Path planning and following | [Autonomy Subsystem Design](autonomy.md) | Plans a path around the mapped obstacles to the target zone, and follows it in AUTO |
 | Task sequencer | [TBD: autonomy doc (7.2)] | Robot computer | SW.2.4 Task sequencer | [Autonomy Subsystem Design](autonomy.md) | Runs dig, travel, dump, travel in AUTO: changes the task mode and sends mechanism commands, but can never enable the robot |
-| Operator frontend | [TBD: teleoperation doc (5.1)] | Operator laptop, in a browser, through rosbridge | SW.3.1 Operator frontend | `teleoperation.md`, not written yet (5.1) | Reads the gamepad through the browser's Gamepad API, sends /joy, the heartbeat, and mode requests, and shows each control source's default view, which the operator can change, with live link bandwidth |
-| `teleop_node` | `luna_teleop` | Robot computer | SW.3.2 Teleop mapping | `teleoperation.md`, not written yet (5.1) | Turns /joy into drive and mechanism commands, zeroes them when the hold button is released, and drops stale input |
+| Operator frontend | Custom frontend with `roslibjs` [TBR: teleop draft, PR #14] | Operator laptop, in a browser, through rosbridge | SW.3.1 Operator frontend | `teleoperation.md`, not written yet (5.1) | Reads the gamepad through the browser's Gamepad API, sends /joy, the heartbeat, and mode requests through rosbridge, and shows each control source's default view, which the operator can change, with live link bandwidth. It is not a ROS node: rosbridge publishes and calls for it. |
+| `teleop_node` | `luna_teleop` [TBR: teleop draft, PR #14] | Robot computer | SW.3.2 Teleop mapping | `teleoperation.md`, not written yet (5.1) | Turns fresh /joy input into drive and mechanism commands, zeroes them when the hold button is released, drops stale input, and requests DISABLED when the controller's input is lost |
 
 <!-- /design -->
 
@@ -269,12 +269,12 @@ on in AUTO, and the operator station shows live link bandwidth so the cost is vi
 | Name | Kind | Type | Rate | Publisher or server | Subscriber or client | QoS |
 | --- | --- | --- | --- | --- | --- | --- |
 | `/robot/mode` | topic | `luna_interfaces/msg/RobotMode` | 10 Hz and on change | `mode_manager` | Drivetrain node, Mechanism node, Command selection node, Path planning and following, Task sequencer, Operator frontend, `teleop_node` | reliable, transient local, depth 1 |
-| `/robot/request_mode` | service | `luna_interfaces/srv/RequestMode` | On demand | `mode_manager` | Operator frontend | default |
+| `/robot/request_mode` | service | `luna_interfaces/srv/RequestMode` | On demand | `mode_manager` | Operator frontend, `teleop_node` | default |
 | `/robot/request_task` | service | `luna_interfaces/srv/RequestTask` | On demand | `mode_manager` | Task sequencer | default |
 | `/power/battery` | topic | `sensor_msgs/msg/BatteryState` | 10 Hz | Power panel reading node | `mode_manager`, Operator frontend | best effort, depth 1 |
 | `/diagnostics` | topic | `diagnostic_msgs/msg/DiagnosticArray` | 1 Hz and on change | Drivetrain node, Mechanism node, Camera driver, Dedicated IMU driver, Localization and mapping, Path planning and following, Task sequencer | `mode_manager` | reliable, depth 10 |
 | `/mechanism/status` | topic | [TBD: mechanism doc (4.2)] | [TBD: mechanism doc (4.2)] | Mechanism node | `mode_manager`, Task sequencer, Operator frontend | [TBD: mechanism doc (4.2)] |
-| `/operator/heartbeat` | topic | `std_msgs/msg/Header` | 10 Hz | Operator frontend | `mode_manager` | best effort, depth 1 [TBR: as rosbridge publishes it, teleoperation doc (5.1)] |
+| `/operator/heartbeat` | topic | `std_msgs/msg/Header` | `heartbeat_rate`, 10 Hz, including in AUTO and with the hold button released | Operator frontend | `mode_manager` | best effort, depth 1 |
 
 <!-- /design -->
 
