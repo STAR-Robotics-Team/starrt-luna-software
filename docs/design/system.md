@@ -62,8 +62,8 @@ each system in each test mode.
 | LiDAR | The Unitree L2's point cloud and its built-in IMU, as Unitree's driver publishes them: by default `unilidar/cloud` in frame `unilidar_lidar` and `unilidar/imu` in frame `unilidar_imu` ([unitree_lidar_ros2 launch file](../sources.md#unitree-lidar-ros2-launch)) | A stub node, a recording, Gazebo | `sensors.md` (6.2) |
 | Dedicated IMU | One `sensor_msgs/msg/Imu`: angular velocity from the gyroscope and linear acceleration from the accelerometer, in the IMU's own frame near the center of mass. No magnetometer. | A stub node, a recording, Gazebo | `sensors.md` (6.2) |
 | Cameras | [TBD: the image and camera info topics and frames of the cameras chosen in 6.1] | A test-pattern stub, a recording, Gazebo | `sensors.md` (6.2) |
-| Gamepad | `/joy`, with [TBD: the button and stick numbers from the gamepad's table (5.2)] | A recording | `teleoperation.md` (5.1) |
-| Radio link | The ROS 2 topics that cross between the operator laptop and the robot: commands, the heartbeat, and telemetry | Both sides on one computer | `teleoperation.md` (5.1) |
+| Gamepad | `/joy`, sent by the operator frontend from the browser's Gamepad API [TBR: chosen in the PR #14 review, 2026-10-26], with [TBD: the button and stick numbers from the gamepad's table (5.2)] | A recording | `teleoperation.md` (5.1) |
+| Radio link | The messages that cross between the operator laptop and the robot over one rosbridge connection (WebSocket over TCP): `/joy`, the heartbeat, mode requests, and telemetry [TBR: chosen in the PR #14 review, 2026-10-26] | Both sides on one computer | `teleoperation.md` (5.1) |
 
 The design docs in code font are not written yet; the number after each is its
 deliverable.
@@ -123,9 +123,9 @@ stub, recording, and Gazebo modes, as [Testing layers](testing-layers.md) descri
 | CAN bus, 1 Mbit/s ([CAN bus](../can-bus.md)) | The Jetson, through the CANable USB adapter (`can0`), and the motor controllers and power distribution panel | Commands, status, and the enable | [TBD: the controllers, in 3.2 (drive) and 4.3 (mechanism)] |
 | Ethernet (UDP) or a serial port (TTL UART), one at a time ([Unitree L2 manual, p. 12](../sources.md#unitree-l2-manual)) | The Jetson and the Unitree L2 | The point cloud and its IMU | Ethernet on the bench (6.6); [TBD: the robot's link, in the sensors doc (6.2)] |
 | [TBD] | The Jetson and the cameras and the dedicated IMU | Images and IMU data | 6.1 |
-| Wi-Fi | The team's access point and the robot's radio | ROS 2 topics both ways | [TBD: the parts, in 5.7] |
-| NASA's Ethernet cable | NASA's switch in Mission Control and the team's access point | ROS 2 topics both ways, past the judges' bandwidth recorder | Supplied by NASA |
-| [TBD] | The operator laptop and the gamepad | Stick and button input | 5.2 |
+| Wi-Fi | The team's access point and the robot's radio | The rosbridge connection, both ways | [TBD: the parts, in 5.7] |
+| NASA's Ethernet cable | NASA's switch in Mission Control and the team's access point | The rosbridge connection, both ways, past the judges' bandwidth recorder | Supplied by NASA |
+| USB cable to the Xbox Model 1914's USB-C port, read by the browser's Gamepad API | The operator laptop and the gamepad | Stick and button input | 5.2 |
 
 The power path, from the battery through the main breaker, energy logger, and E-stop, is
 in the [operating modes design](operating-modes.md#5-libraries-and-hardware-interfaces).
@@ -144,7 +144,7 @@ flowchart TB
   subgraph mcc["Mission Control"]
     direction TB
     pad["`**Gamepad** (5.2)`"] --- laptop["`**Operator laptop**
-teleop, operator view; Linux`"]
+operator frontend in a browser, any OS (5.1)`"]
     laptop --- sw["`**NASA network switch**`"]
   end
   subgraph arena["Arena"]
@@ -154,7 +154,7 @@ on the corner shelf (5.7)`"]
     subgraph robot["Robot"]
       direction TB
       radio["`**Robot radio** (5.7)`"] --- jetson["`**Jetson Orin Nano**
-every robot node`"]
+every robot node, including teleop_node and rosbridge (5.1)`"]
       jetson ---|USB| can
       subgraph can["CAN bus, 1 Mbit/s"]
         direction TB
@@ -209,7 +209,7 @@ flowchart TB
   subgraph mcc["Mission Control Center"]
     direction TB
     laptop["`**Operator laptop and gamepad**
-sends commands and the heartbeat`"] <--> sw["`**NASA network switch**`"]
+the operator frontend, in a browser, sends /joy, mode requests, and the heartbeat (5.1)`"] <--> sw["`**NASA network switch**`"]
   end
   subgraph arena["Artemis Arena"]
     direction TB
@@ -219,7 +219,7 @@ on the corner shelf; the team's GL.iNet Beryl AX is the first candidate (5.7)`"]
       direction TB
       radio["`**Robot radio**
 the Jetson's own Wi-Fi is the first candidate (5.7)`"] <--> jetson["`**Jetson Orin Nano**
-mode manager, drive, sensors`"]
+rosbridge, teleop_node, mode manager, drive, sensors`"]
     end
   end
   ap <-. "Wi-Fi, channel 1, 20 MHz" .-> robot
@@ -253,6 +253,8 @@ mode manager, drive, sensors`"]
   ([GL.iNet network modes guide, section "For models with Wi-Fi"](../sources.md#glinet-network-modes)).
   So [TBD: either NASA's cable goes into one of its LAN ports, or the Beryl AX runs in
   Access Point mode and every device gets a fixed address; 5.7 decides].
+  [TBR: With rosbridge (PR #14 review, 2026-10-26), only the laptop's WebSocket connection has to reach
+  the robot; ROS 2 discovery stays on the robot.]
 - **Deliverable 5.7 decides the parts and the network,** by Oct 28: the access point, the
   robot's radio and antennas, the addresses, and how ROS 2 crosses the link. It also
   settles whether the team's Open-Mesh OM5P-AC radio can be used, and asks the organizers
@@ -287,7 +289,7 @@ mode manager, drive, sensors`"]
 | 3. Which drive motor controllers? (3.2) | Drivetrain owner, with the electrical lead | 2026-10-28 |
 | 4. Which mechanism motor controllers? (4.3) | Mechanism owner, with the electrical lead | 2026-11-01 |
 | 5. How do stand-ins swap in for hardware, system by system, and what are the launch arguments called? (1.4) | Software lead | 2026-10-21 |
-| 6. May the robot use 5 GHz during runs? The guidebook's §14.1.17 and §14.4 disagree ([Rules the robot must follow](../competition/robot-rules.md#communications)). Ask the organizers. | Radio link evaluation owner | 2026-10-21 |
+| 6. May the robot use 5 GHz during runs? The guidebook's §14.1.17 and §14.4 disagree ([Rules the robot must follow](../competition/robot-rules.md#communications)). Ask the organizers. Asked through 5.7; [TBD: no answer yet as of 2026-11-04]. | Radio link evaluation owner | 2026-10-21 |
 | 7. Does a mini PC replace the Jetson on the rover? The team's Hacker Initiative grant application budgets one, an ASRock 4X4 BOX-AI340 with 32 GB of memory, for its faster CPU and hardware video encoding, plus an isolated CANable 2.0 Pro clone. The Jetson would then run the bench testbed. [TBD: decided by the grant, announced by Dec 21, 2026.] If it does, this doc's Jetson references become the mini PC, and on its standard Ubuntu kernel the CANable needs no driver build ([CAN bus](../can-bus.md#what-you-need)). | Software lead | 2026-12-21 |
 | 8. Should the robot's radio be the robot computer's own Wi-Fi? The computer runs on its own battery, so a main-battery sag in a stall could not drop the link, while a separate radio on the main battery reboots if the pack falls below its converter's 9 V minimum ([operating modes, section 7](operating-modes.md#7-behavior-on-failure)). It must still meet the radio rules ([Rules the robot must follow](../competition/robot-rules.md#communications)). (5.7) | Radio link evaluation owner | 2026-11-08 |
 

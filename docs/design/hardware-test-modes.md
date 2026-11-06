@@ -1281,12 +1281,12 @@ Get commands and mode requests`"]
 **Teleop mapping**
 teleop_twist_joy plus our node for the mechanism and mode buttons`"]
   line3["`**Hardware line:** /joy`"]
-  b4["`*ROS code*
-**joy game_controller_node**
-Reads the gamepad`"]
+  b4["`*Ours · 5.1*
+**Operator frontend**
+Reads the gamepad through the browser's Gamepad API; sends /joy over rosbridge`"]
   b5["`*Hardware*
 **The gamepad chosen in 5.2**
-On the Linux operator laptop`"]
+On the operator laptop, any OS`"]
   b2 --> b1
   line3 --> b2
   b4 --> line3
@@ -1299,12 +1299,12 @@ On the Linux operator laptop`"]
   classDef ghost fill:none,stroke:#8b939c,stroke-dasharray:4 4,color:#8b939c
   class b1,b2 ours
   class line3 hwline
-  class b4 ros
+  class b4 ours
   class b5 hw
 ```
 
 - **Deliverable:** 5.6, Teleop over the team's access point
-- **Runs on:** The operator laptop, on Linux
+- **Runs on:** The operator laptop, in a browser on any OS, and the Jetson
 - **Proves:** The real gamepad drives the bench motor over the access point
 - **Can't catch:** Competition distance and interference
 
@@ -1324,9 +1324,9 @@ Get commands and mode requests`"]
 **Teleop mapping**
 teleop_twist_joy plus our node for the mechanism and mode buttons`"]
   line3["`**Hardware line:** /joy`"]
-  b4["`*ROS code*
-**joy game_controller_node**
-Reads the gamepad`"]
+  b4["`*Ours · 5.1*
+**Operator frontend**
+Reads the gamepad through the browser's Gamepad API; sends /joy over rosbridge`"]
   b5["`*Hardware*
 **The gamepad chosen in 5.2**
 On the operator laptop; its commands cross the radio link`"]
@@ -1342,7 +1342,7 @@ On the operator laptop; its commands cross the radio link`"]
   classDef ghost fill:none,stroke:#8b939c,stroke-dasharray:4 4,color:#8b939c
   class b1,b2 ours
   class line3 hwline
-  class b4 ros
+  class b4 ours
   class b5 hw
 ```
 
@@ -1358,7 +1358,7 @@ Other modes:
 
 ## Radio link
 
-*Carries topics between two machines.* **Hardware line:** the topics that cross between the operator laptop and the robot. The full contract is in [Hardware lines](system.md#hardware-lines).
+*Carries messages between two machines.* **Hardware line:** the messages that cross between the operator laptop and the robot, over one rosbridge connection [TBR: chosen in the PR #14 review, 2026-10-26]. The full contract is in [Hardware lines](system.md#hardware-lines).
 
 ### Radio link: One computer (Sim)
 
@@ -1370,13 +1370,13 @@ config:
 ---
 flowchart TB
   b1["`*Ours · 5.4, 5.5*
-**Operator laptop**
-Sends commands and the heartbeat at 10 Hz; shows the operator view`"]
-  subgraph band2["The link: topics both ways"]
+**Operator frontend, in a browser**
+Sends /joy, mode requests, and the heartbeat at 10 Hz over rosbridge; shows the views`"]
+  subgraph band2["The link: one rosbridge connection"]
     direction TB
     b3["`*Stand-in*
 **Both sides on one computer**
-DDS on one machine; Ctrl+Z on the operator process cuts the link`"]
+rosbridge on one machine; stopping the frontend cuts the link`"]
   end
   b4["`*Ours · 1.8*
 **Robot side: mode manager**
@@ -1409,13 +1409,13 @@ config:
 ---
 flowchart TB
   b1["`*Ours · 5.4, 5.5*
-**Operator laptop**
-Sends commands and the heartbeat at 10 Hz; shows the operator view`"]
-  subgraph band2["The link: topics both ways"]
+**Operator frontend, in a browser**
+Sends /joy, mode requests, and the heartbeat at 10 Hz over rosbridge; shows the views`"]
+  subgraph band2["The link: one rosbridge connection"]
     direction TB
     b3["`*Hardware*
 **Access point and radio (5.7)**
-Linux operator laptop to the Jetson on the testbed; pull the Wi-Fi to cut it`"]
+The operator laptop to the Jetson on the testbed; pull the Wi-Fi to cut it`"]
   end
   b4["`*Ours · 1.8*
 **Robot side: mode manager**
@@ -1436,7 +1436,7 @@ Disables within link_timeout plus 100 ms once the heartbeat stops`"]
 - **Deliverable:** 5.6, Teleop over the team's access point
 - **Runs on:** Two machines on the team's access point
 - **Proves:** A Wi-Fi cut stops the bench motor; bandwidth stays under the cap
-- **Link test:** Stop the teleop program while the Wi-Fi stays up and the robot still
+- **Link test:** Close the operator frontend while the Wi-Fi stays up and the robot still
   answers pings: the bench motor stops, because the heartbeat stops (operating modes test
   R3)
 - **Can't catch:** The rover's radio and the arena's distance
@@ -1451,9 +1451,9 @@ config:
 ---
 flowchart TB
   b1["`*Ours · 5.4, 5.5*
-**Operator laptop**
-Sends commands and the heartbeat at 10 Hz; shows the operator view`"]
-  subgraph band2["The link: topics both ways"]
+**Operator frontend, in a browser**
+Sends /joy, mode requests, and the heartbeat at 10 Hz over rosbridge; shows the views`"]
+  subgraph band2["The link: one rosbridge connection"]
     direction TB
     b3["`*Hardware*
 **Access point and drive base radio**

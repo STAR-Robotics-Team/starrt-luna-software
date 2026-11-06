@@ -50,8 +50,8 @@ Requirements:
 - R9. One control on the operator station disables the robot from any mode, to obey the
   power-off command ([§13.9.19, p. 45](../sources.md#nasa-lunabotics-guidebook-2027)) and the end-of-run inhibit
   ([§15.4.1, p. 54](../sources.md#nasa-lunabotics-guidebook-2027)).
-- R10. What the robot streams to the operator station depends on the mode, to keep average
-  bandwidth low. The link must average 4,000 kbit/s or less ([§14.1.19, p. 48](../sources.md#nasa-lunabotics-guidebook-2027)). For
+- R10. What the robot streams to the operator station by default depends on the mode, to
+  keep average bandwidth low. The link must average 4,000 kbit/s or less ([§14.1.19, p. 48](../sources.md#nasa-lunabotics-guidebook-2027)). For
   the score, each arena camera used adds 0.5 Mbit/s to the average, every 1 Mbit/s of the
   total costs 30 of the 120 points, and a total over 4 Mbit/s scores zero
   ([§17.1.4, p. 60](../sources.md#nasa-lunabotics-guidebook-2027)).
@@ -214,16 +214,19 @@ open question 7).]
 | `mode_manager` | Self-test | Watches heartbeat, faults, battery | Same | Same | Same; waits for a clear |
 | Drivetrain node | Output zero; checks its motor controllers | Output zero; telemetry | Follows `/cmd_vel` within task limits | Same | Output zero |
 | Mechanism node | Output zero; checks its motor controllers | Output zero; telemetry | Follows operator commands within task limits | Follows sequencer commands within task limits | Output zero |
-| Teleop (operator laptop) | Heartbeat | Heartbeat; mode requests | Gamepad commands | Heartbeat and mode requests only; gamepad ignored | Heartbeat; clear request |
+| Teleop (frontend on the operator laptop, `teleop_node` on the robot computer) | Heartbeat | Heartbeat; mode requests | Gamepad commands | Heartbeat and mode requests only; gamepad ignored | Heartbeat; clear request |
 | Sensor drivers | Starting | Running | Running | Running | Running |
 | Localization and mapping | Starting | Running, so AUTO needs no warm-up | Running | Running | Running |
 | Planner and task sequencer | Idle | Idle | Idle | Active | Idle |
-| Operator stream | Telemetry, low rate | Telemetry, low rate | Camera and telemetry | Obstacle map and planned path; camera off | Telemetry and fault detail |
+| Default operator view | Telemetry, low rate | Telemetry, low rate | Camera and telemetry | Obstacle map and planned path; camera off | Telemetry and fault detail |
 | Logging (`ros2 bag`) | Starting | Recording | Recording | Recording | Recording |
 
-In AUTO the stream carries the obstacle map and planned path because the judges require
+In AUTO the default view carries the obstacle map and planned path because the judges require
 "visualization of the real time obstacle detection and associated mapping of obstacles
 and the resulting path planning" ([§16, p. 55](../sources.md#nasa-lunabotics-guidebook-2027)), and leaves the camera off to save bandwidth (R10).
+These are defaults: the operator can change the view at runtime, such as turning the camera
+on in AUTO, and the operator station shows live link bandwidth so the cost is visible
+[TBR: chosen in the PR #14 review, 2026-10-26; the teleoperation doc (5.1) holds the details].
 
 ## 3. Interfaces
 
@@ -234,7 +237,7 @@ and the resulting path planning" ([§16, p. 55](../sources.md#nasa-lunabotics-gu
 | `/robot/request_task` | service | `luna_interfaces/srv/RequestTask` | On demand | `mode_manager` | Task sequencer | default |
 | `/operator/heartbeat` | topic | `std_msgs/msg/Header` | 10 Hz | Teleop | `mode_manager` | best effort, depth 1 |
 | `/diagnostics` | topic | `diagnostic_msgs/msg/DiagnosticArray` | 1 Hz and on change | Drivetrain node, mechanism node, sensor drivers, task sequencer | `mode_manager` | reliable, depth 10 |
-| `/power/battery` | topic | `sensor_msgs/msg/BatteryState` | 10 Hz | The node that reads the PDP (section 5) [TBR: the node that owns CTRE access, or one of its own, since Phoenix 5 does not read the PDP] | `mode_manager`, teleop | best effort, depth 1 |
+| `/power/battery` | topic | `sensor_msgs/msg/BatteryState` | 10 Hz | The power panel reading node (section 5), a node of its own, since reading the PDP needs no Phoenix library | `mode_manager`, teleop | best effort, depth 1 |
 | `/mechanism/status` | topic | Defined in the mechanism doc | Defined in the mechanism doc | Mechanism node | `mode_manager` | Defined in the mechanism doc |
 
 `mode_manager` refuses `/robot/request_task` unless the robot is ENABLED in AUTO, so the
@@ -421,11 +424,11 @@ The dotted arrows are `/robot/mode`, which every node follows.
 | Question | Owner | Due |
 | --- | --- | --- |
 | 1. Decided 2026-10-27: keep the 4S LiPo (16.8 V full), and charge the rover's packs to at most 4.00 V per cell (16.0 V) while the rover still has the Victor SPX ([User's Guide, p. 3](../sources.md#ctre-victor-spx-guide)), PDP ([User's Guide, p. 6](../sources.md#ctre-pdp-guide)), and VRM ([User's Guide, p. 5](../sources.md#ctre-vrm-guide)), which are rated to 16 V. That keeps all three in range, at about 73% of the energy a full charge stores ([BU-808, section "What Causes Lithium-ion to Age?"](../sources.md#battery-university-bu-808)). The bench testbed charges its packs fully, since every part on it is rated to 18 V or more. The ToolkitRC M7 charges LiPo to 4.20 V per cell ([M7 Manual, p. 14](../sources.md#toolkitrc-m7-manual)) and can lower that by only 50 mV ([M7 Manual, p. 19](../sources.md#toolkitrc-m7-manual)), so the team is buying a charger that can stop at 4.00 V [TBR: the iCharger X6, whose retailer lists a per-pack end voltage of 3.85 to 4.35 V per cell]. [TBR: The boot self-test refuses to enable while the PDP reads above 16.0 V, so one full charge cannot slip through.] | Electrical lead | Decided |
-| 2. Does the robot drive while digging? A comment on the Spring 2026 power budget (cell M3) asks the same. If not, EXCAVATE allows no drive. | Mechanical lead | 2026-10-25 |
-| 3. Does the conveyor run during DUMP? | Mechanical lead | 2026-10-25 |
+| 2. Does the robot drive while digging? A comment on the Spring 2026 power budget (cell M3) asks the same. If not, EXCAVATE allows no drive. [TBR: the software lead answered yes, at creep output, in the teleoperation review on 2026-10-23; the Mechanical lead to confirm.] | Mechanical lead | 2026-10-25 |
+| 3. Does the conveyor run during DUMP? [TBR: the software lead answered yes in the teleoperation review on 2026-10-23; the Mechanical lead to confirm.] | Mechanical lead | 2026-10-25 |
 | 4. Which sensors tell software that the excavator is stowed and the hatch is closed? The entry guards need them. | Mechanical and electrical leads | 2026-11-01 |
 | 5. Which motor controller runs each mechanism motor? Motors that need a current limit must be on a Talon SRX: the excavator's 775 RedLine (130 A stall, [test report, p. 1](../sources.md#andymark-775-redline-report)) and the depth actuators (about 50 A stall, [Pololu product page, section "Using the actuator"](../sources.md#pololu-lact18-500apl)). | Electrical lead | 2026-11-01 |
-| 6. Does one process's Phoenix enable keep another process's motor controllers enabled? This decides which node feeds the enable and owns CTRE access. With Phoenix 5 and Phoenix 6 in separate nodes (section 5), also check whether either library's enable reaches the other's controllers. Test on the bench. | Drivetrain owner | 2026-10-25 |
+| 6. Does one process's Phoenix enable keep another process's motor controllers enabled? This decides which node feeds the enable. With Phoenix 5 and Phoenix 6 in separate nodes (section 5), also check whether either library's enable reaches the other's controllers. Test on the bench. | Drivetrain owner | 2026-10-25 |
 | 7. Decided 2026-10-28: the robot computer gets its own battery ([§13.2.11, p. 42](../sources.md#nasa-lunabotics-guidebook-2027)) and its own energy logger, with the two batteries' negatives tied at one point, so an E-stop does not reboot it or cut its logs (section 5). | Electrical lead and software lead | Decided |
 | 8. Ask the organizers: does energy used during the 10-minute setup count, and does a separate compute battery have to go through the energy logger? | Software lead | 2026-10-25 |
 | 9. Should `link_timeout` be longer in AUTO, to ride through Wi-Fi dropouts? Measure dropouts in the pits first. | Teleop owner | 2026-11-08 |

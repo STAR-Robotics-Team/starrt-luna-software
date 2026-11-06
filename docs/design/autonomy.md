@@ -134,7 +134,7 @@ same pull request.
 
 | Name | Kind | Type | Rate | Publisher or server | Subscriber or client | QoS |
 | --- | --- | --- | --- | --- | --- | --- |
-| `/example_topic` | topic | `geometry_msgs/msg/Twist` | 20 Hz | `example_publisher` | `example_subscriber` | reliable, depth 10 |
+| [name] | [topic, service, or action] | [type] | [rate] | [publisher or server] | [subscriber or client] | [QoS] |
 
 ## 4. Parameters
 
@@ -155,9 +155,7 @@ same pull request.
 
 ```mermaid
 flowchart LR
-  joy[joy_node] -- /joy --> teleop[teleop_twist_joy]
-  teleop -- /cmd_vel --> drive[drive node]
-  drive -- CAN --> controllers[Talon SRX and Victor SPX]
+  a["[node]"] -- "[topic]" --> b["[node]"]
 ```
 
 ## 7. Behavior on failure
