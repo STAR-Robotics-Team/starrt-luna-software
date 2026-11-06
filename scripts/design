@@ -852,20 +852,25 @@ SHEET_LAYERS = {layer.lower(): layer for layer in LAYERS}
 
 
 def checkable(proc):
-    """The pass lines a tester can tick: those that are not still [TBD]."""
+    """The pass lines a tester can mark: those that are not still [TBD]."""
     return [line for line in proc.get("pass", []) if not line["text"].startswith("[TBD")]
 
 
 def sheet_labels(reg, proc):
-    """The first column of a procedure's tab in the test-run sheet, top to bottom."""
+    """The first column of a procedure's tab in the test-run sheet, top to bottom. Each run
+    takes two columns: Result and Note."""
     tpms = {tpm["id"]: tpm for tpm in reg.tpms}
-    return (["Layer", "Date"] + [plain(line["text"]) for line in checkable(proc)]
-            + [f"{tid} ({tpms[tid]['unit']})" for tid in proc.get("measures", [])] + ["Log", "Notes"])
+    return (["Run", "Layer", "Date"] + [plain(line["text"]) for line in checkable(proc)]
+            + [f"{tid} ({tpms[tid]['unit']})" for tid in proc.get("measures", [])] + ["Log"])
+
+
+RESULTS = {"pass": True, "fail": False, "": None}
 
 
 def parse_tab(reg, proc, rows):
-    """(runs, problems) from a procedure's tab, given as CSV rows. A run is a column with a
-    layer and a date: {layer, date, passes {line text: ticked}, values {tpm: number}, log, notes}."""
+    """(runs, problems) from a procedure's tab, given as CSV rows. A run is a Result column
+    with a layer and a date, and the Note column beside it: {layer, date, passes {line text:
+    True, False, or None when not marked}, values {tpm: number}, notes {row label: note}, log}."""
     import datetime
     problems, labels = [], {}
     for row in rows:
@@ -878,11 +883,15 @@ def parse_tab(reg, proc, rows):
         problems.append("the tab has no row for " + "; ".join(f'"{m}"' for m in missing))
     if extra:
         problems.append("the tab has rows the procedure no longer has: " + "; ".join(f'"{e}"' for e in extra))
+    header = [h.strip().lower() for h in labels.get("Run", [])]
     width = max((len(cells) for cells in labels.values()), default=0)
     runs = []
-    for col in range(width):
-        cell = lambda label: (labels.get(label, []) + [""] * width)[col].strip()
-        layer, when = cell("Layer"), cell("Date")
+    for col, kind in enumerate(header):
+        if kind != "result":
+            continue
+        note_col = col + 1 if col + 1 < len(header) and header[col + 1] == "note" else None
+        cell = lambda label, c: ((labels.get(label, []) + [""] * width)[c].strip() if c is not None else "")
+        layer, when = cell("Layer", col), cell("Date", col)
         if not layer and not when:
             continue
         date_value = None
@@ -892,30 +901,39 @@ def parse_tab(reg, proc, rows):
                 break
             except ValueError:
                 pass
+        where = f"the run in column {col + 2}"
         if SHEET_LAYERS.get(layer.lower()) is None or date_value is None:
-            problems.append(f"run column {col + 2} needs a layer ({', '.join(LAYERS)}) and a date such as "
-                            f"2026-12-02, not {layer or 'nothing'!r} and {when or 'nothing'!r}")
+            problems.append(f"{where} needs a layer ({', '.join(LAYERS)}) and a date such as 2026-12-02, "
+                            f"not {layer or 'nothing'!r} and {when or 'nothing'!r}")
             continue
         run = {"layer": SHEET_LAYERS[layer.lower()], "date": date_value, "passes": {}, "values": {},
-               "log": cell("Log"), "notes": cell("Notes")}
+               "notes": {label: cell(label, note_col) for label in expected if cell(label, note_col)},
+               "log": cell("Log", col)}
         for line in checkable(proc):
-            run["passes"][line["text"]] = cell(plain(line["text"])).upper() == "TRUE"
+            value = cell(plain(line["text"]), col)
+            if value.lower() not in RESULTS:
+                problems.append(f"{where}: a pass line's result is Pass, Fail, or blank, not {value!r}")
+            run["passes"][line["text"]] = RESULTS.get(value.lower())
         for tid in proc.get("measures", []):
             label = next(label for label in expected if label.startswith(f"{tid} ("))
-            text = cell(label).replace(",", "")
+            text = cell(label, col).replace(",", "")
             if text:
                 try:
                     run["values"][tid] = float(text)
                 except ValueError:
-                    problems.append(f"run column {col + 2}: {tid} must be a number, not {text!r}")
+                    problems.append(f"{where}: {tid} must be a number, not {text!r}")
         runs.append(run)
     return runs, problems
 
 
 def run_result(proc, run):
-    lines = checkable(proc)
-    ticked = sum(run["passes"].get(line["text"], False) for line in lines)
-    return "Pass" if ticked == len(lines) else f"{ticked} of {len(lines)} pass lines"
+    """Fail if any pass line failed, Pass if every one passed, and otherwise Incomplete."""
+    marks = [run["passes"].get(line["text"]) for line in checkable(proc)]
+    if False in marks:
+        return "Fail"
+    if all(mark is True for mark in marks):
+        return "Pass"
+    return f"Incomplete ({sum(mark is not None for mark in marks)} of {len(marks)} marked)"
 
 
 def measurements(reg, runs):
@@ -968,9 +986,25 @@ def fill_test_runs(reg, markdown, runs, problems, note=""):
         rows = []
         for run in found:
             got = ", ".join(f"{tid} {number(v)} {tpms[tid]['unit']}" for tid, v in run["values"].items())
+            run_notes = "; ".join(run["notes"][k] for k in ("Layer", "Date", "Log") if k in run["notes"])
             rows.append([run["date"].isoformat(), run["layer"], run_result(proc, run), got or "None",
-                         run["log"] or "None", run["notes"]])
-        return out + ([""] if out else []) + table(["Date", "Layer", "Result", "Measured", "Log", "Notes"], rows)
+                         run["log"] or "None", run_notes])
+        out += ([""] if out else []) + table(["Date", "Layer", "Result", "Measured", "Log", "Notes"], rows)
+        # Each pass line and value, run by run, with the note beside it.
+        heads = [f"{r['date'].isoformat()}, {r['layer']}" for r in found]
+        detail = []
+        for line in checkable(proc):
+            label = plain(line["text"])
+            cells = []
+            for r in found:
+                mark = {True: "Pass", False: "Fail", None: "Not marked"}[r["passes"].get(line["text"])]
+                cells.append(mark + (f": {r['notes'][label]}" if label in r["notes"] else ""))
+            detail.append([label, *cells])
+        for tid in proc.get("measures", []):
+            label = f"{tid} ({tpms[tid]['unit']})"
+            detail.append([label, *[(number(r["values"][tid]) if tid in r["values"] else "None")
+                                    + (f": {r['notes'][label]}" if label in r["notes"] else "") for r in found]])
+        return out + ["", "Each pass line and value, run by run:", ""] + table(["Line", *heads], detail)
 
     def measured():
         found = measurements(reg, runs)
@@ -1031,16 +1065,17 @@ def render_procedures_page(reg):
         "",
         (f"Open the procedure's tab in the [test-run sheet]({sheet}). " if sheet else
          "Open the procedure's tab in the test-run sheet [TBD: the sheet's address, end-to-end-tests.toml]. ")
-        + "In the first empty column, write the layer (Sim, Bench, or Robot) and the date, such as "
-        "2026-12-02. Tick each pass line the run met, type each value it measured, and link the log. "
+        + "Each run takes two columns, Result and Note. In the first empty pair, pick the layer (Sim, "
+        "Bench, or Robot) and type the date, such as 2026-12-02. Mark each pass line Pass or Fail, "
+        "type each value it measured, link the log, and write a note beside any row. "
         "Leave the first column alone: it must match each procedure's pass lines here, and the "
         "website flags any row that drifts. `scripts/design sheet` prints the first column for "
         "every procedure, for a new tab.",
         "",
         "## Results",
         "",
-        "The latest run of each procedure at each layer. A run passes when every pass line is",
-        "ticked.",
+        "The latest run of each procedure at each layer. A run is Fail when any pass line failed,",
+        "Pass when every one passed, and Incomplete until each is marked.",
         "",
         TEST_RUNS.format("summary"),
     ]

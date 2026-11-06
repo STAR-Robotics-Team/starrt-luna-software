@@ -16,12 +16,12 @@ This page is generated from `docs/design/end-to-end-tests.toml` by
 
 ## Recording a run
 
-Open the procedure's tab in the [test-run sheet](https://docs.google.com/spreadsheets/d/1qYh5hzQPgHA6WQpqN9SrjHDDrfeMzqhxvYa_3uOBYCk/edit). In the first empty column, write the layer (Sim, Bench, or Robot) and the date, such as 2026-12-02. Tick each pass line the run met, type each value it measured, and link the log. Leave the first column alone: it must match each procedure's pass lines here, and the website flags any row that drifts. `scripts/design sheet` prints the first column for every procedure, for a new tab.
+Open the procedure's tab in the [test-run sheet](https://docs.google.com/spreadsheets/d/1qYh5hzQPgHA6WQpqN9SrjHDDrfeMzqhxvYa_3uOBYCk/edit). Each run takes two columns, Result and Note. In the first empty pair, pick the layer (Sim, Bench, or Robot) and type the date, such as 2026-12-02. Mark each pass line Pass or Fail, type each value it measured, link the log, and write a note beside any row. Leave the first column alone: it must match each procedure's pass lines here, and the website flags any row that drifts. `scripts/design sheet` prints the first column for every procedure, for a new tab.
 
 ## Results
 
-The latest run of each procedure at each layer. A run passes when every pass line is
-ticked.
+The latest run of each procedure at each layer. A run is Fail when any pass line failed,
+Pass when every one passed, and Incomplete until each is marked.
 
 <!-- test-runs: summary -->
 
