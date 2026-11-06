@@ -22,7 +22,7 @@
 
 | Owner | Status | Last reviewed |
 | --- | --- | --- |
-| [name] | Draft | [YYYY-MM-DD] |
+| [GitHub username] | Draft | [YYYY-MM-DD] |
 
 ## 1. Purpose and requirements
 

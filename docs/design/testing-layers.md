@@ -2,7 +2,7 @@
 
 | Owner | Status | Last reviewed |
 | --- | --- | --- |
-| Julian V | Draft | 2026-10-18 |
+| ja-zoe | Draft | 2026-10-18 |
 
 Every component of the robot software is tested in the same four layers, from a laptop
 with no hardware up to the rover. This page defines the layers, the hardware line that

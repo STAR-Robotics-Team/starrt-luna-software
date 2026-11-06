@@ -2,7 +2,7 @@
 
 | Owner | Status | Last reviewed |
 | --- | --- | --- |
-| Julian V | Draft | 2026-10-18 |
+| ja-zoe | Draft | 2026-10-18 |
 
 This doc shows how the robot's computer, motor controllers, sensors, operator station,
 and network connect, and the contracts between subsystems at the hardware. Each

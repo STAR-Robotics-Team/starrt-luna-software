@@ -2,7 +2,7 @@
 
 | Owner | Status | Last reviewed |
 | --- | --- | --- |
-| Julian V | Draft | 2026-10-07 |
+| ja-zoe | Draft | 2026-10-07 |
 
 This doc defines every mode the robot can be in: what has power, what may move, which
 software runs, and how the robot moves between modes. Software enforces these modes, and

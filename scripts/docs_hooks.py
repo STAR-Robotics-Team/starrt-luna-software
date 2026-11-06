@@ -17,10 +17,11 @@ down, not confirmed). GitHub shows it as written; the website shows it in its ow
 with a TBD or TBR tag (docs/stylesheets/unsettled.css). See "Mark what is not settled" in
 docs/writing-docs.md.
 
-Each design doc's page lists its contributors under its header: everyone who committed to
-the doc (with their Co-authored-by trailers), and, when a GitHub token is set, everyone
-who reviewed or commented on a pull request that changed it. CI sets the token, so the
-published site shows reviewers; a local build shows committers only.
+Each design doc's page gets a people table under its header: its owner (the GitHub
+username in the header), everyone who committed to it (with Co-authored-by trailers), and,
+when a GitHub token is set, everyone who reviewed or commented on a pull request that
+changed it, each with their role. CI sets the token, so the published site shows reviewers
+and names; a local build shows committers only.
 """
 
 import html
@@ -104,106 +105,177 @@ def is_bot(login):
     return login.endswith("[bot]")
 
 
-def contributors(src_uri):
-    """[(name, profile URL or None)]: the doc's committers, then reviewers and commenters."""
+class Person:
+    """One person in a doc's people table, and what they did on it."""
+
+    def __init__(self, name="", login=""):
+        self.name, self.login = name, login
+        self.owner = False
+        self.commits = 0
+        self.coauthored = 0
+        self.reviewed, self.commented = set(), set()
+
+    def cell(self):
+        """The name with the username, the name alone, or the username when there is no name."""
+        if self.login:
+            url = f"https://github.com/{self.login}"
+            return f"[{self.name}]({url}) ({self.login})" if self.name and self.name != self.login else f"[{self.login}]({url})"
+        return self.name
+
+    def roles(self):
+        def prs(numbers):
+            numbers = sorted(numbers)
+            if len(numbers) > 3:
+                return f"{len(numbers)} pull requests"
+            return "PR " + ", ".join(f"#{n}" for n in numbers)
+        roles = ["Owner"] if self.owner else []
+        if self.commits:
+            roles.append(f"Author ({self.commits} commit{'s' * (self.commits != 1)})")
+        if self.coauthored:
+            roles.append(f"Co-author ({self.coauthored} commit{'s' * (self.coauthored != 1)})")
+        if self.reviewed:
+            roles.append(f"Reviewer ({prs(self.reviewed)})")
+        if self.commented - self.reviewed:
+            roles.append(f"Commenter ({prs(self.commented - self.reviewed)})")
+        return ", ".join(roles)
+
+
+def doc_owner(markdown):
+    """The GitHub username in the doc's header table, under Owner."""
+    lines = markdown.split("\n")
+    for i, line in enumerate(lines[:-2]):
+        cells = [c.strip() for c in line.strip().strip("|").split("|")]
+        if "Owner" in cells and lines[i + 1].lstrip().startswith("|"):
+            values = [c.strip().strip("`") for c in lines[i + 2].strip().strip("|").split("|")]
+            owner = values[cells.index("Owner")] if cells.index("Owner") < len(values) else ""
+            return owner if re.fullmatch(r"[A-Za-z0-9-]+", owner) else ""
+    return ""
+
+
+def people(src_uri, owner):
+    """[Person]: the owner, then everyone who committed to the doc, then, with a GitHub
+    token, everyone who reviewed or commented on a pull request that changed it."""
     path = f"docs/{src_uri}"
     log_text = git("log", "--follow",
                    "--format=%H%x1f%an%x1f%ae%x1f%(trailers:key=Co-authored-by,valueonly,separator=%x1e)%x1d",
                    "--", path)
-    commits, authors, names = [], [], []
+    commits = []  # (sha, author name, author email, [co-author names])
     for record in filter(str.strip, log_text.split("\x1d")):
         sha, author, email, coauthors = (record.strip().split("\x1f") + ["", "", ""])[:4]
-        commits.append(sha)
-        authors.append((author, email))
-        names.append(author)
-        names += [re.sub(r"\s*<[^>]*>", "", c).strip() for c in coauthors.split("\x1e") if c.strip()]
+        names = [re.sub(r"\s*<[^>]*>", "", c).strip() for c in coauthors.split("\x1e") if c.strip()]
+        commits.append((sha, author, email, names))
+    found = {}
+
+    def person(key, name="", login=""):
+        if key not in found:
+            found[key] = Person(name, login)
+        p = found[key]
+        p.name = p.name or name
+        return p
+
     if not os.environ.get("GITHUB_TOKEN"):
-        seen = []
-        for name in names:
-            if name and name not in seen and not is_bot(name):
-                seen.append(name)
-        return [(name, None) for name in seen]
+        if owner:
+            person(f"login:{owner}", login=owner).owner = True
+        for _, author, _, coauthors in commits:
+            if not is_bot(author):
+                person(f"name:{author}", author).commits += 1
+            for name in coauthors:
+                person(f"name:{name}", name).coauthored += 1
+        return list(found.values())
+
     repo = repository()
-    logins, unknown, login_of = [], [], {}
-    for sha, (author, email) in zip(commits, authors):
+
+    def profile(login):
         try:
-            commit = github(f"/repos/{repo}/commits/{sha}")
-        except urllib.error.HTTPError as error:
-            if error.code not in (404, 422):
-                raise
-            unknown.append((author, email))  # not pushed yet, so GitHub does not know it
-            continue
-        if commit.get("author"):
-            logins.append(commit["author"]["login"])
-            login_of[email] = commit["author"]["login"]
-        else:
-            unknown.append((author, email))
-        for pr in github(f"/repos/{repo}/commits/{sha}/pulls"):
-            n = pr["number"]
-            logins.append(pr["user"]["login"])
-            logins += [r["user"]["login"] for r in github(f"/repos/{repo}/pulls/{n}/reviews?per_page=100") if r.get("user")]
-            logins += [c["user"]["login"] for c in github(f"/repos/{repo}/pulls/{n}/comments?per_page=100") if c.get("user")]
-            logins += [c["user"]["login"] for c in github(f"/repos/{repo}/issues/{n}/comments?per_page=100") if c.get("user")]
-    people = []
-    for login in dict.fromkeys(logins):
-        if is_bot(login):
-            continue
-        try:
-            user = github(f"/users/{login}")
-            people.append((user.get("name") or login, f"https://github.com/{login}"))
+            return github(f"/users/{login}").get("name") or ""
         except urllib.error.HTTPError as error:
             if error.code != 404:
                 raise
-            people.append((login, None))  # a git author name, not a GitHub login
-    # A commit GitHub does not know yet is matched to a login by its author's email: from
-    # this doc's other commits, or from any commit of theirs in the repository.
-    known = set(logins)
-    rest = []
-    for name, email in dict.fromkeys(unknown):
-        if email not in login_of:
-            found = github(f"/repos/{repo}/commits?author={urllib.parse.quote(email)}&per_page=1")
-            login_of[email] = found[0]["author"]["login"] if found and found[0].get("author") else None
-        if login_of[email] in known:
+            return ""
+
+    def by_login(login, git_name=""):
+        p = person(f"login:{login}", login=login)
+        p.name = p.name or profile(login) or git_name
+        return p
+
+    if owner:
+        by_login(owner).owner = True
+    login_of = {}
+    for sha, author, email, coauthors in commits:
+        try:
+            commit = github(f"/repos/{repo}/commits/{sha}")
+            login = commit["author"]["login"] if commit.get("author") else None
+        except urllib.error.HTTPError as error:
+            if error.code not in (404, 422):
+                raise
+            # Not pushed yet, so GitHub does not know it: match its author's email to a login.
+            if email not in login_of:
+                found_commits = github(f"/repos/{repo}/commits?author={urllib.parse.quote(email)}&per_page=1")
+                login_of[email] = (found_commits[0]["author"]["login"]
+                                   if found_commits and found_commits[0].get("author") else None)
+            login, commit = login_of[email], None
+        if login and is_bot(login):
             continue
-        if login_of[email]:
-            known.add(login_of[email])
-            try:
-                user = github(f"/users/{login_of[email]}")
-                people.append((user.get("name") or login_of[email], f"https://github.com/{login_of[email]}"))
-                continue
-            except urllib.error.HTTPError as error:
-                if error.code != 404:
-                    raise
-        rest.append(name)
-    shown = {name for name, _ in people}
-    return people + [(name, None) for name in dict.fromkeys(rest) if name not in shown]
+        (by_login(login, author) if login else person(f"name:{author}", author)).commits += 1
+        for name in coauthors:
+            person(f"name:{name}", name).coauthored += 1
+        if commit is None:
+            continue
+        for pr in github(f"/repos/{repo}/commits/{sha}/pulls"):
+            n = pr["number"]
+            for review in github(f"/repos/{repo}/pulls/{n}/reviews?per_page=100"):
+                if review.get("user") and not is_bot(review["user"]["login"]):
+                    by_login(review["user"]["login"]).reviewed.add(n)
+            for kind in (f"/repos/{repo}/pulls/{n}/comments?per_page=100", f"/repos/{repo}/issues/{n}/comments?per_page=100"):
+                for comment in github(kind):
+                    if comment.get("user") and not is_bot(comment["user"]["login"]):
+                        by_login(comment["user"]["login"]).commented.add(n)
+    # One person under both a name and a login (an unpushed commit's git name) is merged by name.
+    logins = {p.name: p for p in found.values() if p.login and p.name}
+    for key, p in list(found.items()):
+        if not p.login and p.name in logins:
+            other = logins[p.name]
+            other.commits += p.commits
+            other.coauthored += p.coauthored
+            del found[key]
+    return list(found.values())
 
 
 def add_contributors(markdown, src_uri):
-    """The doc with a contributors line after its header table, or after its title."""
+    """The doc with a people table after its header table, or after its title."""
+    owner = doc_owner(markdown)
     try:
-        people = contributors(src_uri)
+        everyone = people(src_uri, owner)
     except (subprocess.CalledProcessError, OSError, ValueError, KeyError) as error:
-        # In CI a missing line is a broken page, so the build fails; locally it is a note.
+        # In CI a missing table is a broken page, so the build fails; locally it is a note.
         report = log.warning if os.environ.get("CI") else log.info
-        report("%s: could not list contributors: %s", src_uri, error)
+        report("%s: could not list the people who worked on it: %s", src_uri, error)
         return markdown
-    if not people:
+    if not everyone:
         return markdown
-    names = ", ".join(f"[{name}]({url})" if url else name for name, url in people)
-    where = "" if os.environ.get("GITHUB_TOKEN") else " (committers; the published site adds reviewers)"
-    line = f"**Contributors{where}:** {names}"
+    everyone.sort(key=lambda p: (not p.owner, -p.commits, -p.coauthored, -len(p.reviewed), (p.name or p.login).lower()))
+    role = "Role" if os.environ.get("GITHUB_TOKEN") else "Role (a local build lists committers only)"
+    table = [f"| Person | {role} |", "| --- | --- |"] + [f"| {p.cell()} | {p.roles()} |" for p in everyone]
     lines = markdown.split("\n")
     title = next((i for i, text in enumerate(lines) if text.startswith("# ")), -1)
     at = title + 1
     while at < len(lines) and not lines[at].strip():
         at += 1
     if at < len(lines) and lines[at].startswith("|"):
+        header = at
         while at < len(lines) and lines[at].startswith("|"):
             at += 1
+        # The people table names the owner, so the header table drops its Owner column.
+        cells = [c.strip() for c in lines[header].strip().strip("|").split("|")]
+        if "Owner" in cells:
+            column = cells.index("Owner")
+            for i in range(header, at):
+                row = [c.strip() for c in lines[i].strip().strip("|").split("|")]
+                del row[column]
+                lines[i] = "| " + " | ".join(row) + " |"
     else:
         at = title + 1
-    return "\n".join(lines[:at] + ["", line, ""] + lines[at:])
+    return "\n".join(lines[:at] + [""] + table + [""] + lines[at:])
 
 
 def mark_unsettled(content, page):

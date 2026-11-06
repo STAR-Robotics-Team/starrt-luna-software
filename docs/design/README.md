@@ -40,9 +40,10 @@ Four pages are generated from the docs' [registries](#registries):
 
 1. Copy [the template](template.md) to `docs/design/<subsystem>.md`, using the file name
    from the table above.
-2. Fill in the header: the owner, status `Draft`, and today's date. Everyone who commits to
-   the doc, or reviews or comments on a pull request that changes it, is listed as a
-   contributor on the website, so the header names only the owner.
+2. Fill in the header: the owner's GitHub username, status `Draft`, and today's date. On
+   the website, a table under the header lists the owner and everyone who commits to the
+   doc or reviews or comments on a pull request that changes it, with their names and
+   roles, generated from the git and GitHub history.
 3. Put your nodes, interfaces, and open questions in the doc's
    [registry](#registries), `docs/design/<subsystem>.toml`, and run
    `scripts/design render`. If the registry already exists, it holds what the other docs
