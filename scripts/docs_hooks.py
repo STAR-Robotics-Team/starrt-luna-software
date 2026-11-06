@@ -23,6 +23,10 @@ when a GitHub token is set, everyone who reviewed or commented on a pull request
 changed it, each with their role. CI sets the token, so the published site shows reviewers
 and names; a local build shows committers only.
 
+Every page shows when it last changed, under its title: the date of the last commit that
+changed it. docs/javascripts/last-updated.js adds how long ago that was, in the browser, so
+it stays right after the build.
+
 The end-to-end test procedures page and the performance budgets page show test runs, which
 testers record in a Google Sheet, one tab per procedure. The build reads each tab's
 published CSV (the [[sheet]] in docs/design/end-to-end-tests.toml) and fills in the
@@ -42,6 +46,7 @@ import subprocess
 import urllib.error
 import urllib.parse
 import urllib.request
+from datetime import datetime
 from pathlib import Path
 
 log = logging.getLogger("mkdocs.hooks.docs_hooks")
@@ -131,11 +136,37 @@ def test_runs():
     return _design["runs"]
 
 
+def last_updated(markdown, src_uri):
+    """The page with a line under its title: when its last commit changed it."""
+    lines = markdown.split("\n")
+    title = next((i for i, text in enumerate(lines) if text.startswith("# ")), None)
+    if title is None:
+        return markdown
+    path = f"docs/{src_uri}"
+    try:
+        when = git("log", "-1", "--format=%cI", "--", path).strip()
+        changed = bool(git("status", "--porcelain", "--", path).strip())
+    except (subprocess.CalledProcessError, OSError) as error:
+        report = log.warning if os.environ.get("CI") else log.info
+        report("%s: could not read when it last changed: %s", src_uri, error)
+        return markdown
+    if when:
+        d = datetime.fromisoformat(when)
+        text = (f'Last updated <time class="last-updated__time" datetime="{when}">'
+                f"{d:%b} {d.day}, {d.year}</time>")
+        if changed:
+            text += ", with changes not committed yet"
+    else:
+        text = "Not committed yet"
+    return "\n".join(lines[:title + 1] + ["", f'<p class="last-updated">{text}</p>', ""] + lines[title + 1:])
+
+
 def on_page_markdown(markdown, page, **kwargs):
     if page.file.src_uri == "README.md":
         page.meta["template"] = "home.html"
     if page.file.src_uri.startswith("design/") and page.file.src_uri not in NOT_DESIGN_DOCS:
         markdown = add_contributors(markdown, page.file.src_uri)
+    markdown = last_updated(markdown, page.file.src_uri)
     if page.file.src_uri in TEST_RUN_PAGES:
         module, reg = design()
         runs, problems, note = test_runs()
@@ -240,10 +271,17 @@ def people(src_uri, owner):
         return p
 
     if not os.environ.get("GITHUB_TOKEN"):
+        # Without GitHub's API, a commit matches a username only through a GitHub noreply
+        # address, such as 141098322+ja-zoe@users.noreply.github.com.
         if owner:
             person(f"login:{owner}", login=owner).owner = True
-        for _, author, _, coauthors in commits:
-            if not is_bot(author):
+        for _, author, email, coauthors in commits:
+            noreply = re.fullmatch(r"(?:\d+\+)?([A-Za-z0-9-]+)@users\.noreply\.github\.com", email)
+            if noreply:
+                p = person(f"login:{noreply.group(1)}", author, noreply.group(1))
+                p.name = author if p.name in ("", p.login) else p.name
+                p.commits += 1
+            elif not is_bot(author):
                 person(f"name:{author}", author).commits += 1
             for name in coauthors:
                 person(f"name:{name}", name).coauthored += 1
@@ -320,7 +358,8 @@ def add_contributors(markdown, src_uri):
     if not everyone:
         return markdown
     everyone.sort(key=lambda p: (not p.owner, -p.commits, -p.coauthored, -len(p.reviewed), (p.name or p.login).lower()))
-    role = "Role" if os.environ.get("GITHUB_TOKEN") else "Role (a local build lists committers only)"
+    role = ("Role" if os.environ.get("GITHUB_TOKEN") else
+            "Role (without a GitHub token this build lists committers only; sign in with gh auth login)")
     table = [f"| Person | {role} |", "| --- | --- |"] + [f"| {p.cell()} | {p.roles()} |" for p in everyone]
     lines = markdown.split("\n")
     title = next((i for i, text in enumerate(lines) if text.startswith("# ")), -1)
