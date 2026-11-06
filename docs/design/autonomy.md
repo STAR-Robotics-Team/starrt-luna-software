@@ -2,21 +2,21 @@
 
 | Owner | Pair | Status | Last reviewed |
 | --- | --- | --- | --- |
-| [Adam] | [Jason] | Draft | [2026-10-26] |
+| Adam | Jason | Draft | 2026-10-26 |
 
 ## Scoring
 
-### 1. Excavation Autonomy — 200 Points (§16.1, Pg. 48)
+### 1. Excavation Autonomy — 200 Points (§16.1, Pg. 55)
 
 - The starting zone is included in the excavation zone.
 - Must indicate to MCJ that the excavation attempt is autonomous rather than manual.
 - Autonomous operation must begin before the robot engages in the regolith collection process.
 
-### 2. Dump Autonomy — 100 Points (§16.2, Pg. 49)
+### 2. Dump Autonomy — 100 Points (§16.2, Pg. 56)
 
 - Must indicate to MCJ that the dump attempt is autonomous rather than manual.
 
-### 3. Travel Autonomy — 500 Points (§16.3, Pg. 49)
+### 3. Travel Autonomy — 500 Points (§16.3, Pg. 56)
 
 - Touch sensors are not allowed.
 - The robot cannot use previous knowledge about the layout of the arena.
@@ -25,27 +25,28 @@
 - The robot cannot simply follow a wall at a fixed distance (e.g., maintaining a distance of 0.5 m).
 - Waypoints and "Point and Traverse" navigation methods are not allowed.
 
-### 4. 100% Autonomous Cycles — 1000 Points (§16.4, Pg. 50)
+### 4. 100% Autonomous Cycles — 1000 Points (§16.4, Pg. 57)
 
 - Awarded if all excavation, travel, and dump cycles were completed autonomously, even if some manual control was used during the run.
 
-### 5. Full Autonomy — 1400 Points (§16.5, Pg. 50)
+### 5. Full Autonomy — 1400 Points (§16.5, Pg. 57)
 
 - The robot may be moved manually within the starting zone at the beginning of the run.
 - Autonomous operation must begin while the robot is still in the starting zone and must be maintained throughout the entire run.
 - At least **2 complete cycles** of excavation, travel, and dumping must be completed during the construction run.
 
-### 6. Automation Scoring Calculations (§16.6, Pg. 50)
+### 6. Automation Scoring Calculations (§16.6, Pg. 57)
 
 The percentage of automation points earned for excavation, dumping, and travel is determined by the number of successful autonomous cycles divided by the total number of cycles.
 
 **Example:**
+
 - Total excavation cycles: 10
 - Autonomous excavation cycles: 5
 - Automation percentage: 50%
 - Excavation autonomy points earned: 100 out of 200
 
-#### 6.1 Berm Volume Multiplier (§16.6.1, Pg. 51)
+#### 6.1 Berm Volume Multiplier (§16.6.1, Pg. 58)
 
 A berm volume multiplier is applied to discourage teams from constructing undersized berms.
 
@@ -54,17 +55,18 @@ A berm volume multiplier is applied to discourage teams from constructing unders
 
 **Formula:**
 
-$$
-M = \min\left(1, \frac{V_{\text{berm}}}{25{,}000}\right)
-$$
+```text
+M = min(1, V_berm / 25,000)
+```
 
 Where:
+
 - `M` = Berm volume multiplier
 - `V_berm` = Berm volume in cm³
 
 **Goal:** Construct a berm of at least **25 L** to receive the full multiplier of 1.
 
-#### 6.2 Scoring Formula (§16.6.2, Pg. 51)
+#### 6.2 Scoring Formula (§16.6.2, Pg. 58)
 
 The final autonomy score depends on the level of autonomy achieved.
 
@@ -72,27 +74,28 @@ The final autonomy score depends on the level of autonomy achieved.
 
 If the robot meets all full autonomy requirements:
 
-$$
-S = 1400 \times M
-$$
+```text
+S = 1400 × M
+```
 
 **Case 2: 100% Autonomous Cycles Achieved**
 
 If excavation, dumping, and travel are all 100% autonomous, but full autonomy requirements are not met:
 
-$$
-S = 1000 \times M
-$$
+```text
+S = 1000 × M
+```
 
 **Case 3: Partial Autonomy**
 
 Otherwise, the autonomy score is calculated using the percentage of successfully automated cycles for each task:
 
-$$
-S = (200E + 100D + 500T) \times M
-$$
+```text
+S = (200E + 100D + 500T) × M
+```
 
 Where:
+
 - `S` = Final autonomy score
 - `M` = Berm volume multiplier
 - `E` = Fraction of excavation cycles completed autonomously (0–1)

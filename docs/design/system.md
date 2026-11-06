@@ -288,6 +288,8 @@ mode manager, drive, sensors`"]
 | 4. Which mechanism motor controllers? (4.3) | Mechanism owner, with the electrical lead | 2026-11-01 |
 | 5. How do stand-ins swap in for hardware, system by system, and what are the launch arguments called? (1.4) | Software lead | 2026-10-21 |
 | 6. May the robot use 5 GHz during runs? The guidebook's §14.1.17 and §14.4 disagree ([Rules the robot must follow](../competition/robot-rules.md#communications)). Ask the organizers. | Radio link evaluation owner | 2026-10-21 |
+| 7. Does a mini PC replace the Jetson on the rover? The team's Hacker Initiative grant application budgets one, an ASRock 4X4 BOX-AI340 with 32 GB of memory, for its faster CPU and hardware video encoding, plus an isolated CANable 2.0 Pro clone. The Jetson would then run the bench testbed. [TBD: decided by the grant, announced by Dec 21, 2026.] If it does, this doc's Jetson references become the mini PC, and on its standard Ubuntu kernel the CANable needs no driver build ([CAN bus](../can-bus.md#what-you-need)). | Software lead | 2026-12-21 |
+| 8. Should the robot's radio be the robot computer's own Wi-Fi? The computer runs on its own battery, so a main-battery sag in a stall could not drop the link, while a separate radio on the main battery reboots if the pack falls below its converter's 9 V minimum ([operating modes, section 7](operating-modes.md#7-behavior-on-failure)). It must still meet the radio rules ([Rules the robot must follow](../competition/robot-rules.md#communications)). (5.7) | Radio link evaluation owner | 2026-11-08 |
 
 ## Handoff
 

@@ -14,7 +14,7 @@ the doc, and cite the page.
   primary source wins.
 - **To cite a source or add one,** see [Cite sources](writing-docs.md#cite-sources).
 
-35 sources, 32 of them primary, cited 238 times. PDF page
+42 sources, 37 of them primary, cited 254 times. PDF page
 numbers are the ones a PDF viewer shows, so each link opens the PDF at the cited page. This
 page is generated from `docs/sources.toml` by `scripts/sources render`.
 
@@ -82,10 +82,20 @@ Eaton Bussmann, hosted by AndyMark (am-0282), *Series 181, 184, 185 thermal circ
 CTRE, *PDP User's Guide* (3/28/2018). [Open the PDF](https://ctre.download/files/user-manual/PDP%20User's%20Guide.pdf).
 
 - **Primary source.**
-- **Fingerprint:** SHA-256 `224b3486e9db72e8`, checked 2026-10-07.
-- **Used for:** Channels, fused outputs, wire sizes, input range, CAN rate, and the termination jumper.
+- **Fingerprint:** SHA-256 `224b3486e9db72e8`, checked 2026-10-26.
+- **Used for:** Channels, fused outputs, wire sizes, input range and absolute maximum, CAN rate, the termination jumper, and the firmware needed for correct power and energy.
 - **Cited at:**
-    - [Operating Modes Design](design/operating-modes.md): [p. 6](https://ctre.download/files/user-manual/PDP%20User's%20Guide.pdf#page=6), [pp. 17-20](https://ctre.download/files/user-manual/PDP%20User's%20Guide.pdf#page=17)
+    - [Operating Modes Design](design/operating-modes.md): [p. 6](https://ctre.download/files/user-manual/PDP%20User's%20Guide.pdf#page=6), [p. 17](https://ctre.download/files/user-manual/PDP%20User's%20Guide.pdf#page=17)
+
+### `ctre-pdp2-guide`
+
+CTRE, *PDP 2.0 User's Guide* (Revision 1.1, 30-Jun-2025). [Open the PDF](https://ctre.download/files/user-manual/PDP%202.0%20User's%20Guide.pdf).
+
+- **Primary source.**
+- **Fingerprint:** SHA-256 `9d8817584c691a2a`, checked 2026-10-26.
+- **Used for:** The PDP 2.0 is a passive panel: breaker slots and wire terminals, with no CAN and no current sensing. Not a spare for our PDP.
+- **Cited at:**
+    - [Operating Modes Design](design/operating-modes.md): [p. 5](https://ctre.download/files/user-manual/PDP%202.0%20User's%20Guide.pdf#page=5)
 
 ### `ctre-talon-srx-guide`
 
@@ -126,6 +136,17 @@ Concentric International (Glideforce), hosted by Pololu, *LACT Industrial Duty L
 - **Used for:** Depth actuators: current by gear ratio, duty cycle, and the part-number key.
 - **Cited at:** not cited in these docs yet
 
+### `meanwell-rsd-30-spec`
+
+Mean Well, *RSD-30 series: 30W Reliable Railway DC-DC Converter* (RSD-30-SPEC 2026-07-09). [Open the PDF](https://www.meanwell.com/Upload/PDF/RSD-30/RSD-30-SPEC.PDF).
+
+- **Primary source.**
+- **Fingerprint:** SHA-256 `fe0b78cce95fea8e`, checked 2026-10-28.
+- **Used for:** The 12 V and 5 V sensor converters the grant budgets: 9 to 36 V input, 4 kV input-to-output isolation, and shutdown below 9 V with automatic recovery.
+- **Cited at:**
+    - [Hardware Test Modes](design/hardware-test-modes.md): [p. 4](https://www.meanwell.com/Upload/PDF/RSD-30/RSD-30-SPEC.PDF#page=4)
+    - [Operating Modes Design](design/operating-modes.md): [p. 2](https://www.meanwell.com/Upload/PDF/RSD-30/RSD-30-SPEC.PDF#page=2), [p. 4](https://www.meanwell.com/Upload/PDF/RSD-30/RSD-30-SPEC.PDF#page=4)
+
 ### `nvidia-orin-nano-carrier-spec`
 
 NVIDIA, *Jetson Orin Nano Developer Kit Carrier Board Specification, SP-11324-001* (v1.3). [Open the PDF](https://developer.nvidia.com/embedded/downloads).
@@ -144,6 +165,16 @@ Open-Mesh, hosted by a reseller, *OM-Series datasheet (OM2P, OM5P-AC)* (As downl
 - **Fingerprint:** SHA-256 `716b5dd2b5e6d1d8`, checked 2026-10-07.
 - **Used for:** Radio power draw. Open-Mesh no longer exists, so this copy may disappear.
 - **Cited at:** not cited in these docs yet
+
+### `toolkitrc-m7-manual`
+
+ToolkitRC, *M7 Manual* (V1.0 2021.01). [Open the PDF](https://download.toolkitrc.com/wp-content/uploads/2024/09/M7-Manual-V1.0-2.pdf).
+
+- **Primary source.**
+- **Fingerprint:** SHA-256 `2c402a03fc9fec1e`, checked 2026-10-26.
+- **Used for:** The LiPo full charge voltage, and how far the charge cutoff can be lowered from it.
+- **Cited at:**
+    - [Operating Modes Design](design/operating-modes.md): [p. 14](https://download.toolkitrc.com/wp-content/uploads/2024/09/M7-Manual-V1.0-2.pdf#page=14), [p. 19](https://download.toolkitrc.com/wp-content/uploads/2024/09/M7-Manual-V1.0-2.pdf#page=19)
 
 ### `unitree-l2-manual`
 
@@ -245,6 +276,17 @@ CTRE, *Phoenix 5 documentation: Bring Up: Talon FX/SRX and Victor SPX*. [Open th
 - **Cited at:**
     - [Operating Modes Design](design/operating-modes.md): [section "Current Limit"](https://v5.docs.ctr-electronics.com/en/stable/ch13_MC.html#:~:text=Current%20Limit), [section "Plot tab"](https://v5.docs.ctr-electronics.com/en/stable/ch13_MC.html#:~:text=Plot%20tab)
 
+### `ctre-phoenix5-primer`
+
+CTRE, *Phoenix 5 documentation: Primer: What is Phoenix v5 Software*. [Open the web page](https://docs.ctre-phoenix.com/en/stable/ch03_PrimerPhoenixSoft.html).
+
+- **Primary source.**
+- **Checked:** 2026-10-26
+- **Used for:** Phoenix 5 does not include the PDP's API; WPILib does.
+- **Cited at:**
+    - [CAN bus](can-bus.md): [whole source](https://docs.ctre-phoenix.com/en/stable/ch03_PrimerPhoenixSoft.html)
+    - [Operating Modes Design](design/operating-modes.md): [whole source](https://docs.ctre-phoenix.com/en/stable/ch03_PrimerPhoenixSoft.html)
+
 ### `ctre-phoenix5-unmanaged-api`
 
 CTRE, *CTRE Phoenix C++: ctre::phoenix::unmanaged::Unmanaged Class Reference*. [Open the web page](https://api.ctr-electronics.com/phoenix/stable/cpp/classctre_1_1phoenix_1_1unmanaged_1_1_unmanaged.html).
@@ -254,6 +296,17 @@ CTRE, *CTRE Phoenix C++: ctre::phoenix::unmanaged::Unmanaged Class Reference*. [
 - **Used for:** FeedEnable(timeoutMs): the controllers disable themselves when the enable is not fed again within the timeout.
 - **Cited at:**
     - [Operating Modes Design](design/operating-modes.md): [section "FeedEnable()"](https://api.ctr-electronics.com/phoenix/stable/cpp/classctre_1_1phoenix_1_1unmanaged_1_1_unmanaged.html#:~:text=FeedEnable%28%29)
+
+### `ctre-phoenix6-enabling-actuators`
+
+CTRE, *Phoenix 6 documentation: Enabling Actuators*. [Open the web page](https://v6.docs.ctr-electronics.com/en/stable/docs/api-reference/api-usage/enabling-actuators.html).
+
+- **Primary source.**
+- **Checked:** 2026-10-27
+- **Used for:** Outside FRC, Phoenix 6 actuators need Unmanaged.feedEnable() called periodically; a device used with a roboRIO stays FRC-locked until factory-defaulted.
+- **Cited at:**
+    - [CAN bus](can-bus.md): [section "Non-FRC Applications"](https://v6.docs.ctr-electronics.com/en/stable/docs/api-reference/api-usage/enabling-actuators.html#:~:text=Non%2DFRC%20Applications)
+    - [Operating Modes Design](design/operating-modes.md): [section "Non-FRC Applications"](https://v6.docs.ctr-electronics.com/en/stable/docs/api-reference/api-usage/enabling-actuators.html#:~:text=Non%2DFRC%20Applications)
 
 ### `gz-ros2-control`
 
@@ -355,6 +408,17 @@ Unitree, *unilidar_sdk2: unitree_lidar_ros2 launch file (launch.py)* (main branc
 - **Cited at:**
     - [System Design](design/system.md): [whole source](https://github.com/unitreerobotics/unilidar_sdk2/blob/main/unitree_lidar_ros2/src/unitree_lidar_ros2/launch/launch.py)
 
+### `wpilib-ctre-pdp-driver`
+
+WPILib, *allwpilib: hal/src/main/native/systemcore/CTREPDP.cpp* (Commit 4817543). [Open the web page](https://github.com/wpilibsuite/allwpilib/blob/4817543253e343afcf2b630537e995d74d21db62/hal/src/main/native/systemcore/CTREPDP.cpp).
+
+- **Secondary source.** Prefer a primary source when one covers the fact.
+- **Checked:** 2026-10-26
+- **Used for:** The PDP's status frames and their layout, read without sending any request. WPILib's code, not CTRE's: CTRE does not publish the frames.
+- **Cited at:**
+    - [CAN bus](can-bus.md): [whole source](https://github.com/wpilibsuite/allwpilib/blob/4817543253e343afcf2b630537e995d74d21db62/hal/src/main/native/systemcore/CTREPDP.cpp)
+    - [Operating Modes Design](design/operating-modes.md): [whole source](https://github.com/wpilibsuite/allwpilib/blob/4817543253e343afcf2b630537e995d74d21db62/hal/src/main/native/systemcore/CTREPDP.cpp)
+
 ## Engineering practice
 
 ### `esa-margin-philosophy`
@@ -374,3 +438,13 @@ NASA Glenn Research Center, *NASA/TM-20220012395: 40 kW Fission Surface Power Sy
 - **Fingerprint:** SHA-256 `52d22b3e3ae7630e`, checked 2026-10-07.
 - **Used for:** NASA Glenn's own 30% power growth practice. Its AIAA S-120A growth table is a reproduction; the standard itself is paywalled.
 - **Cited at:** not cited in these docs yet
+
+### `battery-university-bu-808`
+
+Battery University, *BU-808: How to Prolong Lithium-based Batteries*. [Open the web page](https://batteryuniversity.com/article/bu-808-how-to-prolong-lithium-based-batteries).
+
+- **Secondary source.** Prefer a primary source when one covers the fact.
+- **Checked:** 2026-10-26
+- **Used for:** Table 4: the energy a cobalt-based lithium cell stores when charged to less than 4.20 V. Estimates, not a datasheet for our packs.
+- **Cited at:**
+    - [Operating Modes Design](design/operating-modes.md): [section "What Causes Lithium-ion to Age?"](https://batteryuniversity.com/article/bu-808-how-to-prolong-lithium-based-batteries#:~:text=What%20Causes%20Lithium%2Dion%20to%20Age%3F)

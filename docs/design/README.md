@@ -16,7 +16,7 @@ code. The software sections of the team's Lunabotics design reports are drawn fr
 | `mechanism.md` | Mechanism control | Not started |
 | `teleoperation.md` | Teleoperation and operator station | Not started |
 | `sensors.md` | Sensors and robot model | Not started |
-| `autonomy.md` | Autonomy | Not started |
+| [`autonomy.md`](autonomy.md) | Autonomy | Draft |
 
 When you add a doc, link it in this table and keep its status current.
 

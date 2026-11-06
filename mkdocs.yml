@@ -58,6 +58,7 @@ nav:
       - design/README.md
       - System: design/system.md
       - Operating modes: design/operating-modes.md
+      - Autonomy: design/autonomy.md
       - Testing layers: design/testing-layers.md
       - Hardware test modes: design/hardware-test-modes.md
       - Design doc template: design/template.md

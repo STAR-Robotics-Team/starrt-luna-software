@@ -282,6 +282,8 @@ At least 1 Talon SRX and 1 CIM; all 4 motor controllers and CIMs if they are fre
 - **Runs on:** A Linux laptop or the Jetson
 - **Launch:** [TBD: `drivetrain:=real`]
 - **Proves:** Our beliefs about the Talons hold; with all 4, each Victor follows its Talon
+- **Fault test:** Unplug the CAN adapter mid-drive: the robot enters FAULT, and every motor
+  controller stops on its own within 100 ms ([operating modes, section 7](operating-modes.md#7-behavior-on-failure))
 - **Can't catch:** The chassis: weight, wheel slip, the floor
 
 ### Drivetrain: Drive base (Robot)
@@ -587,10 +589,10 @@ A low battery halves every current limit; the operator sees voltage and faults`"
   line2["`**Hardware line:** /power/battery`"]
   b3["`*Ours · 3.5, 3.6*
 **Power panel reading**
-In the node that owns CTRE access (modes doc, open question 6)`"]
+Decodes the PDP's CAN frames itself; Phoenix 5 does not read the PDP (modes doc, section 5)`"]
   b4["`*Ours · test code · stand-in*
 **Fake power panel**
-A test version of the motor controller interface that answers the panel's reads with scripted voltages and currents`"]
+Sends scripted PDP frames with chosen voltages and currents`"]
   none5["No hardware"]
   line2 --> b1
   b3 --> line2
@@ -613,7 +615,9 @@ A test version of the motor controller interface that answers the panel's reads 
 - **Proves:** Our panel reading turns raw values into the right /power/battery
 - **Can't catch:** What the real panel reports
 
-Only if open question 6 puts the panel reading in the drive plugin's node.
+[TBR: The fake sends frames on a virtual CAN bus, so this mode works wherever the panel
+reading lives. The panel reading needs no Phoenix 5, so it may leave the drive plugin and
+deliverable 3.5.]
 
 ### Battery and power: Bench
 
@@ -630,40 +634,35 @@ A low battery halves every current limit; the operator sees voltage and faults`"
   line2["`**Hardware line:** /power/battery`"]
   b3["`*Ours · 3.5, 3.6*
 **Power panel reading**
-In the node that owns CTRE access (modes doc, open question 6)`"]
-  b4["`*Ours · C++*
-**Motor controller interface: CTRE**
-The only code that calls Phoenix 5: output, current limit, feed the enable`"]
-  b5["`*CTRE code*
-**Phoenix 5 library**
-Builds and reads the CAN frames`"]
-  b6["`*Hardware*
+Decodes the PDP's CAN frames itself; Phoenix 5 does not read the PDP (modes doc, section 5)`"]
+  b4["`*Hardware*
 **CANable USB adapter (can0)**
 Needs Linux: a laptop or the Jetson`"]
-  b7["`*Hardware*
+  b5["`*Hardware*
 **Power distribution panel**
-On the bench supply, through the E-stop`"]
+The team's only PDP, on the bench supply, through the E-stop`"]
   line2 --> b1
   b3 --> line2
   b4 --> b3
   b5 --> b4
-  b6 --> b5
-  b7 --> b6
   classDef ours fill:#4c669026,stroke:#4c6690
   classDef ros fill:#8b939c1f,stroke:#8b939c
   classDef stand fill:#b0844526,stroke:#b08445
   classDef hw fill:#4a725926,stroke:#4a7259
   classDef hwline fill:#b9707c26,stroke:#b9707c,stroke-dasharray:4 3
   classDef ghost fill:none,stroke:#8b939c,stroke-dasharray:4 4,color:#8b939c
-  class b1,b3,b4 ours
+  class b1,b3 ours
   class line2 hwline
-  class b5 ros
-  class b6,b7 hw
+  class b4,b5 hw
 ```
 
 - **Deliverable:** 3.6, Drivetrain on the bench
 - **Runs on:** A Linux laptop or the Jetson
-- **Proves:** Bus voltage, currents, and faults read from the real panel
+- **Proves:** Bus voltage, currents, and faults read from the real panel, and that the PDP
+  sends them with no roboRIO on the bus ([CAN bus](../can-bus.md#the-power-distribution-panel))
+- **Logger test:** Drop the bench supply below the energy logger's minimum input and back:
+  its energy total is unchanged. With the E-stop pressed, measure the logger's own draw
+  (operating modes test R6).
 - **Can't catch:** The rover's battery under a full load
 
 ### Battery and power: Drive base (Robot)
@@ -681,40 +680,38 @@ A low battery halves every current limit; the operator sees voltage and faults`"
   line2["`**Hardware line:** /power/battery`"]
   b3["`*Ours · 3.5, 3.6*
 **Power panel reading**
-In the node that owns CTRE access (modes doc, open question 6)`"]
-  b4["`*Ours · C++*
-**Motor controller interface: CTRE**
-The only code that calls Phoenix 5: output, current limit, feed the enable`"]
-  b5["`*CTRE code*
-**Phoenix 5 library**
-Builds and reads the CAN frames`"]
-  b6["`*Hardware*
+Decodes the PDP's CAN frames itself; Phoenix 5 does not read the PDP (modes doc, section 5)`"]
+  b4["`*Hardware*
 **CANable USB adapter (can0)**
 Plugged into the Jetson on the drive base`"]
-  b7["`*Hardware*
+  b5["`*Hardware*
 **Power distribution panel**
-Fed by the drive base's battery`"]
+The team's only PDP, moved from the bench, fed by the drive base's battery`"]
   line2 --> b1
   b3 --> line2
   b4 --> b3
   b5 --> b4
-  b6 --> b5
-  b7 --> b6
   classDef ours fill:#4c669026,stroke:#4c6690
   classDef ros fill:#8b939c1f,stroke:#8b939c
   classDef stand fill:#b0844526,stroke:#b08445
   classDef hw fill:#4a725926,stroke:#4a7259
   classDef hwline fill:#b9707c26,stroke:#b9707c,stroke-dasharray:4 3
   classDef ghost fill:none,stroke:#8b939c,stroke-dasharray:4 4,color:#8b939c
-  class b1,b3,b4 ours
+  class b1,b3 ours
   class line2 hwline
-  class b5 ros
-  class b6,b7 hw
+  class b4,b5 hw
 ```
 
 - **Deliverable:** 3.7, Drivetrain on the drive base
 - **Runs on:** The Jetson on the drive base
 - **Proves:** Real battery readings while the drive base drives
+- **Transient test:** Scope the supply at a motor controller while the drive motors stall
+  and reverse: it stays inside the controller's rated input. Other teams saw "supply
+  overvoltage" faults on Talon FX controllers fed by 4S packs [TBR: reported by other
+  teams, cause not found]. Also record the lowest voltage at the sensor converters' inputs
+  during a full stall on a nearly empty pack. The converters shut off below 9 V
+  ([RSD-30 datasheet, p. 4](../sources.md#meanwell-rsd-30-spec)), so a reading below about
+  10 V means adding hold-up capacitance ahead of them.
 
 Only if the drive base is ready by Nov 22; otherwise this moves to spring. It runs again on the whole rover in spring.
 
@@ -1439,6 +1436,9 @@ Disables within link_timeout plus 100 ms once the heartbeat stops`"]
 - **Deliverable:** 5.6, Teleop over the team's access point
 - **Runs on:** Two machines on the team's access point
 - **Proves:** A Wi-Fi cut stops the bench motor; bandwidth stays under the cap
+- **Link test:** Stop the teleop program while the Wi-Fi stays up and the robot still
+  answers pings: the bench motor stops, because the heartbeat stops (operating modes test
+  R3)
 - **Can't catch:** The rover's radio and the arena's distance
 
 ### Radio link: Drive base (Robot)
