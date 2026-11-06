@@ -1,0 +1,51 @@
+# Registry for the teleoperation design (teleoperation.md, deliverable 5.1, in PR #14).
+# These rows follow the PR #14 review of 2026-10-26: a browser frontend on rosbridge, with
+# teleop_node on the robot computer. They are the contract the other docs build against
+# until the teleoperation doc confirms or changes them. See "Registries" in README.md, then
+# run scripts/design render.
+
+[[node]]
+id = "operator_frontend"
+name = "Operator frontend"
+package = "[TBD: teleoperation doc (5.1)]"
+runs_on = "Operator laptop, in a browser, through rosbridge"
+element = "SW.3.1"
+does = "Reads the gamepad through the browser's Gamepad API, sends /joy, the heartbeat, and mode requests, and shows each control source's default view, which the operator can change, with live link bandwidth"
+calls = ["/robot/request_mode"]
+subscribes = ["/robot/mode", "/power/battery", "/mechanism/status", "camera-image", "obstacle-map", "planned-path"]
+
+[[node.publishes]]
+name = "/joy"
+type = "sensor_msgs/msg/Joy"
+rate = "20 Hz and on change [TBR: teleop draft, PR #14]"
+qos = "[TBD: as rosbridge publishes it, teleoperation doc (5.1)]"
+
+[[node.publishes]]
+name = "/operator/heartbeat"
+type = "std_msgs/msg/Header"
+rate = "10 Hz"
+qos = "best effort, depth 1 [TBR: as rosbridge publishes it, teleoperation doc (5.1)]"
+
+[[node]]
+id = "teleop_node"
+name = "`teleop_node`"
+package = "`luna_teleop`"
+runs_on = "Robot computer"
+element = "SW.3.2"
+does = "Turns /joy into drive and mechanism commands, zeroes them when the hold button is released, and drops stale input"
+subscribes = ["/joy", "/robot/mode"]
+
+[[node.publishes]]
+name = "/teleop/cmd_vel"
+type = "geometry_msgs/msg/TwistStamped"
+rate = "[TBD: teleoperation doc (5.1)]"
+qos = "[TBD: teleoperation doc (5.1)]"
+note = "The name comes from the teleop draft (PR #14) [TBR: teleop open question 3, which decides how TELEOP and AUTO commands reach the drivetrain]."
+
+[[node.publishes]]
+id = "teleop-mechanism-command"
+name = "[TBD: teleop's mechanism command topic, teleop open question 3]"
+type = "[TBD: mechanism doc (4.2)]"
+rate = "[TBD: teleoperation doc (5.1)]"
+qos = "[TBD: teleoperation doc (5.1)]"
+

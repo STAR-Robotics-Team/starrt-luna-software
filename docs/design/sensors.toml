@@ -1,0 +1,59 @@
+# Registry for the sensors and robot model design (sensors.md, deliverable 6.2, in PR #15).
+# These rows follow the hardware lines in the system design. They are the contract the
+# other docs build against until the sensors doc confirms or changes them. See
+# "Registries" in README.md, then run scripts/design render.
+
+[[node]]
+id = "lidar_driver"
+name = "Unitree L2 driver"
+package = "`unitree_lidar_ros2`"
+runs_on = "Robot computer"
+element = "SW.2.1"
+does = "Publishes the L2's point cloud and its built-in IMU, with Unitree's default names and frames"
+
+[[node.publishes]]
+name = "unilidar/cloud"
+type = "sensor_msgs/msg/PointCloud2"
+rate = "[TBD: sensors doc (6.2)]"
+qos = "[TBD: sensors doc (6.2)]"
+note = "In frame unilidar_lidar, as Unitree's launch file names it (system design, Hardware lines)."
+
+[[node.publishes]]
+name = "unilidar/imu"
+type = "sensor_msgs/msg/Imu"
+rate = "[TBD: sensors doc (6.2)]"
+qos = "[TBD: sensors doc (6.2)]"
+note = "In frame unilidar_imu, fixed to the LiDAR (system design, The two IMUs)."
+
+[[node]]
+id = "imu_driver"
+name = "Dedicated IMU driver"
+package = "[TBD: the IMU, sensor suite evaluation (6.1)]"
+runs_on = "Robot computer"
+element = "SW.2.1"
+does = "Publishes the dedicated IMU's gyroscope and accelerometer in one message, with no magnetometer (system design R5)"
+publishes_shared = ["/diagnostics"]
+
+[[node.publishes]]
+name = "imu/data_raw"
+type = "sensor_msgs/msg/Imu"
+rate = "[TBD: sensors doc (6.2)]"
+qos = "[TBD: sensors doc (6.2)]"
+note = "The main IMU, near the center of mass, following REP 145's names (system design, The two IMUs)."
+
+[[node]]
+id = "camera_driver"
+name = "Camera driver"
+package = "[TBD: the cameras, sensor suite evaluation (6.1)]"
+runs_on = "Robot computer"
+element = "SW.2.1"
+does = "Publishes the driving camera's compressed images for the operator view"
+publishes_shared = ["/diagnostics"]
+
+[[node.publishes]]
+id = "camera-image"
+name = "[TBD: camera image topics, sensors doc (6.2)]"
+type = "sensor_msgs/msg/CompressedImage [TBR: sensors doc (6.2)]"
+rate = "[TBD: sensors doc (6.2)]"
+qos = "[TBD: sensors doc (6.2)]"
+

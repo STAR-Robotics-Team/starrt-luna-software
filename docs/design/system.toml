@@ -1,0 +1,241 @@
+# Registry for the system design (system.md): the software elements, the interfaces that
+# cross subsystems, and the open questions. See "Registries" in README.md, then run
+# scripts/design render.
+
+# ----------------------------------------------------------------------------------------
+# Software elements: the PDR's system hierarchy (guidebook §18.3.1.1), each designed in one
+# design doc. turgor is the deliverable that writes that doc.
+# ----------------------------------------------------------------------------------------
+
+[[element]]
+id = "SW"
+name = "Robot software"
+function = "Controls and monitors the rover, by remote control and on its own"
+connects_to = "Robot computer, operator laptop, radio link"
+doc = "system.md"
+turgor = ["1.20"]
+
+[[element]]
+id = "SW.1"
+name = "Robot control software"
+parent = "SW"
+function = "Moves actuators only as the current mode allows"
+connects_to = "Motor controllers and power distribution panel (PDP), over CAN"
+doc = "operating-modes.md"
+turgor = ["1.19"]
+
+[[element]]
+id = "SW.1.1"
+name = "Mode manager"
+parent = "SW.1"
+function = "Owns the robot's state and task mode; disables the robot on link loss, a fault, or a command"
+connects_to = "None directly; it hears about CAN devices through SW.1.2 to SW.1.4"
+doc = "operating-modes.md"
+turgor = ["1.19"]
+
+[[element]]
+id = "SW.1.2"
+name = "Drivetrain control"
+parent = "SW.1"
+function = "Sends drive motor commands and per-mode current limits; computes wheel odometry [TBD: which node, system open question 9]"
+connects_to = "Drive motor controllers; wheel and track geometry"
+doc = "drivetrain.md"
+turgor = ["3.1"]
+
+[[element]]
+id = "SW.1.3"
+name = "Mechanism control"
+parent = "SW.1"
+function = "Sends mechanism commands and per-mode limits; reports whether the excavator is stowed and the hatch is closed"
+connects_to = "Mechanism motor controllers, stowed and hatch sensors, limit switches"
+doc = "mechanism.md"
+turgor = ["4.2"]
+
+[[element]]
+id = "SW.1.4"
+name = "Power telemetry"
+parent = "SW.1"
+function = "Reports battery voltage, each channel's current, and energy used, decoded from the PDP's CAN frames"
+connects_to = "PDP (CAN ID 0, firmware 1.40 or later)"
+doc = "operating-modes.md"
+turgor = ["1.19"]
+
+[[element]]
+id = "SW.1.5"
+name = "Command selection"
+parent = "SW.1"
+function = "Passes on drive and mechanism commands from the active control source, TELEOP or AUTO, and drops the other source's [TBR: proposed in the PDR; whether it is a node of its own, and which doc designs it, wait on teleop open question 3]"
+connects_to = "None outside Software"
+doc = "system.md"
+
+[[element]]
+id = "SW.2"
+name = "Perception and autonomy software"
+parent = "SW"
+function = "Sees the arena and runs the mission cycle hands-free"
+connects_to = "Sensors"
+doc = "autonomy.md"
+turgor = ["7.2"]
+
+[[element]]
+id = "SW.2.1"
+name = "Sensor interface and robot model"
+parent = "SW.2"
+function = "Publishes each sensor's data in its own frame, plus the robot's geometry"
+connects_to = "LiDAR, IMUs, cameras; Mechanical's CAD"
+doc = "sensors.md"
+turgor = ["6.2"]
+
+[[element]]
+id = "SW.2.2"
+name = "Localization and mapping"
+parent = "SW.2"
+function = "Finds position and heading from a random start and builds the obstacle map, using only onboard sensors"
+connects_to = "Start-zone markers, if used"
+doc = "autonomy.md"
+turgor = ["7.2"]
+
+[[element]]
+id = "SW.2.3"
+name = "Path planning and following"
+parent = "SW.2"
+function = "Plans a path around obstacles to the target zone and follows it"
+connects_to = "None outside Software"
+doc = "autonomy.md"
+turgor = ["7.2"]
+
+[[element]]
+id = "SW.2.4"
+name = "Task sequencer"
+parent = "SW.2"
+function = "Runs dig, travel, dump, travel in AUTO, through the mode manager"
+connects_to = "None outside Software"
+doc = "autonomy.md"
+turgor = ["7.2"]
+
+[[element]]
+id = "SW.3"
+name = "Operator station software"
+parent = "SW"
+function = "Gives Mission Control control of the robot and a view of it, from a browser on any member's laptop"
+connects_to = "Operator laptop, gamepad, NASA's network switch"
+doc = "teleoperation.md"
+turgor = ["5.1"]
+
+[[element]]
+id = "SW.3.1"
+name = "Operator frontend"
+parent = "SW.3"
+function = "Reads the gamepad, sends /joy, the heartbeat, and mode requests over rosbridge, and shows the operator views and live link bandwidth"
+connects_to = "Gamepad (Xbox Model 1914, USB-C cable); operator laptop [TBR: an HTTPS page served by the robot, or a desktop app, teleoperation doc (5.1)]"
+doc = "teleoperation.md"
+turgor = ["5.1"]
+
+[[element]]
+id = "SW.3.2"
+name = "Teleop mapping"
+parent = "SW.3"
+function = "Turns /joy into drive and mechanism commands on the robot computer, zeroes them when the hold button is released, and drops stale input"
+connects_to = "None outside Software"
+doc = "teleoperation.md"
+turgor = ["5.1"]
+
+[[element]]
+id = "SW.4"
+name = "Bringup, link and logging"
+parent = "SW"
+function = "Starts all robot software at power-on, runs the rosbridge server that decides which topics cross the radio link, and records every run"
+connects_to = "Robot computer, robot radio, access point"
+doc = "platform.md"
+turgor = ["2.11"]
+
+# ----------------------------------------------------------------------------------------
+# Nodes and interfaces that belong to no subsystem's doc yet
+# ----------------------------------------------------------------------------------------
+
+[[node]]
+id = "command_selection"
+name = "Command selection node"
+package = "[TBD: teleop open question 3]"
+runs_on = "Robot computer"
+element = "SW.1.5"
+does = "Passes on the drive and mechanism commands of the active control source, as /robot/mode names it, and drops the other source's"
+subscribes = ["/robot/mode", "/teleop/cmd_vel", "auto-drive-command", "teleop-mechanism-command", "auto-mechanism-command"]
+
+[[node.publishes]]
+name = "/cmd_vel"
+type = "geometry_msgs/msg/TwistStamped [TBR: the drivetrain draft (PR #17) uses Twist; Turgor 3.1 and 5.3 and the teleop draft use TwistStamped]"
+rate = "20 Hz [TBR: drivetrain draft, PR #17]"
+qos = "best effort, depth 1 [TBR: drivetrain draft, PR #17]"
+
+[[node.publishes]]
+id = "mechanism-command"
+name = "[TBD: mechanism command topic, teleop open question 3]"
+type = "[TBD: in the mechanism doc (4.2)]"
+rate = "[TBD: in the mechanism doc (4.2)]"
+qos = "[TBD: in the mechanism doc (4.2)]"
+
+[[shared]]
+name = "/diagnostics"
+type = "diagnostic_msgs/msg/DiagnosticArray"
+rate = "1 Hz and on change"
+qos = "reliable, depth 10"
+note = "Every node of ours that can fail reports here; an ERROR puts the robot in FAULT (operating modes, section 7)."
+
+# ----------------------------------------------------------------------------------------
+# Open questions (section 9). Who answers each one, and by when, is in Turgor.
+# ----------------------------------------------------------------------------------------
+
+[[question]]
+number = 1
+text = "Which access point, robot radio, and network setup: NASA's cable in a LAN port, or Access Point mode with fixed addresses?"
+status = "open"
+turgor = ["5.7"]
+
+[[question]]
+number = 2
+text = "Which dedicated IMU and cameras, and how does each connect to the Jetson?"
+status = "open"
+turgor = ["6.1"]
+
+[[question]]
+number = 3
+text = "Which drive motor controllers?"
+status = "open"
+turgor = ["3.2"]
+
+[[question]]
+number = 4
+text = "Which mechanism motor controllers?"
+status = "open"
+turgor = ["4.3"]
+
+[[question]]
+number = 5
+text = "How do stand-ins swap in for hardware, system by system, and what are the launch arguments called?"
+status = "open"
+turgor = ["1.4"]
+
+[[question]]
+number = 6
+text = "May the robot use 5 GHz during runs? The guidebook's §14.1.17 and §14.4 disagree ([Rules the robot must follow](../competition/robot-rules.md#communications)). Ask the organizers. Asked through 5.7; [TBD: no answer yet as of 2026-11-04]."
+status = "open"
+turgor = ["5.7"]
+
+[[question]]
+number = 7
+text = "Does a mini PC replace the Jetson on the rover? The team's Hacker Initiative grant application budgets one, an ASRock 4X4 BOX-AI340 with 32 GB of memory, for its faster CPU and hardware video encoding, plus an isolated CANable 2.0 Pro clone. The Jetson would then run the bench testbed. [TBD: decided by the grant, announced by Dec 21, 2026.] If it does, this doc's Jetson references become the mini PC, and on its standard Ubuntu kernel the CANable needs no driver build ([CAN bus](../can-bus.md#what-you-need))."
+status = "open"
+turgor = ["1.16"]
+
+[[question]]
+number = 8
+text = "Should the robot's radio be the robot computer's own Wi-Fi? The computer runs on its own battery, so a main-battery sag in a stall could not drop the link, while a separate radio on the main battery reboots if the pack falls below its converter's 9 V minimum ([operating modes, section 7](operating-modes.md#7-behavior-on-failure)). It must still meet the radio rules ([Rules the robot must follow](../competition/robot-rules.md#communications))."
+status = "open"
+turgor = ["5.7"]
+
+[[question]]
+number = 9
+text = "Which node publishes wheel odometry, and on which topic? The drivetrain draft (PR #17) has one drivetrain_node that publishes joint states only; Turgor 3.3 and 3.5 plan ros2_control, whose diff drive controller publishes odometry. Localization (7.5) and the position error budget depend on it."
+status = "open"
+turgor = ["3.1"]

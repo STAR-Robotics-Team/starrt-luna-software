@@ -1,0 +1,27 @@
+# Registry for the drivetrain design (drivetrain.md, deliverable 3.1, not written yet).
+# These rows are the contract the other docs build against until the drivetrain doc
+# confirms or changes them. See "Registries" in README.md, then run scripts/design render.
+
+[[node]]
+id = "drivetrain"
+name = "Drivetrain node"
+package = "`luna_drivetrain`"
+runs_on = "Robot computer"
+element = "SW.1.2"
+does = "Drives only when the mode allows it, within the mode's current limits [TBD: one drivetrain_node, or ros2_control's controller manager with a diff drive controller, drivetrain doc (3.1)]"
+subscribes = ["/robot/mode", "/cmd_vel"]
+publishes_shared = ["/diagnostics"]
+
+[[node.publishes]]
+name = "/drivetrain/joint_states"
+type = "sensor_msgs/msg/JointState"
+rate = "50 Hz [TBR: drivetrain draft, PR #17]"
+qos = "sensor data: best effort, depth 5 [TBR: drivetrain draft, PR #17]"
+
+[[node.publishes]]
+id = "wheel-odometry"
+name = "[TBD: wheel odometry topic, system open question 9]"
+type = "nav_msgs/msg/Odometry [TBR: system open question 9]"
+rate = "[TBD: drivetrain doc (3.1)]"
+qos = "[TBD: drivetrain doc (3.1)]"
+

@@ -1,0 +1,67 @@
+# Registry for the autonomy design (autonomy.md). The nodes and interfaces are the contract
+# the other docs build against until the autonomy doc's sections 2 and 3 confirm or change
+# them (7.2). See "Registries" in README.md, then run scripts/design render.
+
+[[node]]
+id = "localization"
+name = "Localization and mapping"
+package = "[TBD: its nodes, autonomy doc (7.2)]"
+runs_on = "Robot computer"
+element = "SW.2.2"
+does = "Finds the robot's position and heading from the random start, and builds the obstacle map, from the LiDAR, the IMUs, and the wheels"
+subscribes = ["unilidar/cloud", "unilidar/imu", "imu/data_raw", "/drivetrain/joint_states", "wheel-odometry"]
+publishes_shared = ["/diagnostics"]
+
+[[node.publishes]]
+id = "obstacle-map"
+name = "[TBD: obstacle map topic, autonomy doc (7.2)]"
+type = "nav_msgs/msg/OccupancyGrid [TBR: autonomy doc (7.2)]"
+rate = "[TBD: autonomy doc (7.2)]"
+qos = "[TBD: autonomy doc (7.2)]"
+
+[[node]]
+id = "planner"
+name = "Path planning and following"
+package = "[TBD: its nodes, autonomy doc (7.2)]"
+runs_on = "Robot computer"
+element = "SW.2.3"
+does = "Plans a path around the mapped obstacles to the target zone, and follows it in AUTO"
+subscribes = ["/robot/mode", "obstacle-map"]
+publishes_shared = ["/diagnostics"]
+
+[[node.publishes]]
+id = "planned-path"
+name = "[TBD: planned path topic, autonomy doc (7.2)]"
+type = "nav_msgs/msg/Path [TBR: autonomy doc (7.2)]"
+rate = "[TBD: autonomy doc (7.2)]"
+qos = "[TBD: autonomy doc (7.2)]"
+
+[[node.publishes]]
+id = "auto-drive-command"
+name = "[TBD: AUTO drive command topic, teleop open question 3]"
+type = "geometry_msgs/msg/TwistStamped [TBR: matches /cmd_vel]"
+rate = "[TBD: autonomy doc (7.2)]"
+qos = "[TBD: autonomy doc (7.2)]"
+
+[[node]]
+id = "task_sequencer"
+name = "Task sequencer"
+package = "[TBD: autonomy doc (7.2)]"
+runs_on = "Robot computer"
+element = "SW.2.4"
+does = "Runs dig, travel, dump, travel in AUTO: changes the task mode and sends mechanism commands, but can never enable the robot"
+subscribes = ["/robot/mode", "/mechanism/status"]
+calls = ["/robot/request_task"]
+publishes_shared = ["/diagnostics"]
+
+[[node.publishes]]
+id = "auto-mechanism-command"
+name = "[TBD: AUTO mechanism command topic, teleop open question 3]"
+type = "[TBD: mechanism doc (4.2)]"
+rate = "[TBD: autonomy doc (7.2)]"
+qos = "[TBD: autonomy doc (7.2)]"
+
+[[question]]
+number = 1
+status = "open"
+text = "I added an extra section for scoring, is that fine?"

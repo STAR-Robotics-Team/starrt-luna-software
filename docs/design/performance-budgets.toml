@@ -1,0 +1,600 @@
+# Registry for the technical performance measures (TPMs) and their budgets, which
+# scripts/design renders into performance-budgets.md and into each design doc's Budgets
+# table. From the PDR software inputs (1.6), parts 1.3 and 1.4. See "Registries" in
+# README.md, then run scripts/design render.
+#
+# Each [[tpm]] is one measurable quantity with one unit. Its [[tpm.row]] entries split it
+# across software elements. A row with an amount counts toward the total; when the TPM
+# has a limit, the check fails if the counted parts add up to more, and the page shows the
+# margin that is left.
+
+[[tpm]]
+id = "TPM-1"
+measure = "Autonomous cycles completed per run (excavate, travel, dump, travel, with no operator input)"
+unit = "cycles per run"
+source = "PMP: Excavation/dump cycles; Autonomous capabilities. Guidebook §16.4, §16.5"
+threshold = "≥1"
+goal = "≥2, starting in the starting zone (full autonomy)"
+budget = "Which elements make each task autonomous"
+part = "Autonomous task (guidebook)"
+elements_header = "Elements responsible"
+allocation = "Points"
+budget_unit = "points"
+notes = [
+  "**Link to berm volume:** the number of cycles needed for a 25 L berm is 25 L divided by the liters delivered per trip, which Mechanical sets. So two cycles need at least 12.5 L delivered per trip.",
+]
+
+[[tpm.row]]
+part = "Excavation (§16.1)"
+elements = ["SW.2.4", "SW.1.3", "SW.2.2"]
+role = "SW.2.4 decides when to dig and stop; SW.1.3 digs; SW.2.2 confirms the robot is in the excavation zone"
+value = "200"
+
+[[tpm.row]]
+part = "Travel (§16.3)"
+elements = ["SW.2.2", "SW.2.3", "SW.1.2"]
+role = "SW.2.2 localizes and maps; SW.2.3 plans and follows; SW.1.2 drives"
+value = "500"
+
+[[tpm.row]]
+part = "Dump (§16.2)"
+elements = ["SW.2.4", "SW.1.3", "SW.2.2"]
+role = "SW.2.4 decides; SW.1.3 opens the hatch and runs the conveyor; SW.2.2 confirms the construction zone"
+value = "100"
+
+[[tpm.row]]
+part = "Full autonomy (§16.5): at least 2 cycles, starting in the starting zone"
+elements = ["SW.2.4", "SW.1.3", "SW.2.2", "SW.2.3", "SW.1.2", "SW.1.1", "SW.1.5", "SW.3.1", "SW.4"]
+role = "All of the above, plus SW.1.1 (stays enabled), SW.1.5 (passes AUTO commands), SW.3.1 (heartbeat), and SW.4 (link and logging)"
+value = "1,400 × berm factor"
+
+[[tpm]]
+id = "TPM-2"
+measure = "Autonomous cycle time"
+unit = "min per cycle"
+source = "PMP: Excavation/dump cycles. Guidebook §12 (15-minute runs)"
+threshold = "≤7.0 [TBR: proposed in the PDR (1.6)]"
+goal = "≤6.0 [TBR: proposed in the PDR (1.6)]"
+budget = "Budget for the 6.0 min (360 s) goal"
+part = "Phase"
+allocation = "Allocation (s)"
+budget_unit = "s"
+limit = 360
+notes = [
+  "**Threshold:** a 15-minute run, minus 1 minute to start (TPM-3 goal), split over 2 cycles, gives 7.0 min. The goal keeps 2 minutes of margin.",
+  "**If 2 trips can't reach 25 L,** cycle time must drop to 14 min divided by the number of cycles needed.",
+]
+
+[[tpm.row]]
+part = "Excavate until the bin is full"
+elements = ["SW.1.3", "SW.2.4"]
+role = "SW.1.3 runs the excavator; SW.2.4 decides when to stop"
+value = "≤150"
+amount = 150
+basis = "[TBR: dig rate and bin volume, with Mechanical (4.1)]"
+
+[[tpm.row]]
+part = "Travel loaded across the obstacle zone (4.38 m long)"
+elements = ["SW.2.3", "SW.2.2", "SW.1.2"]
+role = "SW.2.3 plans and follows; SW.2.2 localizes; SW.1.2 drives"
+value = "≤60"
+amount = 60
+basis = "[TBR: proposed in the PDR (1.6)]"
+
+[[tpm.row]]
+part = "Dump"
+elements = ["SW.1.3"]
+role = "SW.1.3 opens the hatch and runs the conveyor"
+value = "≤60"
+amount = 60
+basis = "[TBR: with Mechanical (4.1)]"
+
+[[tpm.row]]
+part = "Travel empty back"
+elements = ["SW.2.3", "SW.2.2", "SW.1.2"]
+value = "≤60"
+amount = 60
+basis = "[TBR: proposed in the PDR (1.6)]"
+
+[[tpm.row]]
+part = "Task-mode switches (4 per cycle)"
+elements = ["SW.2.4", "SW.1.1"]
+role = "SW.2.4 requests; SW.1.1 grants"
+value = "≤4 (≤1 each)"
+amount = 4
+basis = "[TBR: proposed in the PDR (1.6)]"
+
+[[tpm]]
+id = "TPM-3"
+measure = "Time from run start to the first cycle starting"
+unit = "s"
+source = "Guidebook §15.3.1 (a cycle must start within 5 minutes or the run ends); §13.9.3 (random start position and direction)"
+threshold = "≤300"
+goal = "≤60 [TBR: proposed in the PDR (1.6)]"
+budget = "Budget for the 60 s goal"
+part = "Step"
+allocation = "Allocation (s of run time)"
+budget_unit = "s"
+limit = 60
+
+[[tpm.row]]
+part = "Find position and heading from the random start"
+elements = ["SW.2.2"]
+value = "0, since it is done during the 10-minute setup while the robot sits still (≤60 s of setup time) [TBR: proposed in the PDR (1.6)]"
+amount = 0
+
+[[tpm.row]]
+part = "Operator enables in AUTO (after telling the judge)"
+elements = ["SW.3.1", "SW.1.1"]
+role = "SW.3.1 sends; SW.1.1 accepts"
+value = "≤5"
+amount = 5
+
+[[tpm.row]]
+part = "Sequencer picks a dig spot and starts"
+elements = ["SW.2.4"]
+value = "≤2"
+amount = 2
+
+[[tpm.row]]
+part = "Drive to the dig spot (the excavation zone includes the starting zone)"
+elements = ["SW.2.3", "SW.1.2"]
+value = "≤20"
+amount = 20
+
+[[tpm]]
+id = "TPM-4"
+measure = "Obstacle contacts per run"
+unit = "contacts per run"
+source = "PMP: Navigation and obstacles. Guidebook §17.1.8 (−50 points, then −25 each, up to −100)"
+threshold = "≤1 [TBR: proposed in the PDR (1.6)]"
+goal = "0"
+budget = "Clearance budget and detection"
+part = "Contributor"
+allocation = "Allocation"
+total_label = "Clearance the planner keeps from every mapped obstacle, at least: the sum of the rows above"
+total_role = "SW.2.3"
+
+[[tpm.row]]
+part = "Position error"
+elements = ["SW.2.2"]
+value = "10 (TPM-5 goal)"
+amount = 10
+unit = "cm"
+
+[[tpm.row]]
+part = "Map cell size"
+elements = ["SW.2.2"]
+value = "5 [TBR: proposed in the PDR (1.6)]"
+amount = 5
+unit = "cm"
+
+[[tpm.row]]
+part = "Path-following error"
+elements = ["SW.2.3", "SW.1.2"]
+role = "SW.2.3 with SW.1.2"
+value = "10 [TBR: proposed in the PDR (1.6)]"
+amount = 10
+unit = "cm"
+
+[[tpm.row]]
+part = "Error in the robot's outline in the robot model"
+elements = ["SW.2.1"]
+role = "SW.2.1, from Mechanical's CAD"
+value = "2 [TBR: proposed in the PDR (1.6)]"
+amount = 2
+unit = "cm"
+
+[[tpm.row]]
+part = "Smallest rock mapped (guidebook §11.4: rocks are 30 to 40 cm across)"
+elements = ["SW.2.1", "SW.2.2"]
+value = "30"
+unit = "cm across"
+
+[[tpm.row]]
+part = "Smallest crater mapped (craters are about 40 to 50 cm wide)"
+elements = ["SW.2.1", "SW.2.2"]
+value = "40"
+unit = "cm wide"
+
+[[tpm.row]]
+part = "Detection range"
+elements = ["SW.2.1", "SW.2.2"]
+value = "≥2.0 [TBR: proposed in the PDR (1.6)]"
+unit = "m"
+
+[[tpm]]
+id = "TPM-5"
+measure = "Position error after a 2-minute drive"
+unit = "m"
+source = "PMP: Navigation and obstacles. Guidebook §13.7 (no GPS or compass), §16.3 (no prior knowledge of the arena)"
+threshold = "≤0.20 [TBR: proposed in the PDR (1.6)]"
+goal = "≤0.10 [TBR: proposed in the PDR (1.6)]"
+budget = "Error budget for the 0.10 m goal"
+part = "Contributor"
+allocation = "Allocation"
+notes = [
+  "**These errors don't simply add up.** SW.2.2 owns the total.",
+  "**How it's measured:** against the true position in Gazebo (7.5), and against tape marks on the floor for the robot.",
+]
+
+[[tpm.row]]
+part = "Wheel odometry error around a 2 m square"
+elements = ["SW.1.2"]
+value = "[TBD: measured in 3.9 (Gazebo) and 3.7 (robot); it needs drive encoders, which 6.1 has not confirmed]"
+unit = "m"
+
+[[tpm.row]]
+part = "IMU heading drift"
+elements = ["SW.2.1"]
+value = "[TBD: sensor suite evaluation (6.1)]"
+unit = "° per min"
+
+[[tpm.row]]
+part = "Sensor position error in the robot model"
+elements = ["SW.2.1"]
+value = "≤0.01, from CAD [TBR: proposed in the PDR (1.6)]"
+unit = "m"
+
+[[tpm.row]]
+part = "Sensor timestamp mismatch"
+elements = ["SW.2.1", "SW.4"]
+value = "≤10 [TBR: proposed in the PDR (1.6)]"
+unit = "ms"
+
+[[tpm.row]]
+part = "Combined estimate (LiDAR, IMU, odometry)"
+elements = ["SW.2.2"]
+value = "≤0.10"
+unit = "m"
+
+[[tpm]]
+id = "TPM-6"
+measure = "Average link bandwidth over a run"
+unit = "kbit/s"
+source = "PMP: Communications bandwidth. Guidebook §14.1.19 (4,000 kbit/s average limit), §17.1.4 (score)"
+threshold = "≤4,000"
+goal = "≤1,000, which scores 90 of 120 [TBR: proposed in the PDR (1.6)]"
+budget = "Budget by sending element (kbit/s)"
+part = "What it sends over the link"
+budget_unit = "kbit/s"
+cases = ["TELEOP (default view)", "AUTO (default view)"]
+limit = 1000
+notes = [
+  "**With the default views, any mix of TELEOP and AUTO averages under the 1,000 kbit/s goal.**",
+  "**Turning the camera on in AUTO adds 750 kbit/s** (1,150 in total, over the goal). The frontend shows live link bandwidth so the operator can see the cost (PR #14 review, 2026-10-26).",
+  "**Over rosbridge, each sender's number includes its encoding** (JSON, or CBOR for the camera) [TBR: measured in 5.6].",
+  "**Arena cameras:** each one used during the run adds 500 kbit/s to the scored total (§14.1.18). This budget assumes none. Using them during setup is free.",
+]
+
+[[tpm.row]]
+part = "/robot/mode, 10 Hz"
+elements = ["SW.1.1"]
+amounts = [20, 20]
+
+[[tpm.row]]
+part = "Drivetrain data [TBR: drivetrain doc (3.1)]"
+elements = ["SW.1.2"]
+amounts = [50, 50]
+
+[[tpm.row]]
+part = "Stowed and hatch status [TBD: mechanism doc (4.2)]"
+elements = ["SW.1.3"]
+amounts = [20, 20]
+
+[[tpm.row]]
+part = "/power/battery, 10 Hz"
+elements = ["SW.1.4"]
+amounts = [30, 30]
+
+[[tpm.row]]
+part = "Nothing: it runs on the robot"
+elements = ["SW.1.5"]
+amounts = [0, 0]
+
+[[tpm.row]]
+part = "Compressed driving camera, as CBOR on its own connection: on by default in TELEOP, and the operator can turn it on in AUTO"
+elements = ["SW.2.1"]
+amounts = [750, 0]
+
+[[tpm.row]]
+part = "Obstacle map, on by default in AUTO (a 5 cm grid of the arena is about 110 kbit per update)"
+elements = ["SW.2.2"]
+amounts = [0, 150]
+
+[[tpm.row]]
+part = "Planned path, on by default in AUTO"
+elements = ["SW.2.3"]
+amounts = [0, 50]
+
+[[tpm.row]]
+part = "Nothing"
+elements = ["SW.2.4"]
+amounts = [0, 0]
+
+[[tpm.row]]
+part = "/joy, the heartbeat, and mode requests (laptop to robot)"
+elements = ["SW.3.1"]
+amounts = [50, 50]
+
+[[tpm.row]]
+part = "Nothing: it runs on the robot"
+elements = ["SW.3.2"]
+amounts = [0, 0]
+
+[[tpm.row]]
+part = "rosbridge connection overhead (WebSocket over TCP) [TBR: measured in 5.6]"
+elements = ["SW.4"]
+amounts = [30, 30]
+
+[[tpm]]
+id = "TPM-7"
+measure = "Stop time after a disable command (request received on the robot, to zero output at every motor controller)"
+unit = "ms"
+source = "Guidebook §13.9.19 (power-off command), §15.4.1 (stop when time is up)"
+threshold = "≤100"
+goal = "≤100"
+budget = "Delay budget (ms)"
+part = "Step"
+allocation = "Allocation (ms)"
+budget_unit = "ms"
+limit = 100
+notes = [
+  "**If the mode manager itself stops,** the drivetrain and mechanism treat a `/robot/mode` older than `mode_timeout` (0.3 s) as DISABLED, so output is zero within 400 ms (drivetrain draft R3).",
+]
+
+[[tpm.row]]
+part = "Accept the disable request and publish DISABLED"
+elements = ["SW.1.1"]
+value = "≤10"
+amount = 10
+
+[[tpm.row]]
+part = "Receive DISABLED and send zero output on CAN, in the next 50 Hz control loop"
+elements = ["SW.1.2", "SW.1.3"]
+role = "SW.1.2 and SW.1.3, in parallel"
+value = "≤90"
+amount = 90
+
+[[tpm.row]]
+part = "Backstop if software hangs: the motor controllers disable themselves 100 ms after the enable signal stops"
+role = "Motor controllers (Electronic, not Software)"
+value = "100, not counted"
+
+[[tpm]]
+id = "TPM-8"
+measure = "Stop time after link loss (last heartbeat received, to zero output)"
+unit = "ms"
+source = "Guidebook §13.9.19 (without the link, the robot can't hear the power-off command)"
+threshold = "≤600"
+goal = "≤600"
+budget = "Delay budget (ms)"
+part = "Step"
+allocation = "Allocation (ms)"
+budget_unit = "ms"
+limit = 600
+notes = [
+  "**The link is TCP (rosbridge).** After a Wi-Fi stall, heartbeats and commands can arrive late, in a burst. The mode manager judges each heartbeat by when it arrived (deliverable 1.8), so a burst that arrives after the robot has disabled doesn't enable it again.",
+  "**SW.3.2 drops gamepad input older than `input_timeout`** (0.15 s) [TBR: teleoperation doc (5.1)].",
+  "**Stale input:** [TBD: how SW.3.2 tells stale input from fresh, since the laptop's and the robot's clocks differ, teleoperation doc (5.1)].",
+]
+
+[[tpm.row]]
+part = "Send a heartbeat every 100 ms, which sets how soon a loss can be seen"
+elements = ["SW.3.1"]
+value = "100 (the period), not counted"
+
+[[tpm.row]]
+part = "Declare the link lost"
+elements = ["SW.1.1"]
+value = "500 after the last heartbeat (`link_timeout`) [TBR: operating modes open question 9]"
+amount = 500
+
+[[tpm.row]]
+part = "Disable chain (TPM-7)"
+elements = ["SW.1.1", "SW.1.2", "SW.1.3"]
+value = "≤100"
+amount = 100
+
+[[tpm]]
+id = "TPM-9"
+measure = "Peak current in the worst task mode (EXCAVATE)"
+unit = "A"
+source = "PMP: Berm and energy productivity (power). Main breaker in Electrical's power budget"
+threshold = "Below the main breaker rating, 150 A in operating modes [TBR: Electrical's power budget workbook sizes it at 170 to 175 A]"
+goal = "≤135"
+budget = "Allocation in EXCAVATE, the worst mode (A)"
+part = "Load"
+elements_header = "Element that sets the limit"
+allocation = "Allocation (A)"
+budget_unit = "A"
+limit = 135
+notes = [
+  "**TRAVEL is the next-worst mode:** 4 drive motors at 30 A is 120 A, plus electronics.",
+  "**The limits come from operating modes** [TBR: for Electrical to confirm].",
+  "**Victor SPX followers can't limit current.** The 15 A per drive motor holds only if each follower draws like its Talon leader [TBR: drivetrain doc (3.1)]. The Talon FXS controllers the team plans to buy can limit current [TBR: the grant (1.16)].",
+]
+
+[[tpm.row]]
+part = "Drive, 4 motors at 15 A (creep, 20% output)"
+elements = ["SW.1.2"]
+value = "60"
+amount = 60
+
+[[tpm.row]]
+part = "Excavator chain"
+elements = ["SW.1.3"]
+value = "30"
+amount = 30
+
+[[tpm.row]]
+part = "Depth actuators, 2 at 15 A"
+elements = ["SW.1.3"]
+value = "30"
+amount = 30
+
+[[tpm.row]]
+part = "Conveyor (the NeveRest stalls at 11.5 A, so it needs no limit)"
+elements = ["SW.1.3"]
+value = "11.5"
+amount = 11.5
+
+[[tpm.row]]
+part = "Hatch (off in EXCAVATE)"
+elements = ["SW.1.3"]
+value = "0"
+amount = 0
+
+[[tpm.row]]
+part = "Electronics on the main battery"
+role = "Electrical (power budget workbook)"
+value = "[TBR: Electrical's power budget workbook], not counted"
+
+[[tpm]]
+id = "TPM-10"
+measure = "Energy used per autonomous cycle"
+unit = "Wh per cycle"
+source = "PMP: Berm and energy productivity. Guidebook §17.1.3 (points = 1.5 × berm cm³ ÷ run minutes ÷ Wh)"
+threshold = "A baseline [TBD: measured on the first full robot cycle]"
+goal = "Below the baseline (PMP: improve)"
+budget = "Allocation by phase (Wh)"
+part = "Phase"
+elements_header = "Elements that control it"
+allocation = "Allocation (Wh)"
+budget_unit = "Wh"
+notes = [
+  "**The robot computer has its own battery and energy logger.** Whether the judges count that energy is operating modes open question 8 (ask the organizers).",
+]
+
+[[tpm.row]]
+part = "Excavate"
+elements = ["SW.1.3"]
+role = "SW.1.3 (limits, and how it digs)"
+value = "[TBD: baseline]"
+
+[[tpm.row]]
+part = "Travel, loaded and empty"
+elements = ["SW.1.2", "SW.2.3"]
+role = "SW.1.2 (limits), SW.2.3 (path length)"
+value = "[TBD: baseline]"
+
+[[tpm.row]]
+part = "Dump"
+elements = ["SW.1.3"]
+value = "[TBD: baseline]"
+
+[[tpm.row]]
+part = "Electronics on the main battery over the cycle (LiDAR, radio, controllers)"
+role = "Electrical; shrinks as TPM-2 shrinks"
+value = "[TBD: baseline]"
+
+[[tpm.row]]
+part = "Measuring it: energy per task mode, checked against the main energy logger"
+elements = ["SW.1.4"]
+role = "SW.1.4 logs it"
+value = "None: it measures"
+
+[[tpm]]
+id = "TPM-11"
+measure = "Robot computer processor load, averaged over a run"
+unit = "% of all CPU cores"
+source = "Derived: protects PMP Autonomous capabilities and Navigation and obstacles, since all robot software shares one computer"
+threshold = "≤85 [TBR: proposed in the PDR (1.6)]"
+goal = "≤70 [TBR: proposed in the PDR (1.6)]"
+budget = "Allocation (% of all CPU cores)"
+part = "Element"
+allocation = "Allocation (%)"
+budget_unit = "%"
+limit = 70
+notes = [
+  "**The computer may change.** The robot computer is the Jetson Orin Nano today. It becomes an ASRock 4X4 BOX-AI340 mini PC if the Hacker Initiative grant pays for one (system open question 7). That would change every share.",
+]
+
+[[tpm.row]]
+part = "Localization and mapping"
+elements = ["SW.2.2"]
+value = "[TBD: autonomy doc v1 (7.8)]; expected to be the largest share"
+
+[[tpm.row]]
+part = "Path planning and following"
+elements = ["SW.2.3"]
+value = "[TBD: autonomy doc v1 (7.8)]"
+
+[[tpm.row]]
+part = "Sensor drivers, including camera compression"
+elements = ["SW.2.1"]
+value = "[TBD: autonomy doc v1 (7.8)]"
+
+[[tpm.row]]
+part = "Task sequencer"
+elements = ["SW.2.4"]
+value = "[TBD: autonomy doc v1 (7.8)]"
+
+[[tpm.row]]
+part = "Robot control"
+elements = ["SW.1.1", "SW.1.2", "SW.1.3", "SW.1.4", "SW.1.5"]
+role = "SW.1.1 to SW.1.5"
+value = "[TBD: autonomy doc v1 (7.8)]"
+
+[[tpm.row]]
+part = "Teleop mapping"
+elements = ["SW.3.2"]
+value = "[TBD: autonomy doc v1 (7.8)]; expected to be small"
+
+[[tpm.row]]
+part = "Bringup, link (rosbridge), and logging"
+elements = ["SW.4"]
+value = "[TBD: autonomy doc v1 (7.8)]"
+
+[[tpm]]
+id = "TPM-12"
+measure = "Restart time (power-on to DISABLED with position known)"
+unit = "s"
+source = "Derived: Guidebook §15.3.3 and §15.3.4 (a long restart can look like a dead robot); §15.3.1"
+threshold = "≤180 [TBR: proposed in the PDR (1.6)]"
+goal = "≤120 [TBR: proposed in the PDR (1.6)]"
+budget = "Budget for the 120 s goal"
+part = "Step"
+allocation = "Allocation (s)"
+budget_unit = "s"
+limit = 120
+notes = [
+  "**An E-stop no longer reboots the computer,** since it has its own battery. This budget matters for power-on during setup and for a computer reset mid-run.",
+]
+
+[[tpm.row]]
+part = "Operating system boots"
+elements = ["SW.4"]
+role = "SW.4 (robot computer configuration)"
+value = "[TBD: measured in 2.10]"
+
+[[tpm.row]]
+part = "Every robot program starts"
+elements = ["SW.4"]
+value = "[TBD: measured in 2.10]"
+
+[[tpm.row]]
+part = "Self-test finds every CAN device"
+elements = ["SW.1.1"]
+value = "≤10, with FAULT at 60 [TBR: proposed in the PDR (1.6)]"
+amount = 10
+
+[[tpm.row]]
+part = "Sensor drivers publishing"
+elements = ["SW.2.1"]
+value = "[TBD: sensors doc (6.2)]"
+
+[[tpm.row]]
+part = "Position found"
+elements = ["SW.2.2"]
+value = "≤60 (as in TPM-3)"
+amount = 60
+
+[[tpm]]
+id = "TPM-13"
+measure = "Mass"
+unit = "kg"
+source = "PMP: Weight"
+threshold = "0"
+goal = "0"
+none = "0 kg for every software element, at every level"

@@ -6,9 +6,14 @@
 >    [Design docs](README.md#the-docs).
 > 2. Replace every `[bracketed]` placeholder, including `[Subsystem]` in the title above
 >    (for example, "Drivetrain Subsystem Design").
-> 3. Fill in every section. Write "None" rather than deleting a section, so readers know
+> 3. Your doc's nodes, interfaces, and open questions live in its registry,
+>    `docs/design/<subsystem>.toml`, and `scripts/design render` writes their tables into
+>    sections 2, 3, and 9. If the registry already exists, it holds what the other docs
+>    assume your subsystem provides: confirm or change each entry. Otherwise, create it.
+>    [Registries](README.md#registries) explains the format.
+> 4. Fill in every section. Write "None" rather than deleting a section, so readers know
 >    it was considered.
-> 4. Delete every quote block that starts with **Delete this**, like this one. Everything
+> 5. Delete every quote block that starts with **Delete this**, like this one. Everything
 >    else stays.
 >
 > Status is one of `Draft` (being written), `Approved` (reviewed, no code yet),
@@ -27,25 +32,40 @@
 - R1. [requirement]
 - R2. [requirement]
 
+### Budgets
+
+This doc's share of each technical performance measure, from the
+[performance budgets](performance-budgets.md).
+
+> **Delete this:** the table below lists the budget rows that name your elements in
+> `performance-budgets.toml`. Change a budget there, not here.
+
+<!-- design: budgets -->
+<!-- /design -->
+
 ## 2. Nodes
 
-| Node | Package | Runs on | What it does |
-| --- | --- | --- | --- |
-| [node] | [package] | [Jetson or operator laptop] | [what it does] |
+> **Delete this:** list your nodes in your registry as `[[node]]` entries. The table
+> below is generated from them.
+
+<!-- design: nodes -->
+<!-- /design -->
 
 ## 3. Interfaces
 
 This table is the contract between this subsystem and the rest of the robot. The code must
-match it exactly, and a pull request that changes an interface updates this table in the
-same pull request.
+match it exactly. It is generated from this doc's registry, so a pull request that changes
+an interface edits the registry and runs `scripts/design render`, in the same pull request
+as the code ([Registries](README.md#registries)).
 
-> **Delete this:** list every topic, service, and action. Kind is topic, service, or
-> action. Use standard message types where they fit; custom types go in
-> `luna_interfaces`. The row below is an example; replace it.
+> **Delete this:** under each node in your registry, define every topic it publishes as a
+> `[[node.publishes]]` entry, every service it serves as a `[[node.serves]]` entry, and
+> every action it serves as a `[[node.serves_actions]]` entry. List what each node uses
+> under its `subscribes` and `calls`. Use standard message types where they fit; custom
+> types go in `luna_interfaces`. [Registries](README.md#registries) lists every field.
 
-| Name | Kind | Type | Rate | Publisher or server | Subscriber or client | QoS |
-| --- | --- | --- | --- | --- | --- | --- |
-| `/example_topic` | topic | `geometry_msgs/msg/Twist` | 20 Hz | `example_publisher` | `example_subscriber` | reliable, depth 10 |
+<!-- design: interfaces -->
+<!-- /design -->
 
 ## 4. Parameters
 
@@ -68,9 +88,8 @@ same pull request.
 
 ```mermaid
 flowchart LR
-  joy[joy_node] -- /joy --> teleop[teleop_twist_joy]
-  teleop -- /cmd_vel --> drive[drive node]
-  drive -- CAN --> controllers[Talon SRX and Victor SPX]
+  a["[node]"] -- "[topic]" --> b["[node]"]
+  b -- "[bus]" --> c["[hardware]"]
 ```
 
 ## 7. Behavior on failure
@@ -93,9 +112,11 @@ flowchart LR
 
 ## 9. Open questions
 
-| Question | Owner | Due |
-| --- | --- | --- |
-| [question] | [name] | [YYYY-MM-DD] |
+> **Delete this:** list each question as a `[[question]]` entry in your registry. Who
+> answers it, and by when, belongs in Turgor; give the Turgor deliverable's number.
+
+<!-- design: questions -->
+<!-- /design -->
 
 ## Handoff
 

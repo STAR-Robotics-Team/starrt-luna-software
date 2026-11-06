@@ -193,15 +193,49 @@ Every motor controller also runs voltage compensation at 12 V, so a motor behave
 on a full battery as on a nearly empty one, and the 12 V motors and actuators never see
 more than 12 V on average.
 
+### Budgets
+
+This doc's share of each technical performance measure, from the
+[performance budgets](performance-budgets.md).
+
+<!-- design: budgets (generated from operating-modes.toml by scripts/design render: edit that file, not this table) -->
+
+| TPM | Element | Part | Budget |
+| --- | --- | --- | --- |
+| [TPM-1](performance-budgets.md#tpm-1-autonomous-cycles-completed-per-run) | SW.1.1 | Full autonomy (§16.5): at least 2 cycles, starting in the starting zone (All of the above, plus SW.1.1 (stays enabled), SW.1.5 (passes AUTO commands), SW.3.1 (heartbeat), and SW.4 (link and logging)) | 1,400 × berm factor |
+| [TPM-2](performance-budgets.md#tpm-2-autonomous-cycle-time) | SW.1.1 | Task-mode switches (4 per cycle) (SW.2.4 requests; SW.1.1 grants) | ≤4 (≤1 each) |
+| [TPM-3](performance-budgets.md#tpm-3-time-from-run-start-to-the-first-cycle-starting) | SW.1.1 | Operator enables in AUTO (after telling the judge) (SW.3.1 sends; SW.1.1 accepts) | ≤5 s |
+| [TPM-6](performance-budgets.md#tpm-6-average-link-bandwidth-over-a-run) | SW.1.1 | /robot/mode, 10 Hz | 20 kbit/s in TELEOP (default view), 20 kbit/s in AUTO (default view) |
+| [TPM-6](performance-budgets.md#tpm-6-average-link-bandwidth-over-a-run) | SW.1.4 | /power/battery, 10 Hz | 30 kbit/s in TELEOP (default view), 30 kbit/s in AUTO (default view) |
+| [TPM-7](performance-budgets.md#tpm-7-stop-time-after-a-disable-command) | SW.1.1 | Accept the disable request and publish DISABLED | ≤10 ms |
+| [TPM-8](performance-budgets.md#tpm-8-stop-time-after-link-loss) | SW.1.1 | Declare the link lost | 500 after the last heartbeat (`link_timeout`) [TBR: operating modes open question 9] |
+| [TPM-8](performance-budgets.md#tpm-8-stop-time-after-link-loss) | SW.1.1 | Disable chain (TPM-7) | ≤100 ms |
+| [TPM-10](performance-budgets.md#tpm-10-energy-used-per-autonomous-cycle) | SW.1.4 | Measuring it: energy per task mode, checked against the main energy logger (SW.1.4 logs it) | None: it measures |
+| [TPM-11](performance-budgets.md#tpm-11-robot-computer-processor-load-averaged-over-a-run) | SW.1.1, SW.1.4 | Robot control (SW.1.1 to SW.1.5) | [TBD: autonomy doc v1 (7.8)] |
+| [TPM-12](performance-budgets.md#tpm-12-restart-time) | SW.1.1 | Self-test finds every CAN device | ≤10, with FAULT at 60 [TBR: proposed in the PDR (1.6)] |
+
+<!-- /design -->
+
 ## 2. Nodes
 
-| Node | Package | Runs on | What it does |
-| --- | --- | --- | --- |
-| `mode_manager` | `luna_modes` [TBR: proposed name] | Robot computer | Owns the robot state and task mode, runs the boot self-test, watches the heartbeat, faults, and battery, and accepts or refuses mode requests |
-| Drivetrain node | `luna_drivetrain` | Robot computer | Drives only when the mode allows it, within the mode's limits |
-| Mechanism node | `luna_mechanism` | Robot computer | Runs each mechanism actuator only when the mode allows it, within the mode's limits; reports whether the excavator is stowed and the hatch is closed |
-| Teleop | `luna_teleop` | Operator laptop | Sends the heartbeat and mode requests, and gamepad commands while in TELEOP |
-| Task sequencer | autonomy (see the autonomy doc) | Robot computer | Changes task mode while in AUTO, such as from EXCAVATE to TRAVEL |
+<!-- design: nodes connected (generated from operating-modes.toml by scripts/design render: edit that file, not this table) -->
+
+| Node | Package | Runs on | Element | Design doc | What it does |
+| --- | --- | --- | --- | --- | --- |
+| `mode_manager` | `luna_modes` [TBR: proposed name] | Robot computer | SW.1.1 Mode manager | [Operating Modes Design](operating-modes.md) | Owns the robot state and task mode, runs the boot self-test, watches the heartbeat, faults, and battery, and accepts or refuses mode requests |
+| Power panel reading node | [TBD: operating modes v1 (1.19)] | Robot computer | SW.1.4 Power telemetry | [Operating Modes Design](operating-modes.md) | Decodes the PDP's CAN frames from can0 (section 5) and publishes the battery voltage, each channel's current, and the energy used. It is a node of its own, since reading the PDP needs no Phoenix library. |
+| Drivetrain node | `luna_drivetrain` | Robot computer | SW.1.2 Drivetrain control | `drivetrain.md`, not written yet (3.1) | Drives only when the mode allows it, within the mode's current limits [TBD: one drivetrain_node, or ros2_control's controller manager with a diff drive controller, drivetrain doc (3.1)] |
+| Mechanism node | `luna_mechanism` | Robot computer | SW.1.3 Mechanism control | `mechanism.md`, not written yet (4.2) | Runs each mechanism actuator only when the mode allows it, within the mode's limits, and reports whether the excavator is stowed and the hatch is closed |
+| Command selection node | [TBD: teleop open question 3] | Robot computer | SW.1.5 Command selection | [System Design](system.md) | Passes on the drive and mechanism commands of the active control source, as /robot/mode names it, and drops the other source's |
+| Camera driver | [TBD: the cameras, sensor suite evaluation (6.1)] | Robot computer | SW.2.1 Sensor interface and robot model | `sensors.md`, not written yet (6.2) | Publishes the driving camera's compressed images for the operator view |
+| Dedicated IMU driver | [TBD: the IMU, sensor suite evaluation (6.1)] | Robot computer | SW.2.1 Sensor interface and robot model | `sensors.md`, not written yet (6.2) | Publishes the dedicated IMU's gyroscope and accelerometer in one message, with no magnetometer (system design R5) |
+| Localization and mapping | [TBD: its nodes, autonomy doc (7.2)] | Robot computer | SW.2.2 Localization and mapping | [Autonomy Subsystem Design](autonomy.md) | Finds the robot's position and heading from the random start, and builds the obstacle map, from the LiDAR, the IMUs, and the wheels |
+| Path planning and following | [TBD: its nodes, autonomy doc (7.2)] | Robot computer | SW.2.3 Path planning and following | [Autonomy Subsystem Design](autonomy.md) | Plans a path around the mapped obstacles to the target zone, and follows it in AUTO |
+| Task sequencer | [TBD: autonomy doc (7.2)] | Robot computer | SW.2.4 Task sequencer | [Autonomy Subsystem Design](autonomy.md) | Runs dig, travel, dump, travel in AUTO: changes the task mode and sends mechanism commands, but can never enable the robot |
+| Operator frontend | [TBD: teleoperation doc (5.1)] | Operator laptop, in a browser, through rosbridge | SW.3.1 Operator frontend | `teleoperation.md`, not written yet (5.1) | Reads the gamepad through the browser's Gamepad API, sends /joy, the heartbeat, and mode requests, and shows each control source's default view, which the operator can change, with live link bandwidth |
+| `teleop_node` | `luna_teleop` | Robot computer | SW.3.2 Teleop mapping | `teleoperation.md`, not written yet (5.1) | Turns /joy into drive and mechanism commands, zeroes them when the hold button is released, and drops stale input |
+
+<!-- /design -->
 
 The robot computer is the Jetson today. [TBD: A mini PC replaces it on the rover if the
 Hacker Initiative grant pays for one; the Jetson then runs the bench testbed (system design,
@@ -230,15 +264,19 @@ on in AUTO, and the operator station shows live link bandwidth so the cost is vi
 
 ## 3. Interfaces
 
+<!-- design: interfaces (generated from operating-modes.toml by scripts/design render: edit that file, not this table) -->
+
 | Name | Kind | Type | Rate | Publisher or server | Subscriber or client | QoS |
 | --- | --- | --- | --- | --- | --- | --- |
-| `/robot/mode` | topic | `luna_interfaces/msg/RobotMode` | 10 Hz and on change | `mode_manager` | Drivetrain node, mechanism node, teleop, task sequencer | reliable, transient local, depth 1 |
-| `/robot/request_mode` | service | `luna_interfaces/srv/RequestMode` | On demand | `mode_manager` | Teleop | default |
+| `/robot/mode` | topic | `luna_interfaces/msg/RobotMode` | 10 Hz and on change | `mode_manager` | Drivetrain node, Mechanism node, Command selection node, Path planning and following, Task sequencer, Operator frontend, `teleop_node` | reliable, transient local, depth 1 |
+| `/robot/request_mode` | service | `luna_interfaces/srv/RequestMode` | On demand | `mode_manager` | Operator frontend | default |
 | `/robot/request_task` | service | `luna_interfaces/srv/RequestTask` | On demand | `mode_manager` | Task sequencer | default |
-| `/operator/heartbeat` | topic | `std_msgs/msg/Header` | 10 Hz | Teleop | `mode_manager` | best effort, depth 1 |
-| `/diagnostics` | topic | `diagnostic_msgs/msg/DiagnosticArray` | 1 Hz and on change | Drivetrain node, mechanism node, sensor drivers, task sequencer | `mode_manager` | reliable, depth 10 |
-| `/power/battery` | topic | `sensor_msgs/msg/BatteryState` | 10 Hz | The power panel reading node (section 5), a node of its own, since reading the PDP needs no Phoenix library | `mode_manager`, teleop | best effort, depth 1 |
-| `/mechanism/status` | topic | Defined in the mechanism doc | Defined in the mechanism doc | Mechanism node | `mode_manager` | Defined in the mechanism doc |
+| `/power/battery` | topic | `sensor_msgs/msg/BatteryState` | 10 Hz | Power panel reading node | `mode_manager`, Operator frontend | best effort, depth 1 |
+| `/diagnostics` | topic | `diagnostic_msgs/msg/DiagnosticArray` | 1 Hz and on change | Drivetrain node, Mechanism node, Camera driver, Dedicated IMU driver, Localization and mapping, Path planning and following, Task sequencer | `mode_manager` | reliable, depth 10 |
+| `/mechanism/status` | topic | [TBD: mechanism doc (4.2)] | [TBD: mechanism doc (4.2)] | Mechanism node | `mode_manager`, Task sequencer, Operator frontend | [TBD: mechanism doc (4.2)] |
+| `/operator/heartbeat` | topic | `std_msgs/msg/Header` | 10 Hz | Operator frontend | `mode_manager` | best effort, depth 1 [TBR: as rosbridge publishes it, teleoperation doc (5.1)] |
+
+<!-- /design -->
 
 `mode_manager` refuses `/robot/request_task` unless the robot is ENABLED in AUTO, so the
 sequencer can change task mode but can never enable the robot or take control. To stop
@@ -421,18 +459,22 @@ The dotted arrows are `/robot/mode`, which every node follows.
 
 ## 9. Open questions
 
-| Question | Owner | Due |
+<!-- design: questions (generated from operating-modes.toml by scripts/design render: edit that file, not this table) -->
+
+| Question | Status | Turgor |
 | --- | --- | --- |
-| 1. Decided 2026-10-27: keep the 4S LiPo (16.8 V full), and charge the rover's packs to at most 4.00 V per cell (16.0 V) while the rover still has the Victor SPX ([User's Guide, p. 3](../sources.md#ctre-victor-spx-guide)), PDP ([User's Guide, p. 6](../sources.md#ctre-pdp-guide)), and VRM ([User's Guide, p. 5](../sources.md#ctre-vrm-guide)), which are rated to 16 V. That keeps all three in range, at about 73% of the energy a full charge stores ([BU-808, section "What Causes Lithium-ion to Age?"](../sources.md#battery-university-bu-808)). The bench testbed charges its packs fully, since every part on it is rated to 18 V or more. The ToolkitRC M7 charges LiPo to 4.20 V per cell ([M7 Manual, p. 14](../sources.md#toolkitrc-m7-manual)) and can lower that by only 50 mV ([M7 Manual, p. 19](../sources.md#toolkitrc-m7-manual)), so the team is buying a charger that can stop at 4.00 V [TBR: the iCharger X6, whose retailer lists a per-pack end voltage of 3.85 to 4.35 V per cell]. [TBR: The boot self-test refuses to enable while the PDP reads above 16.0 V, so one full charge cannot slip through.] | Electrical lead | Decided |
-| 2. Does the robot drive while digging? A comment on the Spring 2026 power budget (cell M3) asks the same. If not, EXCAVATE allows no drive. [TBR: the software lead answered yes, at creep output, in the teleoperation review on 2026-10-23; the Mechanical lead to confirm.] | Mechanical lead | 2026-10-25 |
-| 3. Does the conveyor run during DUMP? [TBR: the software lead answered yes in the teleoperation review on 2026-10-23; the Mechanical lead to confirm.] | Mechanical lead | 2026-10-25 |
-| 4. Which sensors tell software that the excavator is stowed and the hatch is closed? The entry guards need them. | Mechanical and electrical leads | 2026-11-01 |
-| 5. Which motor controller runs each mechanism motor? Motors that need a current limit must be on a Talon SRX: the excavator's 775 RedLine (130 A stall, [test report, p. 1](../sources.md#andymark-775-redline-report)) and the depth actuators (about 50 A stall, [Pololu product page, section "Using the actuator"](../sources.md#pololu-lact18-500apl)). | Electrical lead | 2026-11-01 |
-| 6. Does one process's Phoenix enable keep another process's motor controllers enabled? This decides which node feeds the enable. With Phoenix 5 and Phoenix 6 in separate nodes (section 5), also check whether either library's enable reaches the other's controllers. Test on the bench. | Drivetrain owner | 2026-10-25 |
-| 7. Decided 2026-10-28: the robot computer gets its own battery ([§13.2.11, p. 42](../sources.md#nasa-lunabotics-guidebook-2027)) and its own energy logger, with the two batteries' negatives tied at one point, so an E-stop does not reboot it or cut its logs (section 5). | Electrical lead and software lead | Decided |
-| 8. Ask the organizers: does energy used during the 10-minute setup count, and does a separate compute battery have to go through the energy logger? | Software lead | 2026-10-25 |
-| 9. Should `link_timeout` be longer in AUTO, to ride through Wi-Fi dropouts? Measure dropouts in the pits first. | Teleop owner | 2026-11-08 |
-| 10. Does anything deploy after the run starts (stowed envelope 150 × 75 × 75 cm, [§13.3, p. 42](../sources.md#nasa-lunabotics-guidebook-2027))? If so, add a DEPLOY step. | Mechanical lead | 2026-11-01 |
+| 1. Keep the 4S LiPo (16.8 V full), and charge the rover's packs to at most 4.00 V per cell (16.0 V) while the rover still has the Victor SPX ([User's Guide, p. 3](../sources.md#ctre-victor-spx-guide)), PDP ([User's Guide, p. 6](../sources.md#ctre-pdp-guide)), and VRM ([User's Guide, p. 5](../sources.md#ctre-vrm-guide)), which are rated to 16 V. That keeps all three in range, at about 73% of the energy a full charge stores ([BU-808, section "What Causes Lithium-ion to Age?"](../sources.md#battery-university-bu-808)). The bench testbed charges its packs fully, since every part on it is rated to 18 V or more. The ToolkitRC M7 charges LiPo to 4.20 V per cell ([M7 Manual, p. 14](../sources.md#toolkitrc-m7-manual)) and can lower that by only 50 mV ([M7 Manual, p. 19](../sources.md#toolkitrc-m7-manual)), so the team is buying a charger that can stop at 4.00 V [TBR: the iCharger X6, whose retailer lists a per-pack end voltage of 3.85 to 4.35 V per cell]. [TBR: The boot self-test refuses to enable while the PDP reads above 16.0 V, so one full charge cannot slip through.] | Decided 2026-10-27 | None |
+| 2. Does the robot drive while digging? A comment on the Spring 2026 power budget (cell M3) asks the same. If not, EXCAVATE allows no drive. [TBR: the software lead answered yes, at creep output, in the teleoperation review on 2026-10-23; for Mechanical to confirm.] | Open | 4.1 |
+| 3. Does the conveyor run during DUMP? [TBR: the software lead answered yes in the teleoperation review on 2026-10-23; for Mechanical to confirm.] | Open | 4.1 |
+| 4. Which sensors tell software that the excavator is stowed and the hatch is closed? The entry guards need them. For Mechanical and Electrical. | Open | 4.1 |
+| 5. Which motor controller runs each mechanism motor? Motors that need a current limit must be on a Talon SRX: the excavator's 775 RedLine (130 A stall, [test report, p. 1](../sources.md#andymark-775-redline-report)) and the depth actuators (about 50 A stall, [Pololu product page, section "Using the actuator"](../sources.md#pololu-lact18-500apl)). For Electrical. | Open | 4.3 |
+| 6. Does one process's Phoenix enable keep another process's motor controllers enabled? This decides which node feeds the enable. With Phoenix 5 and Phoenix 6 in separate nodes (section 5), also check whether either library's enable reaches the other's controllers. Test on the bench. | Open | 3.6 |
+| 7. The robot computer gets its own battery ([§13.2.11, p. 42](../sources.md#nasa-lunabotics-guidebook-2027)) and its own energy logger, with the two batteries' negatives tied at one point, so an E-stop does not reboot it or cut its logs (section 5). | Decided 2026-10-28 | None |
+| 8. Ask the organizers: does energy used during the 10-minute setup count, and does a separate compute battery have to go through the energy logger? | Open | None |
+| 9. Should `link_timeout` be longer in AUTO, to ride through Wi-Fi dropouts? Measure dropouts in the pits first. | Open | 5.6 |
+| 10. Does anything deploy after the run starts (stowed envelope 150 × 75 × 75 cm, [§13.3, p. 42](../sources.md#nasa-lunabotics-guidebook-2027))? If so, add a DEPLOY step. For Mechanical. | Open | 4.1 |
+
+<!-- /design -->
 
 ## Handoff
 

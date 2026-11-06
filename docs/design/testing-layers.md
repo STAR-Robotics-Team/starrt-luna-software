@@ -140,7 +140,7 @@ Not every mix works. The launch file refuses one that breaks these rules, and sa
 | Real hardware never runs with Gazebo or a recording | Every node must run on one clock. A real driver stamps its data with the computer's clock, while Gazebo, and a recording played with its clock, run the robot on a simulated one. Data on two clocks breaks transforms and timeouts. |
 | Gazebo and a recording never run together | Each brings its own simulated clock. |
 | Stubs run with anything | A stub stamps its data with whichever clock the robot runs on. |
-| Systems that share a driver switch together | If the power panel reading lives in the drive plugin ([operating modes design](operating-modes.md#9-open-questions), open question 6), battery and power follow the drivetrain. |
+| Systems that share a driver switch together | One driver cannot be real for one system and a stand-in for another. Battery and power no longer share one: the power panel reading is a node of its own, since reading the PDP needs no Phoenix library ([operating modes design](operating-modes.md#3-interfaces)), so it switches on its own. |
 
 ## Gates
 
@@ -170,7 +170,11 @@ records:
 
 ## Open questions
 
-| Question | Owner | Due |
+<!-- design: questions (generated from testing-layers.toml by scripts/design render: edit that file, not this table) -->
+
+| Question | Status | Turgor |
 | --- | --- | --- |
-| 1. Where do bench procedures, robot procedures, and test logs live: beside each package's code, or in one folder? The answer becomes a template. | Software lead | 2026-10-28 |
-| 2. The launch arguments' names and values (1.4). These pages use `backend` for the whole robot and each system's name, such as `drivetrain`, for one system, with the values `stub`, `fake_motor_controllers`, `gazebo`, and `real`, as an example. | Software lead | 2026-10-21 |
+| 1. Where do bench procedures, robot procedures, and test logs live: beside each package's code, or in one folder? The answer becomes a template. | Open | 1.3 |
+| 2. The launch arguments' names and values (1.4). These pages use `backend` for the whole robot and each system's name, such as `drivetrain`, for one system, with the values `stub`, `fake_motor_controllers`, `gazebo`, and `real`, as an example. | Open | 1.4 |
+
+<!-- /design -->

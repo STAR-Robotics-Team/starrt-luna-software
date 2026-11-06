@@ -15,6 +15,7 @@ docs_dir: docs
 exclude_docs: |
   requirements.txt
   sources.toml
+  design/*.toml
 
 # Gives the home page its banner (overrides/home.html), and fails the build when a list
 # will look different here than on GitHub.
@@ -61,6 +62,9 @@ nav:
       - Autonomy: design/autonomy.md
       - Testing layers: design/testing-layers.md
       - Hardware test modes: design/hardware-test-modes.md
+      - Interfaces: design/interfaces.md
+      - Performance budgets: design/performance-budgets.md
+      - Open items: design/open-items.md
       - Design doc template: design/template.md
   - Sources: sources.md
   - Team process:
