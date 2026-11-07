@@ -33,6 +33,8 @@ const REFERENCE = [
 ];
 const COLUMNS = ["Row", "Actor", "Node", "What happens", "Interface", "TPM"];
 const WIDTHS = [80, 110, 170, 380, 190, 75];
+// Row, Actor, Node, and What happens stay in view while the run columns scroll.
+const FROZEN = 4;
 const RUNS = 10;
 const RESULT_WIDTH = 75;
 const NOTE_WIDTH = 200;
@@ -230,8 +232,10 @@ function tidy(sheet) {
   if (!header) return;
   const lastColumn = sheet.getLastColumn();
   const lastRow = Math.max(sheet.getLastRow(), header + 1);
+  // A merge may not cross the frozen columns' edge, so undo any above the header first.
+  if (header > 1) sheet.getRange(1, 1, header - 1, lastColumn).breakApart();
   sheet.setFrozenRows(header);
-  sheet.setFrozenColumns(4);
+  sheet.setFrozenColumns(FROZEN);
   WIDTHS.forEach((width, i) => sheet.setColumnWidth(i + 1, width));
   const titles = sheet.getRange(header, 1, 1, lastColumn).getDisplayValues()[0].map((v) => v.trim().toLowerCase());
   const results = [];
@@ -249,7 +253,8 @@ function tidy(sheet) {
   sheet.getRange(header, 1, 1, lastColumn).setFontWeight("bold").setBackground(COLORS.header);
   for (let row = 1; row < header; row++) {
     if (sheet.getRange(row, 1).getDisplayValue().trim().toLowerCase() === "purpose") {
-      const purpose = sheet.getRange(row, 2, 1, 5);
+      // Across the frozen columns, so the purpose stays in view beside the runs.
+      const purpose = sheet.getRange(row, 2, 1, FROZEN - 1);
       if (!purpose.isPartOfMerge()) purpose.merge();
       purpose.setWrap(true);
       sheet.getRange(row, 1).setFontWeight("bold");
