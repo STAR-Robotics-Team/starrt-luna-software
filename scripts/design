@@ -44,6 +44,7 @@ INTERFACES_PAGE = DESIGN / "interfaces.md"
 OPEN_ITEMS_PAGE = DESIGN / "open-items.md"
 BUDGETS_PAGE = DESIGN / "performance-budgets.md"
 PROCEDURES_PAGE = DESIGN / "end-to-end-tests.md"
+MODES_PAGE = DESIGN / "hardware-test-modes.md"
 LAYERS = ("Sim", "Bench", "Robot")
 TEMPLATE = DESIGN / "template.md"
 # Pages generated from other data, which the open items scan skips.
@@ -207,6 +208,7 @@ class Registry:
         self.questions = {}   # doc stem -> [entries]
         self.tpms = []        # entries, in order
         self.sheet = None     # the test sheet, if one is set
+        self.test_modes = {}  # system -> its test modes, from hardware-test-modes.md
         self.home = {}        # id(entry) -> doc stem of the registry that defines it
 
     def doc_of(self, entry):
@@ -353,6 +355,7 @@ def load(problems):
                 if key in store:
                     problems.error(f"{where}: {kind} {key!r} is also defined in {reg.doc_of(store[key])}.toml")
                 store[key] = entry
+    reg.test_modes = load_test_modes(problems)
     return reg
 
 
@@ -803,10 +806,14 @@ def block_budgets(reg, stem, options):
 # and scripts/test-sheet-readers.js checks that they agree on a sample sheet: change them
 # together.
 TEST_SHEET = "<!-- test-sheet: {} -->"
-SHEET_COLUMNS = {"row": "kind", "actor": "actor", "node": "node", "interface": "interface",
-                 "tpm": "tpm", "what happens": "does"}
+SHEET_COLUMNS = {"row": "kind", "do": "do", "pass when": "pass_when", "applies when": "applies",
+                 "actor": "actor", "node": "node", "interface": "interface", "budget": "budget",
+                 "measures": "measures"}
+STEP_FIELDS = ("applies", "actor", "node", "do", "pass_when", "interface", "budget", "measures")
 TEMPLATE_TAB = "Template"
-MARKS = {"pass": "Pass", "fail": "Fail", "": ""}
+MARKS = {"pass": "Pass", "fail": "Fail"}
+# How a measured value compares with its TPM, and whether the step passes.
+LEVELS = {"goal": "Pass", "threshold": "Pass", "recorded": "Pass", "missed": "Fail"}
 XLSX = "{http://schemas.openxmlformats.org/spreadsheetml/2006/main}"
 XLSX_RELS = "{http://schemas.openxmlformats.org/package/2006/relationships}"
 XLSX_ID = "{http://schemas.openxmlformats.org/officeDocument/2006/relationships}id"
@@ -914,12 +921,54 @@ def read_number(value):
     return whole(float(text)) if NUMBER.fullmatch(text) else None
 
 
+def load_test_modes(problems):
+    """{system: [{"mode", "layer", "anchor"}]}: every hardware system's test modes, from the
+    headings of hardware-test-modes.md, such as "### Drivetrain: Stub (Sim)" or
+    "### Radio link: Bench" (a mode named after its layer)."""
+    modes = {}
+    text = MODES_PAGE.read_text(encoding="utf-8")
+    for match in re.finditer(r"^### (.+)$", blank_code(text), flags=re.M):
+        heading = text[match.start(1):match.end(1)].strip()
+        found = re.fullmatch(r"([^:]+): (.+?)(?: \((Sim|Bench|Robot)\))?", heading)
+        if not found or not (found.group(3) or found.group(2) in LAYERS):
+            problems.error(f"hardware-test-modes.md: the heading {heading!r} is not \"System: Mode (Layer)\", "
+                           "such as \"Drivetrain: Stub (Sim)\"; a mode named after its layer needs no (Layer)")
+            continue
+        system, mode = found.group(1).strip(), found.group(2).strip()
+        modes.setdefault(system, []).append({"mode": mode, "layer": found.group(3) or mode, "anchor": anchor(heading)})
+    return modes
+
+
+def mode_name(text):
+    """A test mode as the sheet may write it, without its layer: "One computer (Sim)" is
+    "One computer"."""
+    return re.sub(r"\s*\((?:Sim|Bench|Robot)\)$", "", text.strip())
+
+
+def judge(tpm, value):
+    """How a measured value compares with its TPM: "goal", "threshold" (it meets the
+    threshold but not the goal), "missed", or "recorded" when the TPM has no numbers yet."""
+    better, goal, threshold = tpm.get("better"), tpm.get("goal_value"), tpm.get("threshold_value")
+    if better not in ("lower", "higher") or (goal is None and threshold is None):
+        return "recorded"
+
+    def fits(limit):
+        return value <= limit if better == "lower" else value >= limit
+
+    if goal is not None and fits(goal):
+        return "goal"
+    if threshold is not None and fits(threshold):
+        return "threshold"
+    return "missed"
+
+
 def read_sheet(tabs, ids):
     """The test sheet's procedures and their problems, from read_workbook's tabs:
-    {"procedures": [procedure], "problems": [problem]}. ids holds the IDs the registries
-    define, under "nodes", "interfaces", and "tpms". A problem is {"text", "reference"},
-    where reference means it names something no registry defines."""
-    ids = {kind: set(values) for kind, values in ids.items()}
+    {"procedures": [procedure], "problems": [problem]}. ids is sheet_ids: what a procedure
+    may name. A problem is {"text", "reference"}, where reference means it names something
+    no registry, or no heading of Hardware test modes, defines."""
+    ids = {"nodes": set(ids["nodes"]), "interfaces": set(ids["interfaces"]), "tpms": ids["tpms"],
+           "modes": ids["modes"]}
     procedures = []
     for name, rows in tabs:
         title = re.sub(r"\s+", " ", name).strip()
@@ -940,7 +989,7 @@ def read_procedure(title, rows, ids):
         return cell_text(rows.get(row, {}).get(column, "")) if row and column else ""
 
     header = next((r for r in sorted(rows) if text(r, 1).lower() == "row"
-                   and "what happens" in {cell_text(v).lower() for v in rows[r].values()}), None)
+                   and "do" in {cell_text(v).lower() for v in rows[r].values()}), None)
     if header is None:
         return None
     columns = {}
@@ -949,39 +998,11 @@ def read_procedure(title, rows, ids):
             columns.setdefault(key, column)
     runs = [(c, c + 1 if text(header, c + 1).lower() == "note" else None)
             for c, value in sorted(rows[header].items()) if cell_text(value).lower() == "result"]
-    proc = {"title": title, "slug": anchor(title), "purpose": "", "steps": [], "passes": [],
-            "measures": [], "runs": [], "problems": []}
+    proc = {"title": title, "slug": anchor(title), "purpose": "", "systems": [], "steps": [], "runs": [],
+            "problems": []}
 
     def say(message, reference=False):
         proc["problems"].append({"text": message, "reference": reference})
-
-    for r in sorted(rows):
-        if r < header and text(r, 1).lower() == "purpose" and not proc["purpose"]:
-            proc["purpose"] = next((cell_text(v) for c, v in sorted(rows[r].items()) if c > 1 and cell_text(v)), "")
-    fixed, entries = {}, []
-    for r in sorted(r for r in rows if r > header):
-        kind = text(r, 1)
-        fields = {key: text(r, columns.get(key)) for key in ("actor", "node", "interface", "tpm", "does")}
-        used = any(fields.values()) or any(text(r, rc) or text(r, nc) for rc, nc in runs)
-        if kind.lower() in ("layer", "date", "log"):
-            fixed.setdefault(kind.lower(), r)
-        elif not used:
-            continue
-        elif kind.lower() == "step":
-            entries.append(("step", {"row": r, **fields}))
-        elif kind.lower() == "pass":
-            entries.append(("pass", {"row": r, "tpm": fields["tpm"], "text": fields["does"]}))
-        elif kind.lower() == "measure":
-            entries.append(("measure", {"row": r, "tpm": fields["tpm"], "what": fields["does"]}))
-        elif not kind:
-            say(f"Row {r}: say what the row is in column A: Step, Pass, or Measure.")
-        else:
-            say(f'Row {r}: "{kind}" is not a kind of row: use Step, Pass, or Measure.')
-    for name in ("Layer", "Date"):
-        if name.lower() not in fixed:
-            say(f'The tab has no {name} row: add one under the header, with "{name}" in column A.')
-    if not proc["purpose"]:
-        say('Write the procedure\'s purpose beside "Purpose", above the table.')
 
     def check(r, kind, value):
         if value and value not in ids[f"{kind}s"]:
@@ -989,88 +1010,158 @@ def read_procedure(title, rows, ids):
             name = "TPM" if kind == "tpm" else kind
             say(f'Row {r}: no {name} "{value}" in the design registries. Pick one from the {tab} tab.', True)
 
-    measured = [e["tpm"] for kind, e in entries if kind == "measure" and e["tpm"]]
-    seen = set()
-    for kind, e in entries:
-        r = e["row"]
-        if kind == "step":
-            if not e["actor"] and not e["node"]:
-                say(f"Row {r}: say who acts: pick the node, or write the actor.")
-            check(r, "node", e["node"])
-            check(r, "interface", e["interface"])
-            check(r, "tpm", e["tpm"])
-            if not e["does"]:
-                say(f"Row {r}: say what happens.")
-            proc["steps"].append(e)
-        elif kind == "pass":
-            if not e["text"]:
-                say(f"Row {r}: write what must be true, under What happens.")
-            check(r, "tpm", e["tpm"])
-            if e["tpm"] in ids["tpms"] and e["tpm"] not in measured:
-                say(f"Row {r} checks {e['tpm']}, which no Measure row records.")
-            proc["passes"].append(e)
+    for r in sorted(rows):
+        if r < header and text(r, 1).lower() == "purpose" and not proc["purpose"]:
+            proc["purpose"] = next((cell_text(v) for c, v in sorted(rows[r].items()) if c > 1 and cell_text(v)), "")
+    systems = {system.lower(): system for system in ids["modes"]}
+    fixed = {}
+    for r in sorted(r for r in rows if r > header):
+        kind = text(r, 1)
+        fields = {key: text(r, columns.get(key)) for key in STEP_FIELDS}
+        used = any(fields.values()) or any(text(r, rc) or text(r, nc) for rc, nc in runs)
+        if kind.lower() in ("date", "log"):
+            fixed.setdefault(kind.lower(), r)
+        elif kind.lower() in systems:
+            system = systems[kind.lower()]
+            if any(s["system"] == system for s in proc["systems"]):
+                say(f"Row {r}: {system} has another row above.")
+            else:
+                proc["systems"].append({"row": r, "system": system})
+        elif not used:
+            continue
+        elif kind.lower() == "step":
+            proc["steps"].append({"row": r, **fields})
+        elif not kind:
+            say(f"Row {r}: say what the row is in column A: Step, Date, Log, or a system from the Test modes tab.")
         else:
-            if not e["tpm"]:
-                say(f"Row {r}: pick the TPM it measures.")
-            check(r, "tpm", e["tpm"])
-            if e["tpm"] and e["tpm"] in seen:
-                say(f"Row {r}: {e['tpm']} has another Measure row above.")
-            seen.add(e["tpm"])
-            proc["measures"].append(e)
+            say(f'Row {r}: "{kind}" is not a kind of row: use Step, Date, Log, or a system from the Test modes tab.')
+    if "date" not in fixed:
+        say('The tab has no Date row: add one under the header, with "Date" in column A.')
+    if not proc["systems"]:
+        say("List the hardware systems the procedure uses: a row for each, under Date, with its name from the "
+            "Test modes tab in column A.")
+    if not proc["purpose"]:
+        say('Write the procedure\'s purpose beside "Purpose", above the table.')
 
-    lines = proc["steps"] + proc["passes"]
+    listed = {s["system"] for s in proc["systems"]}
+    for step in proc["steps"]:
+        r = step["row"]
+        applies, step["applies"] = step["applies"], None
+        if applies:
+            system, colon, names = applies.partition(":")
+            canonical = systems.get(system.strip().lower())
+            names = [mode_name(n) for n in names.split(",") if n.strip()]
+            if not colon or not names:
+                say(f'Row {r}: write Applies when as "System: Mode", such as "Radio link: Bench", not "{applies}".')
+            elif canonical is None:
+                say(f'Row {r}: no system "{system.strip()}" in Hardware test modes. Pick one from the Test modes tab.',
+                    True)
+            else:
+                known = {m["mode"].lower(): m["mode"] for m in ids["modes"][canonical]}
+                modes = []
+                for name in names:
+                    if name.lower() in known:
+                        modes.append(known[name.lower()])
+                    else:
+                        say(f'Row {r}: {canonical} has no mode "{name}" in Hardware test modes. Pick one from the '
+                            "Test modes tab.", True)
+                if canonical not in listed:
+                    say(f"Row {r} applies when {canonical} is in a given mode, but the procedure has no {canonical} "
+                        "row: add one under Date.")
+                step["applies"] = {"text": applies, "system": canonical, "modes": modes}
+        tbd = step["do"].startswith("[TBD") or step["pass_when"].startswith("[TBD")
+        if not step["do"] and not tbd:
+            say(f"Row {r}: say what to do, under Do.")
+        if not step["pass_when"] and not tbd:
+            say(f"Row {r}: say what must be seen for the step to pass, under Pass when.")
+        check(r, "node", step["node"])
+        check(r, "interface", step["interface"])
+        check(r, "tpm", step["budget"])
+        check(r, "tpm", step["measures"])
+
     for rc, nc in runs:
-        rows_used = [fixed.get(k) for k in ("layer", "date", "log")] + [e["row"] for e in lines + proc["measures"]]
-        if not any(text(r, rc) or text(r, nc) for r in rows_used if r):
+        used = [fixed.get("date"), fixed.get("log")] + [s["row"] for s in proc["systems"] + proc["steps"]]
+        if not any(text(r, rc) or text(r, nc) for r in used if r):
             continue
         where = f"Run in column {column_letters(rc)}"
-        layer_text = text(fixed.get("layer"), rc)
-        layer = next((name for name in LAYERS if name.lower() == layer_text.lower()), None)
         date_value = rows.get(fixed.get("date"), {}).get(rc, "")
         when = read_date(date_value) if date_value != "" else None
-        if not layer_text:
-            say(f"{where}: pick its layer: Sim, Bench, or Robot.")
-        elif not layer:
-            say(f'{where}: its layer is "{layer_text}", not Sim, Bench, or Robot.')
         if date_value == "":
             say(f"{where}: give its date, such as 2026-12-02.")
         elif not when:
             say(f'{where}: "{cell_text(date_value)}" is not a date such as 2026-12-02.')
-        if not layer or not when:
+        modes, ready = {}, bool(when)
+        for s in proc["systems"]:
+            got = text(s["row"], rc)
+            mode = next((m for m in ids["modes"][s["system"]] if m["mode"].lower() == mode_name(got).lower()), None)
+            if not got:
+                say(f"{where}: pick its {s['system']} mode.")
+                ready = False
+            elif mode is None:
+                say(f'{where}: "{got}" is not a {s["system"]} mode in Hardware test modes.')
+                ready = False
+            else:
+                modes[s["system"]] = mode
+        if not ready or not modes:
             continue
 
-        def mark(e):
-            got = text(e["row"], rc)
-            if got.lower() not in MARKS:
-                say(f'{where}, row {e["row"]}: mark Pass or Fail, not "{got}".')
-            return {"mark": MARKS.get(got.lower(), ""), "note": text(e["row"], nc)}
-
-        def value(e):
-            raw = rows.get(e["row"], {}).get(rc, "")
-            got = read_number(raw) if raw != "" else None
-            if raw != "" and got is None:
-                say(f'{where}, row {e["row"]}: {e["tpm"] or "the value"} must be a number, not "{cell_text(raw)}".')
-            return {"value": got, "note": text(e["row"], nc)}
-
-        run = {"column": column_letters(rc), "layer": layer, "date": when,
-               "steps": [mark(e) for e in proc["steps"]], "passes": [mark(e) for e in proc["passes"]],
-               "values": [value(e) for e in proc["measures"]],
-               "log": text(fixed.get("log"), rc),
-               "notes": {k: text(fixed.get(k), nc) for k in ("layer", "date", "log")}}
-        markable = [m["mark"] for e, m in zip(lines, run["steps"] + run["passes"])
-                    if not (e.get("does") or e.get("text") or "").startswith("[TBD")]
-        run["marked"], run["markable"] = sum(1 for m in markable if m), len(markable)
-        run["result"] = ("Fail" if "Fail" in markable else
-                         "Pass" if markable and all(m == "Pass" for m in markable) else "Incomplete")
-        proc["runs"].append(run)
+        results = []
+        for step in proc["steps"]:
+            r, a = step["row"], step["applies"]
+            raw = rows.get(r, {}).get(rc, "")
+            got = cell_text(raw) if raw != "" else ""
+            applies = a is None or modes.get(a["system"], {}).get("mode") in a["modes"]
+            entry = {"applies": applies, "mark": "", "value": None, "level": "", "note": text(r, nc)}
+            number = read_number(raw) if got else None
+            if not applies:
+                if got:
+                    current = modes.get(a["system"], {}).get("mode")
+                    which = f"{a['system']}: {current}" if current else f"no {a['system']} mode"
+                    say(f"{where}, row {r}: the step does not apply to this run ({which}), so leave it blank.")
+            elif not got:
+                pass
+            elif number is not None and step["measures"]:
+                tpm = ids["tpms"].get(step["measures"])
+                entry["value"] = number
+                entry["level"] = judge(tpm, number) if tpm else "recorded"
+                entry["mark"] = LEVELS[entry["level"]]
+            elif number is not None:
+                say(f"{where}, row {r}: {got} is a number, but the step measures no TPM. Mark Pass or Fail, or pick "
+                    "the TPM it measures under Measures.")
+            elif got.lower() in MARKS:
+                entry["mark"] = MARKS[got.lower()]
+            else:
+                also = ", or type the measured number" if step["measures"] else ""
+                say(f'{where}, row {r}: mark Pass or Fail{also}, not "{got}".')
+            results.append(entry)
+        considered = [(s, e) for s, e in zip(proc["steps"], results) if e["applies"]
+                      and not (s["do"].startswith("[TBD") or s["pass_when"].startswith("[TBD"))]
+        marks = [e["mark"] for _, e in considered]
+        proc["runs"].append({
+            "column": column_letters(rc), "date": when,
+            "layer": max((m["layer"] for m in modes.values()), key=LAYERS.index),
+            "modes": {system: m["mode"] for system, m in modes.items()},
+            "steps": results, "log": text(fixed.get("log"), rc),
+            "notes": {"date": text(fixed.get("date"), nc), "log": text(fixed.get("log"), nc)},
+            "mode_notes": {s["system"]: text(s["row"], nc) for s in proc["systems"]},
+            "marked": sum(1 for m in marks if m), "markable": len(marks),
+            "result": "Fail" if "Fail" in marks else "Pass" if marks and all(m == "Pass" for m in marks)
+            else "Incomplete",
+            "threshold_only": list(dict.fromkeys(s["measures"] for s, e in considered if e["level"] == "threshold")),
+        })
     return proc
 
 
 def sheet_ids(reg):
-    """The IDs a procedure in the test sheet may name, for read_sheet."""
-    return {"nodes": sorted(reg.nodes), "interfaces": sorted(reg.interfaces),
-            "tpms": [tpm["id"] for tpm in reg.tpms]}
-
+    """What a procedure in the test sheet may name, for read_sheet: the registries' IDs, each
+    TPM's numbers to judge a measurement by, and each hardware system's test modes."""
+    return {
+        "nodes": sorted(reg.nodes), "interfaces": sorted(reg.interfaces),
+        "tpms": {t["id"]: {"better": t.get("better"), "threshold_value": t.get("threshold_value"),
+                           "goal_value": t.get("goal_value")} for t in reg.tpms},
+        "modes": {system: [{"mode": m["mode"], "layer": m["layer"]} for m in modes]
+                  for system, modes in reg.test_modes.items()},
+    }
 
 def fetch(url, timeout=30):
     import urllib.request
@@ -1113,9 +1204,9 @@ def fetch_tab_ids(reg):
 
 
 def check_sheet(problems, reg):
-    """Check the test sheet's procedures against the registries: naming a node, interface,
-    or TPM that no registry defines is an error, so a pull request that renames or removes
-    one that a procedure uses fails until the sheet is updated."""
+    """Check the test sheet's procedures against the registries and Hardware test modes:
+    naming a node, interface, TPM, system, or mode that none defines is an error, so a pull
+    request that renames or removes one a procedure uses fails until the sheet is updated."""
     sheet, error = fetch_sheet(reg)
     if sheet is None:
         problems.warn(f"the test sheet was not checked: {error}")
@@ -1126,7 +1217,7 @@ def check_sheet(problems, reg):
         for p in proc["problems"]:
             report = problems.error if p["reference"] else problems.warn
             report(f'test sheet, tab "{proc["title"]}": {p["text"]}')
-    measured = {m["tpm"] for proc in sheet["procedures"] for m in proc["measures"]}
+    measured = {s["measures"] for proc in sheet["procedures"] for s in proc["steps"]}
     for tpm in reg.tpms:
         if tpm["id"] not in measured and not tpm.get("none"):
             problems.warn(f"{reg.doc_of(tpm)}.toml: {tpm['id']}: no test procedure measures it yet")
@@ -1135,8 +1226,8 @@ def check_sheet(problems, reg):
 
 def registry_csvs(reg):
     """{file name: CSV text}: the lists the test sheet's dropdowns choose from. The website
-    publishes them in design/registry/, and the sheet's Nodes, Interfaces, and TPMs tabs
-    import them."""
+    publishes them in design/registry/, and the sheet's Nodes, Interfaces, TPMs, and Test
+    modes tabs import them."""
     import csv
     import io
 
@@ -1148,19 +1239,29 @@ def registry_csvs(reg):
     def bare(value):
         return value.replace("`", "")
 
+    def title(stem):
+        # The doc's title, not its file name, which Sheets would show as a link to a .md site.
+        path = DESIGN / f"{stem}.md"
+        return doc_title(path) if path.exists() else f"{stem} (not written yet)"
+
     nodes = [["ID", "Name", "Runs on", "Design doc", "What it does"]]
-    nodes += [[n["id"], bare(n["name"]), n["runs_on"], f"{reg.doc_of(n)}.md", n["does"]]
+    nodes += [[n["id"], bare(n["name"]), n["runs_on"], title(reg.doc_of(n)), n["does"]]
               for n in by_element(reg.nodes.values())]
     interfaces = [["ID", "Name", "Kind", "Type", "Publisher or server", "Defined in"]]
     interfaces += [[i["id"], bare(i["name"]), i["kind"], i["type"], bare(names(reg.publishers(i))),
-                    f"{reg.doc_of(i)}.toml"] for i in sorted(reg.interfaces.values(), key=lambda i: i["id"])]
+                    title(reg.doc_of(i))] for i in sorted(reg.interfaces.values(), key=lambda i: i["id"])]
     tpms = [["ID", "Measure", "Unit", "Threshold", "Goal"]]
     tpms += [[t["id"], t["measure"], t["unit"], t["threshold"], t["goal"]] for t in reg.tpms]
-    return {"nodes.csv": text(nodes), "interfaces.csv": text(interfaces), "tpms.csv": text(tpms)}
+    modes = [["System", "Mode", "Layer", "Choice", "Applies when"]]
+    modes += [[system, m["mode"], m["layer"], m["mode"] if m["mode"] == m["layer"] else f"{m['mode']} ({m['layer']})",
+               f"{system}: {m['mode']}"] for system, ms in reg.test_modes.items() for m in ms]
+    return {"nodes.csv": text(nodes), "interfaces.csv": text(interfaces), "tpms.csv": text(tpms),
+            "test-modes.csv": text(modes)}
 
 
 def sheet_registry(reg):
-    """What the website's reader needs from the registries: each ID with how to show it."""
+    """What the website's reader needs from the registries: each ID with how to show it,
+    each TPM's numbers, and each hardware system's test modes."""
     return {
         "nodes": {n["id"]: n["name"] for n in reg.nodes.values()},
         "interfaces": {i["id"]: i["name"] for i in reg.interfaces.values()},
@@ -1168,8 +1269,8 @@ def sheet_registry(reg):
                            "none": bool(t.get("none")), "better": t.get("better"),
                            "threshold_value": t.get("threshold_value"), "goal_value": t.get("goal_value")}
                  for t in reg.tpms},
+        "modes": reg.test_modes,
     }
-
 
 def inline_html(text):
     """Text as HTML: escaped, with `code` in code font."""
@@ -1181,31 +1282,23 @@ def procedure_snapshot(reg, proc):
     """A procedure as plain HTML, for site search and for readers without JavaScript. The
     website's script replaces it with the full view, read from the sheet."""
     out = [f"<p>{inline_html(proc['purpose'])}</p>"] if proc["purpose"] else []
+    if proc["systems"]:
+        out.append(f"<p><strong>Uses:</strong> {inline_html(', '.join(s['system'] for s in proc['systems']))}.</p>")
     if proc["steps"]:
         out.append("<ol>")
         for step in proc["steps"]:
-            node = reg.nodes.get(step["node"], {}).get("name", step["node"])
-            who = ", through the ".join(x for x in (step["actor"], node) if x)
-            iface = reg.interfaces.get(step["interface"], {}).get("name", step["interface"])
-            if iface and "[" not in iface:
-                iface = f"`{iface}`"
-            uses = ", ".join(x for x in (iface, step["tpm"]) if x)
-            out.append(f"<li>{inline_html(who)}: {inline_html(step['does'])}"
-                       + (f" ({inline_html(uses)})" if uses else "") + "</li>")
+            when = f"<em>{inline_html(step['applies']['text'])}:</em> " if step["applies"] else ""
+            check = f" <strong>Pass when:</strong> {inline_html(step['pass_when'])}" if step["pass_when"] else ""
+            out.append(f"<li>{when}{inline_html(step['do'])}{check}</li>")
         out.append("</ol>")
-    if proc["passes"]:
-        out.append("<p><strong>It passes when:</strong></p>")
-        out.append("<ul>" + "".join(f"<li>{inline_html(p['text'])}</li>" for p in proc["passes"]) + "</ul>")
     return "\n".join(out)
 
 
 def sheet_markers(proc):
     """Each [TBD] or [TBR] in a procedure: (row, text of the cell that holds it)."""
     cells = [("Purpose", proc["purpose"])]
-    cells += [(s["row"], s[key]) for s in proc["steps"] for key in ("actor", "does")]
-    cells += [(p["row"], p["text"]) for p in proc["passes"]] + [(m["row"], m["what"]) for m in proc["measures"]]
+    cells += [(s["row"], s[key]) for s in proc["steps"] for key in ("actor", "do", "pass_when")]
     return [(row, value) for row, value in cells if re.search(r"\[(?:TBD|TBR)\b", value)]
-
 
 def render_procedures_page(reg):
     sheet = (reg.sheet or {}).get("edit_url", "")
@@ -1214,16 +1307,19 @@ def render_procedures_page(reg):
     out = [
         "# End-to-end test procedures",
         "",
-        "Each procedure follows one thing the robot does through every node it crosses, from",
-        "the operator or the hardware to the motors. Each step names who acts, the interface it",
-        "uses, and the budget it spends, and the pass lines come from the",
-        "[performance budgets](performance-budgets.md) and the design docs' requirements.",
+        "Each procedure is a step-by-step walkthrough of one thing the robot does, through every",
+        "node it crosses, from the operator or the hardware to the motors. Each step says exactly",
+        "what to do and exactly what must be seen for it to pass, and names the node and",
+        "interface it checks, the [performance budget](performance-budgets.md) it spends, and the",
+        "TPM it measures.",
         "",
         "- **Before anything runs, the design review walks each procedure on paper,** with",
         "  whoever works on each step explaining it. A step nobody can explain, or a name still",
         "  `[TBD]`, is a gap to settle.",
-        "- **Then each one runs at Sim, Bench, and Robot,** as [Testing layers](testing-layers.md)",
-        "  describes, and each run is recorded beside its steps.",
+        "- **Then each one runs with each hardware system in the modes of",
+        "  [Hardware test modes](hardware-test-modes.md),** from stand-ins on a laptop to the",
+        "  rover, as [Testing layers](testing-layers.md) describes, and each run is recorded",
+        "  beside its steps.",
         "",
         f"The procedures and their runs live in the {link}, one tab per procedure. This page",
         "reads the sheet each time it opens, so it shows the sheet as it is now.",
@@ -1231,24 +1327,43 @@ def render_procedures_page(reg):
         "## Writing a procedure",
         "",
         f"In the {link}, choose **Test procedures > New procedure** and give it a name: the",
-        "name is its title here. Write its purpose above the table, then one row for each:",
+        "name is its title here. Write its purpose above the table, then:",
         "",
-        "- **Step:** who acts (a node, or an actor such as the operator), what happens, the",
-        "  interface it uses, and the TPM whose budget it spends, in order.",
-        "- **Pass:** what must be true for a run to pass, and the TPM it checks, if any.",
-        "- **Measure:** a TPM each run records.",
+        "- **One row for each hardware system the procedure uses,** under Date, with the",
+        "  system's name in column A, such as Radio link. Each run picks that system's mode.",
+        "- **One Step row for each step, in the order it happens,** from setting up (the",
+        "  recording, the launch, each terminal to watch) to tearing down (stopping the",
+        "  recording, noting the commit, linking the log). Write each step so that someone who has",
+        "  never run it can follow it:",
+        "    - **Do:** exactly what to do, where, and with which tool or exact command.",
+        "    - **Pass when:** exactly what must be seen, where, and within what limit.",
+        "    - **Applies when:** a system mode, such as Radio link: Bench, when the step is only",
+        "      for runs with that system in that mode. Leave it blank for every run.",
+        "    - **Actor, Node, and Interface:** who acts, and the node and interface the step checks.",
+        "    - **Budget:** the TPM whose budget the step spends.",
+        "    - **Measures:** the TPM the step measures. A run can then type the measured number",
+        "      instead of Pass or Fail.",
         "",
-        "Pick nodes, interfaces, and TPMs from the dropdowns. They come from the design",
-        "registries, so a procedure names only what the design docs define. A pull request that",
-        "renames or removes a node, interface, or TPM that a procedure uses fails",
-        "`scripts/design check` until the procedure is updated too.",
+        "Write a name that is not settled yet, such as a launch argument, as a `[TBR]` or `[TBD]`",
+        "marker that says where it gets settled, as in any doc; the",
+        "[open items](open-items.md#marked-in-the-test-sheet) page lists each one.",
+        "",
+        "Pick nodes, interfaces, TPMs, and test modes from the dropdowns. They come from the",
+        "design registries and the headings of Hardware test modes, so a procedure names only",
+        "what the design docs define. A pull request that renames or removes one that a procedure",
+        "uses fails `scripts/design check` until the procedure is updated too.",
         "",
         "## Recording a run",
         "",
         "Open the procedure's tab. Each run takes two columns, Result and Note. In the first",
-        "empty pair, pick the layer (Sim, Bench, or Robot) and type the date, such as",
-        "2026-12-02. Mark each step and pass line Pass or Fail as you go, type each value",
-        "measured, link the log, and write a note beside any row.",
+        "empty pair, type the date, such as 2026-12-02, and pick each system's mode. Then follow",
+        "the steps in order, skipping a step whose Applies when names another mode, and mark each",
+        "one Pass or Fail as you go. For a step that measures a TPM, you can type the measured",
+        "number instead: this page judges it against the TPM, and a number that misses the",
+        "threshold fails the step. Link the log, and write a note beside any row.",
+        "",
+        "A run's layer is the highest layer among its systems' modes, so a run on the drive base",
+        "with every sensor on its stub counts as Robot.",
         "",
         "## How this page stays current",
         "",
@@ -1271,8 +1386,8 @@ def render_procedures_page(reg):
         "",
         "## Results",
         "",
-        "The latest run of each procedure at each layer. A run is Fail when any step or pass",
-        "line failed, Pass when every one passed, and Incomplete until each is marked.",
+        "The latest run of each procedure at each layer. A run is Fail when any of its steps",
+        "failed, Pass when every one passed, and Incomplete until each is marked.",
         "",
         TEST_SHEET.format("summary"),
         "",

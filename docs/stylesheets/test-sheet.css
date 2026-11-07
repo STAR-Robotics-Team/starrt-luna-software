@@ -3,23 +3,32 @@
 :root,
 [data-md-color-scheme="default"] {
   --test-sheet-pass: #1b7a3a;
+  --test-sheet-threshold: #8a5a00;
   --test-sheet-fail: #b3261e;
 }
 
 [data-md-color-scheme="slate"] {
   --test-sheet-pass: #7bd389;
+  --test-sheet-threshold: #ffcc66;
   --test-sheet-fail: #ff8a80;
 }
 
 /* Where the page's copy of the sheet comes from: like the "Last updated" line. */
 .md-typeset .test-sheet-status,
-.md-typeset .test-sheet-tab {
+.md-typeset .test-sheet-tab,
+.md-typeset .test-sheet-step-meta {
   color: var(--md-default-fg-color--light);
   font-size: 0.75rem;
 }
 
 .md-typeset .test-sheet-mark--pass {
   color: var(--test-sheet-pass);
+  font-weight: 700;
+}
+
+/* A measurement that meets its TPM's threshold but not its goal: a pass, flagged. */
+.md-typeset .test-sheet-mark--threshold {
+  color: var(--test-sheet-threshold);
   font-weight: 700;
 }
 
@@ -47,4 +56,13 @@
 
 .md-typeset .test-sheet--removed {
   color: var(--md-default-fg-color--light);
+}
+
+/* A procedure's steps: a numbered walkthrough, each step's Do and Pass when in full. */
+.md-typeset .test-sheet-steps > li {
+  margin-bottom: 1em;
+}
+
+.md-typeset .test-sheet-steps > li > p {
+  margin: 0.2em 0;
 }
