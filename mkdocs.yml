@@ -27,9 +27,11 @@ extra_css:
   - stylesheets/unsettled.css
   - stylesheets/navigation.css
   - stylesheets/page-info.css
+  - stylesheets/test-sheet.css
 
 extra_javascript:
   - javascripts/last-updated.js
+  - javascripts/test-sheet.js
 
 # Every page must be listed here. Add new pages in reading order.
 nav:

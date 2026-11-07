@@ -27,17 +27,19 @@ Every page shows when it last changed, under its title: the date of the last com
 changed it. docs/javascripts/last-updated.js adds how long ago that was, in the browser, so
 it stays right after the build.
 
-The end-to-end test procedures page and the performance budgets page show test runs, which
-testers record in a Google Sheet, one tab per procedure. The build reads each tab's
-published CSV (the [[sheet]] in docs/design/end-to-end-tests.toml) and fills in the
-<!-- test-runs: ... --> markers that scripts/design writes.
+The end-to-end test procedures, and their runs, live in the test sheet: a Google Sheet,
+one tab per procedure (the [[sheet]] in docs/design/end-to-end-tests.toml). The pages that
+show them read the sheet live, in the browser (docs/javascripts/test-sheet.js). The build
+reads it too, and fills in the <!-- test-sheet: ... --> markers that scripts/design writes:
+each procedure's heading and text, so site search finds them, and the sheet as the build
+read it, which the page shows until it has read the sheet itself, or when it cannot. The
+build also publishes the registries' IDs as CSV in design/registry/, which the sheet's
+dropdowns import.
 """
 
-import csv
 import html
 import importlib.machinery
 import importlib.util
-import io
 import json
 import logging
 import os
@@ -46,8 +48,10 @@ import subprocess
 import urllib.error
 import urllib.parse
 import urllib.request
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
+
+from mkdocs.utils import get_relative_url
 
 log = logging.getLogger("mkdocs.hooks.docs_hooks")
 
@@ -60,8 +64,9 @@ MERGED = re.compile(r"<p>((?:(?!</p>).)*?)\n(?:\d+\.|[-*]) (?:(?!</p>).)*</p>", 
 UNSETTLED = re.compile(
     r"\[(TBD|TBR)(?::\s*((?:(?!</?(?:p|li|td|th|tr|table|ul|ol|div|h[1-6]|pre|blockquote)\b)[^\]])+?))?\]"
 )
-# Code is shown as written, so a marker inside it stays a marker.
-CODE = re.compile(r"<(pre|code)\b.*?</\1>", re.S)
+# Code is shown as written, so a marker inside it stays a marker; a script's data is left
+# alone too.
+CODE = re.compile(r"<(pre|code|script)\b.*?</\1>", re.S)
 MEANING = {"TBD": "To be determined: not decided yet", "TBR": "To be resolved: written down, not confirmed"}
 # A bare [TBD] or [TBR] after a table column's name marks every value in that column.
 TABLE = re.compile(r"<table>.*?</table>", re.S)
@@ -80,9 +85,8 @@ REPO = Path(__file__).resolve().parent.parent
 NOT_DESIGN_DOCS = {"design/README.md", "design/template.md", "design/interfaces.md",
                    "design/open-items.md", "design/performance-budgets.md", "design/end-to-end-tests.md"}
 GITHUB_API = "https://api.github.com"
-TEST_RUN_PAGES = {"design/end-to-end-tests.md", "design/performance-budgets.md"}
 _cache = {}
-_design = {}  # the registries and test runs, read once per build
+_design = {}  # the registries and the test sheet, read once per build
 
 
 def on_pre_build(config, **kwargs):
@@ -105,35 +109,88 @@ def design():
     return _design["module"], _design["reg"]
 
 
-def test_runs():
-    """(runs, problems, note) from the published test-run sheet: runs and problems by
-    procedure, and a note to show instead when there are none to read."""
-    if "runs" in _design:
-        return _design["runs"]
+def test_sheet():
+    """(the test sheet as scripts/design reads it, or None; why it could not be read, or
+    None; {tab name: gid}; when this build read it), read once per build."""
+    if "sheet" not in _design:
+        module, reg = design()
+        sheet, error = module.fetch_sheet(reg)
+        if error:
+            # The pages still read the sheet live, so a build that cannot read it is not
+            # broken: it only lacks the copy that search and readers without JavaScript use.
+            log.info("could not read the test sheet: %s", error)
+        built = datetime.now(timezone.utc).isoformat(timespec="seconds")
+        _design["sheet"] = (sheet, error, module.fetch_tab_ids(reg) if sheet else {}, built)
+    return _design["sheet"]
+
+
+def heading_text(title):
+    """A tab's name as the text of a Markdown heading, with Markdown's characters escaped."""
+    return re.sub(r"([\\`*_{}\[\]()#+!|])", r"\\\1", html.escape(title, quote=False))
+
+
+def fill_test_sheet(markdown, page, files):
+    """The page with each <!-- test-sheet: ... --> marker that scripts/design writes filled
+    in: a place for docs/javascripts/test-sheet.js to draw each view of the test sheet, the
+    sheet as this build read it, and what the script needs to read it live."""
     module, reg = design()
-    published = (reg.sheet or {}).get("published", "")
-    runs, problems, note = {}, {}, ""
-    if not published:
-        note = ("No runs to show yet: the test-run sheet is not published "
-                "[TBD: publish it and add its address to end-to-end-tests.toml].")
-    else:
-        try:
-            for proc in reg.procedures:
-                if "sheet_gid" not in proc:
-                    continue
-                url = f"{published}?gid={proc['sheet_gid']}&single=true&output=csv"
-                request = urllib.request.Request(url, headers={"User-Agent": "starrt-luna-software docs build"})
-                with urllib.request.urlopen(request, timeout=30) as response:
-                    rows = list(csv.reader(io.StringIO(response.read().decode("utf-8"))))
-                runs[proc["id"]], problems[proc["id"]] = module.parse_tab(reg, proc, rows)
-        except (OSError, ValueError) as error:
-            # In CI a page without its runs is broken, so the build fails; locally it is a note.
-            report = log.warning if os.environ.get("CI") else log.info
-            report("could not read the test-run sheet: %s", error)
-            runs, problems = {}, {}
-            note = f"No runs to show: this build could not read the test-run sheet ({error})."
-    _design["runs"] = (runs, problems, note)
-    return _design["runs"]
+    sheet, error, tabs, built = test_sheet()
+
+    def url(src):
+        return get_relative_url(files.get_file_from_path(src).url, page.url)
+
+    links = {"procedures": url("design/end-to-end-tests.md"), "budgets": url("design/performance-budgets.md")}
+    procedures = sheet["procedures"] if sheet else []
+    edit = (reg.sheet or {}).get("edit_url", "")
+    waiting = (f'<p class="test-sheet-status">This comes from the <a href="{html.escape(edit)}">test sheet</a>, '
+               "which this page reads in your browser.</p>")
+
+    def view(name, body=waiting):
+        return f'<div class="test-sheet" data-view="{name}" data-search-exclude>\n{body}\n</div>'
+
+    def replace(match):
+        what = match.group(1)
+        if what in ("summary", "measurements"):
+            return view(what)
+        if what == "open-items":
+            rows = [f'<tr><td><a href="{links["procedures"]}#{p["slug"]}">{html.escape(p["title"])}</a></td>'
+                    f"<td>{row}</td><td>{module.inline_html(text)}</td></tr>"
+                    for p in procedures for row, text in module.sheet_markers(p)]
+            body = ("<table><thead><tr><th>Procedure</th><th>Row</th><th>Marked</th></tr></thead><tbody>"
+                    + "".join(rows) + "</tbody></table>") if rows else waiting
+            return f'<div class="test-sheet" data-view="open-items">\n{body}\n</div>'
+        if what == "procedures":
+            out = []
+            for proc in procedures:
+                out += [f"## {heading_text(proc['title'])}", "",
+                        f'<div class="test-sheet" data-view="procedure" data-slug="{proc["slug"]}">',
+                        module.procedure_snapshot(reg, proc), "</div>", ""]
+            return "\n".join(out + ['<div class="test-sheet" data-view="new-procedures"></div>'])
+        if what == "data":
+            data = {"built": built, "error": error, "links": links,
+                    "sheet": {"edit": edit, "published": (reg.sheet or {}).get("published", ""), "tabs": tabs},
+                    "registry": module.sheet_registry(reg), "snapshot": sheet}
+            text = json.dumps(data, ensure_ascii=False, separators=(",", ":")).replace("<", "\\u003c")
+            return f'<script type="application/json" id="test-sheet-data">{text}</script>'
+        return match.group(0)
+
+    def measured_by(match):
+        found = [f'<a href="{links["procedures"]}#{p["slug"]}">{html.escape(p["title"])}</a>' for p in procedures
+                 if any(m["tpm"] == match.group(2) for m in p["measures"])]
+        return match.group(1) + (", ".join(found) or ("None yet" if sheet else "")) + match.group(3)
+
+    markdown = re.sub(r'(<span class="test-sheet" data-view="measured-by" data-tpm="([^"]+)">)(</span>)',
+                      measured_by, markdown)
+    return re.sub(r"<!-- test-sheet: ([\w-]+) -->", replace, markdown)
+
+
+def on_post_build(config, **kwargs):
+    """Publish the registries' IDs as CSV, for the test sheet's dropdowns to import."""
+    module, reg = design()
+    folder = Path(config["site_dir"]) / "design" / "registry"
+    folder.mkdir(parents=True, exist_ok=True)
+    for name, text in module.registry_csvs(reg).items():
+        (folder / name).write_text(text, encoding="utf-8")
 
 
 def last_updated(markdown, src_uri):
@@ -161,16 +218,14 @@ def last_updated(markdown, src_uri):
     return "\n".join(lines[:title + 1] + ["", f'<p class="last-updated">{text}</p>', ""] + lines[title + 1:])
 
 
-def on_page_markdown(markdown, page, **kwargs):
+def on_page_markdown(markdown, page, files, **kwargs):
     if page.file.src_uri == "README.md":
         page.meta["template"] = "home.html"
     if page.file.src_uri.startswith("design/") and page.file.src_uri not in NOT_DESIGN_DOCS:
         markdown = add_contributors(markdown, page.file.src_uri)
     markdown = last_updated(markdown, page.file.src_uri)
-    if page.file.src_uri in TEST_RUN_PAGES:
-        module, reg = design()
-        runs, problems, note = test_runs()
-        markdown = module.fill_test_runs(reg, markdown, runs, problems, note)
+    if "<!-- test-sheet: " in markdown:
+        markdown = fill_test_sheet(markdown, page, files)
     return markdown
 
 

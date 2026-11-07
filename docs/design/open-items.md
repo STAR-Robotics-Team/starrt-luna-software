@@ -124,15 +124,6 @@ that uses them; each is listed here once.
 | interface wheel-odometry | rate | [TBD: drivetrain doc (3.1)] |
 | interface wheel-odometry | qos | [TBD: drivetrain doc (3.1)] |
 
-### `end-to-end-tests.toml`
-
-| Entry | Field | Value |
-| --- | --- | --- |
-| procedure stick-drives-wheels | pass 3 | [TBD: a pass line for button-to-motor latency, from the teleop draft's tc netem test, teleoperation doc (5.1)] |
-| procedure link-loss | pass 3 | [TBD: no false disables in a 10-minute tc netem run, at a packet loss rate the radio link evaluation (5.7) sets] |
-| procedure battery-low | step 4 | Halves its current limits [TBD: how it learns to, drivetrain doc (3.1)] |
-| procedure battery-low | step 5 | Halves its current limits [TBD: how it learns to, mechanism doc (4.2)] |
-
 ### `mechanism.toml`
 
 | Entry | Field | Value |
@@ -231,6 +222,13 @@ that uses them; each is listed here once.
 | interface teleop-mechanism-command | type | [TBD: mechanism doc (4.2)] |
 | interface teleop-mechanism-command | rate | `command_rate`, 20 Hz [TBR: teleop draft, PR #14, for the mechanism doc (4.2) to confirm] |
 | interface teleop-mechanism-command | qos | [TBD: teleoperation doc (5.1)] |
+
+## Marked in the test sheet
+
+Every `[TBD]` and `[TBR]` in the end-to-end test procedures, which live in the
+[test sheet](end-to-end-tests.md). This page reads the sheet each time it opens.
+
+<!-- test-sheet: open-items -->
 
 ## Marked in the docs
 
@@ -350,3 +348,5 @@ Every `[TBD]` and `[TBR]` in the docs' own text, by page and section.
 | [What works where](../development-environment.md#what-works-where) | [TBD: not set up yet (deliverable 5.2)] |
 | [What works where](../development-environment.md#what-works-where) | [TBD: not set up yet] |
 | [What works where](../development-environment.md#what-works-where) | [TBR: yes, with ROS's `joy` package; not tested yet] |
+
+<!-- test-sheet: data -->

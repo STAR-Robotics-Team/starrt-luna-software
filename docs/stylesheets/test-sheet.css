@@ -1,0 +1,50 @@
+/* The test sheet's procedures and runs, drawn by docs/javascripts/test-sheet.js. Colors are
+   set for both of Material's color schemes. */
+:root,
+[data-md-color-scheme="default"] {
+  --test-sheet-pass: #1b7a3a;
+  --test-sheet-fail: #b3261e;
+}
+
+[data-md-color-scheme="slate"] {
+  --test-sheet-pass: #7bd389;
+  --test-sheet-fail: #ff8a80;
+}
+
+/* Where the page's copy of the sheet comes from: like the "Last updated" line. */
+.md-typeset .test-sheet-status,
+.md-typeset .test-sheet-tab {
+  color: var(--md-default-fg-color--light);
+  font-size: 0.75rem;
+}
+
+.md-typeset .test-sheet-mark--pass {
+  color: var(--test-sheet-pass);
+  font-weight: 700;
+}
+
+.md-typeset .test-sheet-mark--fail {
+  color: var(--test-sheet-fail);
+  font-weight: 700;
+}
+
+.md-typeset .test-sheet-mark--none,
+.md-typeset .test-sheet-mark--incomplete {
+  color: var(--md-default-fg-color--light);
+}
+
+/* Interface names are short: keep each on one line rather than breaking it mid-word. */
+.md-typeset .test-sheet td code {
+  white-space: nowrap;
+  word-break: normal;
+}
+
+/* A name in the sheet that no design registry defines. */
+.md-typeset .test-sheet-unknown {
+  text-decoration: underline wavy var(--test-sheet-fail);
+  text-underline-offset: 0.2em;
+}
+
+.md-typeset .test-sheet--removed {
+  color: var(--md-default-fg-color--light);
+}

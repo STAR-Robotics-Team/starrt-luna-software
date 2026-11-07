@@ -14,14 +14,18 @@ them in tables that this script writes between two markers:
 It also writes pages built from every registry: docs/design/interfaces.md (every node and
 interface), docs/design/performance-budgets.md (every technical performance measure, its
 budget, and its measurements, from performance-budgets.toml), docs/design/end-to-end-tests.md
-(the test procedures that follow one thing the robot does through every node, from
-end-to-end-tests.toml), and docs/design/open-items.md (every open question, and every
-[TBD] and [TBR] marker in the docs).
+(the end-to-end test procedures), and docs/design/open-items.md (every open question, and
+every [TBD] and [TBR] marker in the docs).
 
-    scripts/design render   Rewrite every generated table and page.
-    scripts/design check    Check the registries, and that every generated table and page
-                            is up to date. Offline; CI runs it on every pull request.
-    scripts/design sheet    Print each procedure's first column for the test-run sheet.
+The end-to-end test procedures, and their runs, live in the test sheet: a Google Sheet,
+one tab per procedure (the [[sheet]] in end-to-end-tests.toml). The pages read it live in
+the browser; this script reads it too, to check it against the registries.
+
+    scripts/design render       Rewrite every generated table and page. Offline.
+    scripts/design check        Check the registries, that every generated table and page is
+                                up to date, and that the test sheet names only what the
+                                registries define. CI runs it on every pull request.
+    scripts/design sheet-json   Print the test sheet as this script reads it, as JSON.
 
 Needs only Python 3.11 or newer. See "Registries" in docs/design/README.md.
 """
@@ -123,31 +127,13 @@ SCHEMA = {
         ("basis", False, "Where the value comes from"),
         ("unit", False, "This row's unit, when it differs from the TPM's"),
     ]),
-    "procedure": (("`end-to-end-tests.toml`", "An end-to-end test procedure: one thing the robot does, through every node it crosses"), [
-        ("id", True, "A short key, such as `link-loss`"),
-        ("title", True, "What happens, such as The operator link drops"),
-        ("purpose", True, "What it checks, and the requirements it comes from"),
-        ("measures", False, "IDs of the TPMs a run of it measures"),
-        ("sheet_gid", False, "Its tab in the test-run sheet: the number after gid= in the tab's address"),
-    ]),
-    "procedure.step": (("Under its `[[procedure]]`", "One step, in order"), [
-        ("does", True, "What happens in this step"),
-        ("node", False, "The ID of the node that acts"),
-        ("actor", False, "Who acts, when it is not a node or as well as one: the operator, a tester, or hardware"),
-        ("interface", False, "The ID of the interface the step uses"),
-        ("budget", False, "The ID of the TPM whose budget the step spends"),
-    ]),
-    "procedure.pass": (("Under its `[[procedure]]`", "A line a run must meet to pass"), [
-        ("text", True, "What must be true"),
-        ("tpm", False, "The ID of the TPM it checks, which the procedure measures"),
-    ]),
-    "sheet": (("`end-to-end-tests.toml`", "The Google Sheet that records test runs, one tab per procedure"), [
-        ("edit_url", True, "The sheet's address, where testers record runs"),
-        ("published", False, "Its published address (File, Share, Publish to web), ending in /pub; the website reads runs from it"),
+    "sheet": (("`end-to-end-tests.toml`", "The test sheet: the Google Sheet that holds the end-to-end test procedures and their runs, one tab per procedure"), [
+        ("edit_url", True, "The sheet's address, where testers write procedures and record runs"),
+        ("published", False, "Its published address (File, Share, Publish to web), ending in /pub; the website reads the sheet from it"),
     ]),
 }
 # Tables written under an entry: (parent kind, key) -> schema name.
-SUBTABLES = {"row": "tpm.row", "step": "procedure.step", "pass": "procedure.pass"}
+SUBTABLES = {"row": "tpm.row"}
 
 
 def fields(table):
@@ -158,12 +144,11 @@ def fields(table):
 
 # The interfaces a node defines, under it, and the kind each one is.
 NESTED = {"publishes": "topic", "serves": "service", "serves_actions": "action"}
-FIELDS = {t: fields(t) for t in ("element", "node", "shared", "question", "tpm", "procedure", "sheet")}
+FIELDS = {t: fields(t) for t in ("element", "node", "shared", "question", "tpm", "sheet")}
 FIELDS["node"][1].extend(NESTED)
 FIELDS["tpm"][1].append("row")
-FIELDS["procedure"][1].extend(["step", "pass"])
-LISTS = {"subscribes", "calls", "publishes_shared", "turgor", "elements", "cases", "notes", "measures"}
-NUMBERS = {"limit", "amount", "threshold_value", "goal_value", "sheet_gid"}
+LISTS = {"subscribes", "calls", "publishes_shared", "turgor", "elements", "cases", "notes"}
+NUMBERS = {"limit", "amount", "threshold_value", "goal_value"}
 TURGOR = re.compile(r"\d+\.\d+")
 
 START = re.compile(r"<!-- design: ([a-z]+)((?: [a-z]+)*)(?: \([^)]*\))? -->")
@@ -221,8 +206,7 @@ class Registry:
         self.owner = {}       # id(interface) -> id of the node that publishes or serves it
         self.questions = {}   # doc stem -> [entries]
         self.tpms = []        # entries, in order
-        self.procedures = []  # entries, in order
-        self.sheet = None     # the test-run sheet, if one is set
+        self.sheet = None     # the test sheet, if one is set
         self.home = {}        # id(entry) -> doc stem of the registry that defines it
 
     def doc_of(self, entry):
@@ -359,12 +343,9 @@ def load(problems):
                 if kind == "tpm":
                     reg.tpms.append(entry)
                     continue
-                if kind == "procedure":
-                    reg.procedures.append(entry)
-                    continue
                 if kind == "sheet":
                     if reg.sheet is not None:
-                        problems.error(f"{where}: there is one test-run sheet; this is a second [[sheet]]")
+                        problems.error(f"{where}: there is one test sheet; this is a second [[sheet]]")
                     reg.sheet = entry
                     continue
                 store = {"element": reg.elements, "node": reg.nodes}[kind]
@@ -437,44 +418,12 @@ def validate(problems, reg):
             if limit is not None and total > limit:
                 label = f" in {case}" if case else ""
                 problems.error(f"{where}: its parts{label} add up to {number(total)}, over its limit of {number(limit)}")
-    tpm_ids = {tpm.get("id") for tpm in reg.tpms}
-    seen = set()
-    for proc in reg.procedures:
-        where = f"{reg.doc_of(proc)}.toml: procedure {proc.get('id')}"
-        if proc.get("id") in seen:
-            problems.error(f"{where} appears twice")
-        seen.add(proc.get("id"))
-        measures = proc.get("measures", [])
-        for tid in measures:
-            if tid not in tpm_ids:
-                problems.error(f"{where} measures {tid!r}, which no [[tpm]] defines")
-        for n, step in enumerate(proc.get("step", []), 1):
-            if "node" not in step and "actor" not in step:
-                problems.error(f"{where}, step {n}: name the node that acts, or the actor")
-            if "node" in step and step["node"] not in reg.nodes:
-                problems.error(f"{where}, step {n}: no node {step['node']!r}")
-            if "interface" in step and step["interface"] not in reg.interfaces:
-                problems.error(f"{where}, step {n}: no interface {step['interface']!r}")
-            if "budget" in step and step["budget"] not in tpm_ids:
-                problems.error(f"{where}, step {n}: no TPM {step['budget']!r}")
-        for n, line in enumerate(proc.get("pass", []), 1):
-            if "tpm" in line and line["tpm"] not in measures:
-                problems.error(f"{where}, pass {n} checks {line['tpm']}, which the procedure does not list "
-                               "under measures")
-        if "sheet_gid" in proc and not isinstance(proc["sheet_gid"], int):
-            problems.error(f"{where}: sheet_gid is the whole number after gid= in the tab's address")
-    gids = [proc["sheet_gid"] for proc in reg.procedures if "sheet_gid" in proc]
-    for gid in {g for g in gids if gids.count(g) > 1}:
-        problems.error(f"end-to-end-tests.toml: two procedures use the sheet tab gid {gid}")
     if reg.sheet:
         for key, start in (("edit_url", "https://docs.google.com/spreadsheets/d/"),
                            ("published", "https://docs.google.com/spreadsheets/d/e/")):
             if key in reg.sheet and not str(reg.sheet[key]).startswith(start):
                 problems.error(f"end-to-end-tests.toml: the sheet's {key} must start with {start}")
-    measured = {tid for proc in reg.procedures for tid in proc.get("measures", [])}
     for tpm in reg.tpms:
-        if tpm.get("id") not in measured and not tpm.get("none"):
-            problems.warn(f"{reg.doc_of(tpm)}.toml: {tpm.get('id')}: no test procedure measures it yet")
         if ("threshold_value" in tpm or "goal_value" in tpm) and tpm.get("better") not in ("lower", "higher"):
             problems.error(f"{reg.doc_of(tpm)}.toml: {tpm.get('id')}: better must be lower or higher, "
                            "so a measurement can be judged against its values")
@@ -792,14 +741,14 @@ def render_budgets_page(reg):
     rows = []
     for tpm in reg.tpms:
         budget = tpm.get("none") or f"[{tpm.get('budget', 'Budget')}]({tpm_link(tpm)})"
-        by = [proc_link(proc, PROCEDURES_PAGE.name) for proc in reg.procedures if tpm["id"] in proc.get("measures", [])]
-        rows.append([tpm["id"], tpm["measure"], tpm["unit"], tpm["source"], tpm["threshold"], tpm["goal"], budget,
-                     ", ".join(by) or "None yet"])
+        # The procedures that measure it are in the test sheet, which the page reads live.
+        by = f'<span class="test-sheet" data-view="measured-by" data-tpm="{tpm["id"]}"></span>'
+        rows.append([tpm["id"], tpm["measure"], tpm["unit"], tpm["source"], tpm["threshold"], tpm["goal"], budget, by])
     out += table(["ID", "Measure", "Unit", "Source", "Threshold", "Goal", "Budget", "Measured by"], rows)
     out += ["", "## Measurements", "",
             "The latest value each TPM measured at each layer, from the runs in the",
-            f"[test-run sheet]({PROCEDURES_PAGE.name}#recording-a-run), judged against its threshold",
-            "and goal. The website reads the sheet when it builds.", "", TEST_RUNS.format("measurements")]
+            f"[test sheet]({PROCEDURES_PAGE.name}#recording-a-run), judged against its threshold and",
+            "goal. This page reads the sheet each time it opens.", "", TEST_SHEET.format("measurements")]
     out += ["", "## Budgets"]
     for tpm in reg.tpms:
         if not tpm.get("row"):
@@ -815,7 +764,7 @@ def render_budgets_page(reg):
     rows = [[f"{e} {reg.elements[e]['name']}", ", ".join(sorted(found[e], key=tpm_number)) or "None"]
             for e in sorted(reg.elements, key=element_key)]
     out += table(["Element", "TPMs"], rows)
-    return "\n".join(out) + "\n"
+    return "\n".join(out + ["", TEST_SHEET.format("data")]) + "\n"
 
 
 def block_budgets(reg, stem, options):
@@ -840,273 +789,497 @@ def block_budgets(reg, stem, options):
 
 
 # ----------------------------------------------------------------------------------------
-# End-to-end test procedures and measurements
+# The test sheet: end-to-end test procedures and their runs
 # ----------------------------------------------------------------------------------------
 
-def proc_link(proc, page=""):
-    return f"[{proc['title']}]({page}#{slugify(proc['title'])})"
+# Testers write each end-to-end test procedure, and record its runs, in one tab of a Google
+# Sheet (the [[sheet]] in end-to-end-tests.toml). A tab is a procedure when it has a
+# header row that starts with "Row" and has a "What happens" column. Each row below the
+# header is a Step, a Pass line, or a Measure, or one of the run rows: Layer, Date, and
+# Log. Each run takes a Result column and the Note column beside it.
+#
+# The website reads the sheet in the reader's browser (docs/javascripts/test-sheet.js), and
+# the build and the check read it here. Both readers turn the sheet into the same data,
+# and scripts/test-sheet-readers.js checks that they agree on a sample sheet: change them
+# together.
+TEST_SHEET = "<!-- test-sheet: {} -->"
+SHEET_COLUMNS = {"row": "kind", "actor": "actor", "node": "node", "interface": "interface",
+                 "tpm": "tpm", "what happens": "does"}
+TEMPLATE_TAB = "Template"
+MARKS = {"pass": "Pass", "fail": "Fail", "": ""}
+XLSX = "{http://schemas.openxmlformats.org/spreadsheetml/2006/main}"
+XLSX_RELS = "{http://schemas.openxmlformats.org/package/2006/relationships}"
+XLSX_ID = "{http://schemas.openxmlformats.org/officeDocument/2006/relationships}id"
+NUMBER = re.compile(r"[-+]?(?:[0-9]+\.?[0-9]*|\.[0-9]+)(?:[eE][-+]?[0-9]+)?")
 
 
-TEST_RUNS = "<!-- test-runs: {} -->"
-SHEET_LAYERS = {layer.lower(): layer for layer in LAYERS}
+def read_workbook(data):
+    """[(tab name, {row: {column: value}})] from an .xlsx file's bytes, in tab order. Rows
+    and columns count from 1. A value is text, or a number for a number cell."""
+    import io
+    import xml.etree.ElementTree as ET
+    import zipfile
+    book = zipfile.ZipFile(io.BytesIO(data))
+
+    def part(name):
+        return ET.fromstring(book.read(name))
+
+    def words(item):
+        # A string's words are in its t element, or in the t of each rich-text run.
+        return "".join(t.text or "" for t in [*item.findall(XLSX + "t"), *item.findall(f"{XLSX}r/{XLSX}t")])
+
+    names = book.namelist()
+    shared = [words(si) for si in part("xl/sharedStrings.xml").findall(XLSX + "si")] \
+        if "xl/sharedStrings.xml" in names else []
+    targets = {rel.get("Id"): rel.get("Target") for rel in part("xl/_rels/workbook.xml.rels").iter(XLSX_RELS + "Relationship")}
+    tabs = []
+    for sheet in part("xl/workbook.xml").iter(XLSX + "sheet"):
+        target = targets[sheet.get(XLSX_ID)]
+        rows = {}
+        for cell in part(target[1:] if target.startswith("/") else f"xl/{target}").iter(XLSX + "c"):
+            kind, v = cell.get("t", "n"), cell.find(XLSX + "v")
+            raw = v.text or "" if v is not None else ""
+            if kind == "s":
+                value = shared[int(raw)]
+            elif kind == "inlineStr":
+                item = cell.find(XLSX + "is")
+                value = words(item) if item is not None else ""
+            elif kind == "b":
+                value = "TRUE" if raw == "1" else "FALSE"
+            elif kind in ("str", "e", "d"):
+                value = raw
+            else:
+                value = whole(float(raw)) if raw else ""
+            if value == "":
+                continue
+            ref = re.fullmatch(r"([A-Z]+)(\d+)", cell.get("r", ""))
+            column = 0
+            for letter in ref.group(1):
+                column = column * 26 + ord(letter) - 64
+            rows.setdefault(int(ref.group(2)), {})[column] = value
+        tabs.append((sheet.get("name"), rows))
+    return tabs
 
 
-def checkable(proc):
-    """The pass lines a tester can mark: those that are not still [TBD]."""
-    return [line for line in proc.get("pass", []) if not line["text"].startswith("[TBD")]
+def anchor(text):
+    """The anchor the website gives a heading with this plain text: Python-Markdown's toc
+    rule, which keeps underscores (slugify drops them, as Markdown would)."""
+    text = unicodedata.normalize("NFKD", text).encode("ascii", "ignore").decode("ascii")
+    return re.sub(r"[-\s]+", "-", re.sub(r"[^\w\s-]", "", text).strip().lower())
 
 
-def sheet_labels(reg, proc):
-    """The first column of a procedure's tab in the test-run sheet, top to bottom. Each run
-    takes two columns: Result and Note."""
-    tpms = {tpm["id"]: tpm for tpm in reg.tpms}
-    return (["Run", "Layer", "Date"] + [plain(line["text"]) for line in checkable(proc)]
-            + [f"{tid} ({tpms[tid]['unit']})" for tid in proc.get("measures", [])] + ["Log"])
+def whole(n):
+    """812.0 -> 812, so a number reads the same in Python and JavaScript."""
+    return int(n) if n.is_integer() and abs(n) < 2 ** 53 else n
 
 
-RESULTS = {"pass": True, "fail": False, "": None}
+def cell_text(value):
+    return value.strip() if isinstance(value, str) else str(value)
 
 
-def parse_tab(reg, proc, rows):
-    """(runs, problems) from a procedure's tab, given as CSV rows. A run is a Result column
-    with a layer and a date, and the Note column beside it: {layer, date, passes {line text:
-    True, False, or None when not marked}, values {tpm: number}, notes {row label: note}, log}."""
+def column_letters(column):
+    out = ""
+    while column:
+        column, rest = divmod(column - 1, 26)
+        out = chr(65 + rest) + out
+    return out
+
+
+def read_date(value):
+    """The ISO date in a date cell (a day count from 1899-12-30) or in text such as
+    2026-12-02 or 12/2/2026, or None."""
     import datetime
-    problems, labels = [], {}
-    for row in rows:
-        if row and row[0].strip():
-            labels[re.sub(r"\s+", " ", row[0]).strip()] = row[1:]
-    expected = sheet_labels(reg, proc)
-    missing = [label for label in expected if label not in labels]
-    extra = [label for label in labels if label not in expected]
-    if missing:
-        problems.append("the tab has no row for " + "; ".join(f'"{m}"' for m in missing))
-    if extra:
-        problems.append("the tab has rows the procedure no longer has: " + "; ".join(f'"{e}"' for e in extra))
-    header = [h.strip().lower() for h in labels.get("Run", [])]
-    width = max((len(cells) for cells in labels.values()), default=0)
-    runs = []
-    for col, kind in enumerate(header):
-        if kind != "result":
+    if isinstance(value, (int, float)):
+        if not 1 <= value < 2958466:
+            return None
+        return (datetime.date(1899, 12, 30) + datetime.timedelta(days=int(value // 1))).isoformat()
+    text = value.strip()
+    if match := re.fullmatch(r"([0-9]{4})-([0-9]{1,2})-([0-9]{1,2})", text):
+        year, month, day = map(int, match.groups())
+    elif match := re.fullmatch(r"([0-9]{1,2})/([0-9]{1,2})/([0-9]{4})", text):
+        month, day, year = map(int, match.groups())
+    else:
+        return None
+    try:
+        return datetime.date(year, month, day).isoformat()
+    except ValueError:
+        return None
+
+
+def read_number(value):
+    """The number in a number cell, or in text such as 1,200; None if there is none."""
+    if isinstance(value, (int, float)):
+        return value
+    text = value.strip().replace(",", "")
+    return whole(float(text)) if NUMBER.fullmatch(text) else None
+
+
+def read_sheet(tabs, ids):
+    """The test sheet's procedures and their problems, from read_workbook's tabs:
+    {"procedures": [procedure], "problems": [problem]}. ids holds the IDs the registries
+    define, under "nodes", "interfaces", and "tpms". A problem is {"text", "reference"},
+    where reference means it names something no registry defines."""
+    ids = {kind: set(values) for kind, values in ids.items()}
+    procedures = []
+    for name, rows in tabs:
+        title = re.sub(r"\s+", " ", name).strip()
+        if title != TEMPLATE_TAB and (proc := read_procedure(title, rows, ids)):
+            procedures.append(proc)
+    problems, seen = [], {}
+    for proc in procedures:
+        if proc["slug"] in seen:
+            problems.append({"text": f'The tabs "{seen[proc["slug"]]}" and "{proc["title"]}" would have the same '
+                                     "link on the website: rename one.", "reference": False})
+        seen.setdefault(proc["slug"], proc["title"])
+    return {"procedures": procedures, "problems": problems}
+
+
+def read_procedure(title, rows, ids):
+    """One tab as a procedure, or None when it is not one (it has no header row)."""
+    def text(row, column):
+        return cell_text(rows.get(row, {}).get(column, "")) if row and column else ""
+
+    header = next((r for r in sorted(rows) if text(r, 1).lower() == "row"
+                   and "what happens" in {cell_text(v).lower() for v in rows[r].values()}), None)
+    if header is None:
+        return None
+    columns = {}
+    for column, value in sorted(rows[header].items()):
+        if key := SHEET_COLUMNS.get(cell_text(value).lower()):
+            columns.setdefault(key, column)
+    runs = [(c, c + 1 if text(header, c + 1).lower() == "note" else None)
+            for c, value in sorted(rows[header].items()) if cell_text(value).lower() == "result"]
+    proc = {"title": title, "slug": anchor(title), "purpose": "", "steps": [], "passes": [],
+            "measures": [], "runs": [], "problems": []}
+
+    def say(message, reference=False):
+        proc["problems"].append({"text": message, "reference": reference})
+
+    for r in sorted(rows):
+        if r < header and text(r, 1).lower() == "purpose" and not proc["purpose"]:
+            proc["purpose"] = next((cell_text(v) for c, v in sorted(rows[r].items()) if c > 1 and cell_text(v)), "")
+    fixed, entries = {}, []
+    for r in sorted(r for r in rows if r > header):
+        kind = text(r, 1)
+        fields = {key: text(r, columns.get(key)) for key in ("actor", "node", "interface", "tpm", "does")}
+        used = any(fields.values()) or any(text(r, rc) or text(r, nc) for rc, nc in runs)
+        if kind.lower() in ("layer", "date", "log"):
+            fixed.setdefault(kind.lower(), r)
+        elif not used:
             continue
-        note_col = col + 1 if col + 1 < len(header) and header[col + 1] == "note" else None
-        cell = lambda label, c: ((labels.get(label, []) + [""] * width)[c].strip() if c is not None else "")
-        layer, when = cell("Layer", col), cell("Date", col)
-        if not layer and not when:
+        elif kind.lower() == "step":
+            entries.append(("step", {"row": r, **fields}))
+        elif kind.lower() == "pass":
+            entries.append(("pass", {"row": r, "tpm": fields["tpm"], "text": fields["does"]}))
+        elif kind.lower() == "measure":
+            entries.append(("measure", {"row": r, "tpm": fields["tpm"], "what": fields["does"]}))
+        elif not kind:
+            say(f"Row {r}: say what the row is in column A: Step, Pass, or Measure.")
+        else:
+            say(f'Row {r}: "{kind}" is not a kind of row: use Step, Pass, or Measure.')
+    for name in ("Layer", "Date"):
+        if name.lower() not in fixed:
+            say(f'The tab has no {name} row: add one under the header, with "{name}" in column A.')
+    if not proc["purpose"]:
+        say('Write the procedure\'s purpose beside "Purpose", above the table.')
+
+    def check(r, kind, value):
+        if value and value not in ids[f"{kind}s"]:
+            tab = {"node": "Nodes", "interface": "Interfaces", "tpm": "TPMs"}[kind]
+            name = "TPM" if kind == "tpm" else kind
+            say(f'Row {r}: no {name} "{value}" in the design registries. Pick one from the {tab} tab.', True)
+
+    measured = [e["tpm"] for kind, e in entries if kind == "measure" and e["tpm"]]
+    seen = set()
+    for kind, e in entries:
+        r = e["row"]
+        if kind == "step":
+            if not e["actor"] and not e["node"]:
+                say(f"Row {r}: say who acts: pick the node, or write the actor.")
+            check(r, "node", e["node"])
+            check(r, "interface", e["interface"])
+            check(r, "tpm", e["tpm"])
+            if not e["does"]:
+                say(f"Row {r}: say what happens.")
+            proc["steps"].append(e)
+        elif kind == "pass":
+            if not e["text"]:
+                say(f"Row {r}: write what must be true, under What happens.")
+            check(r, "tpm", e["tpm"])
+            if e["tpm"] in ids["tpms"] and e["tpm"] not in measured:
+                say(f"Row {r} checks {e['tpm']}, which no Measure row records.")
+            proc["passes"].append(e)
+        else:
+            if not e["tpm"]:
+                say(f"Row {r}: pick the TPM it measures.")
+            check(r, "tpm", e["tpm"])
+            if e["tpm"] and e["tpm"] in seen:
+                say(f"Row {r}: {e['tpm']} has another Measure row above.")
+            seen.add(e["tpm"])
+            proc["measures"].append(e)
+
+    lines = proc["steps"] + proc["passes"]
+    for rc, nc in runs:
+        rows_used = [fixed.get(k) for k in ("layer", "date", "log")] + [e["row"] for e in lines + proc["measures"]]
+        if not any(text(r, rc) or text(r, nc) for r in rows_used if r):
             continue
-        date_value = None
-        for fmt in ("%Y-%m-%d", "%m/%d/%Y", "%m/%d/%y"):
-            try:
-                date_value = datetime.datetime.strptime(when, fmt).date()
-                break
-            except ValueError:
-                pass
-        where = f"the run in column {col + 2}"
-        if SHEET_LAYERS.get(layer.lower()) is None or date_value is None:
-            problems.append(f"{where} needs a layer ({', '.join(LAYERS)}) and a date such as 2026-12-02, "
-                            f"not {layer or 'nothing'!r} and {when or 'nothing'!r}")
+        where = f"Run in column {column_letters(rc)}"
+        layer_text = text(fixed.get("layer"), rc)
+        layer = next((name for name in LAYERS if name.lower() == layer_text.lower()), None)
+        date_value = rows.get(fixed.get("date"), {}).get(rc, "")
+        when = read_date(date_value) if date_value != "" else None
+        if not layer_text:
+            say(f"{where}: pick its layer: Sim, Bench, or Robot.")
+        elif not layer:
+            say(f'{where}: its layer is "{layer_text}", not Sim, Bench, or Robot.')
+        if date_value == "":
+            say(f"{where}: give its date, such as 2026-12-02.")
+        elif not when:
+            say(f'{where}: "{cell_text(date_value)}" is not a date such as 2026-12-02.')
+        if not layer or not when:
             continue
-        run = {"layer": SHEET_LAYERS[layer.lower()], "date": date_value, "passes": {}, "values": {},
-               "notes": {label: cell(label, note_col) for label in expected if cell(label, note_col)},
-               "log": cell("Log", col)}
-        for line in checkable(proc):
-            value = cell(plain(line["text"]), col)
-            if value.lower() not in RESULTS:
-                problems.append(f"{where}: a pass line's result is Pass, Fail, or blank, not {value!r}")
-            run["passes"][line["text"]] = RESULTS.get(value.lower())
-        for tid in proc.get("measures", []):
-            label = next(label for label in expected if label.startswith(f"{tid} ("))
-            text = cell(label, col).replace(",", "")
-            if text:
-                try:
-                    run["values"][tid] = float(text)
-                except ValueError:
-                    problems.append(f"{where}: {tid} must be a number, not {text!r}")
-        runs.append(run)
-    return runs, problems
+
+        def mark(e):
+            got = text(e["row"], rc)
+            if got.lower() not in MARKS:
+                say(f'{where}, row {e["row"]}: mark Pass or Fail, not "{got}".')
+            return {"mark": MARKS.get(got.lower(), ""), "note": text(e["row"], nc)}
+
+        def value(e):
+            raw = rows.get(e["row"], {}).get(rc, "")
+            got = read_number(raw) if raw != "" else None
+            if raw != "" and got is None:
+                say(f'{where}, row {e["row"]}: {e["tpm"] or "the value"} must be a number, not "{cell_text(raw)}".')
+            return {"value": got, "note": text(e["row"], nc)}
+
+        run = {"column": column_letters(rc), "layer": layer, "date": when,
+               "steps": [mark(e) for e in proc["steps"]], "passes": [mark(e) for e in proc["passes"]],
+               "values": [value(e) for e in proc["measures"]],
+               "log": text(fixed.get("log"), rc),
+               "notes": {k: text(fixed.get(k), nc) for k in ("layer", "date", "log")}}
+        markable = [m["mark"] for e, m in zip(lines, run["steps"] + run["passes"])
+                    if not (e.get("does") or e.get("text") or "").startswith("[TBD")]
+        run["marked"], run["markable"] = sum(1 for m in markable if m), len(markable)
+        run["result"] = ("Fail" if "Fail" in markable else
+                         "Pass" if markable and all(m == "Pass" for m in markable) else "Incomplete")
+        proc["runs"].append(run)
+    return proc
 
 
-def run_result(proc, run):
-    """Fail if any pass line failed, Pass if every one passed, and otherwise Incomplete."""
-    marks = [run["passes"].get(line["text"]) for line in checkable(proc)]
-    if False in marks:
-        return "Fail"
-    if all(mark is True for mark in marks):
-        return "Pass"
-    return f"Incomplete ({sum(mark is not None for mark in marks)} of {len(marks)} marked)"
+def sheet_ids(reg):
+    """The IDs a procedure in the test sheet may name, for read_sheet."""
+    return {"nodes": sorted(reg.nodes), "interfaces": sorted(reg.interfaces),
+            "tpms": [tpm["id"] for tpm in reg.tpms]}
 
 
-def measurements(reg, runs):
-    """{tpm id: {layer: (date, value, procedure)}}: the latest measurement at each layer."""
+def fetch(url, timeout=30):
+    import urllib.request
+    request = urllib.request.Request(url, headers={"User-Agent": "starrt-luna-software docs build"})
+    with urllib.request.urlopen(request, timeout=timeout) as response:
+        return response.read()
+
+
+def fetch_sheet(reg):
+    """(the test sheet read by read_sheet, None) from its published address, or (None,
+    why it could not be read)."""
+    published = (reg.sheet or {}).get("published", "")
+    if not published:
+        return None, "the test sheet is not published yet: add its published address to end-to-end-tests.toml"
+    try:
+        return read_sheet(read_workbook(fetch(f"{published}?output=xlsx")), sheet_ids(reg)), None
+    except Exception as error:  # A network, zip, or XML error: say what it was.
+        return None, f"{type(error).__name__}: {error}"
+
+
+def fetch_tab_ids(reg):
+    """{tab name: its gid}, for links to each tab, from the published sheet's web page.
+    That page is not a documented format, so this returns {} when it cannot read it, and
+    links then go to the sheet."""
+    import json
+    published = (reg.sheet or {}).get("published", "")
+    if not published:
+        return {}
+    try:
+        page = fetch(f"{published}html").decode("utf-8")
+    except Exception:
+        return {}
     found = {}
-    for proc in reg.procedures:
-        for run in runs.get(proc["id"], []):
-            for tid, value in run["values"].items():
-                layers = found.setdefault(tid, {})
-                if run["layer"] not in layers or run["date"] >= layers[run["layer"]][0]:
-                    layers[run["layer"]] = (run["date"], value, proc)
+    for name, gid in re.findall(r'name: "((?:[^"\\]|\\.)*)", pageUrl: "[^"]*?gid=(\d+)', page):
+        try:
+            found[json.loads('"' + re.sub(r"\\x([0-9a-fA-F]{2})", r"\\u00\1", name) + '"')] = gid
+        except ValueError:
+            continue
     return found
 
 
-def judge(tpm, value):
-    """How a measured value compares with the TPM's threshold and goal."""
-    better, goal, threshold = tpm.get("better"), tpm.get("goal_value"), tpm.get("threshold_value")
-    if better not in ("lower", "higher"):
-        return "not judged: the TPM has no numbers to compare with"
-    fits = (lambda limit: value <= limit) if better == "lower" else (lambda limit: value >= limit)
-    if goal is not None and fits(goal):
-        return "meets the goal"
-    if threshold is not None and fits(threshold):
-        return "meets the threshold, not the goal"
-    return "misses the threshold" if threshold is not None else "misses the goal"
+def check_sheet(problems, reg):
+    """Check the test sheet's procedures against the registries: naming a node, interface,
+    or TPM that no registry defines is an error, so a pull request that renames or removes
+    one that a procedure uses fails until the sheet is updated."""
+    sheet, error = fetch_sheet(reg)
+    if sheet is None:
+        problems.warn(f"the test sheet was not checked: {error}")
+        return 0
+    for p in sheet["problems"]:
+        problems.warn(f"test sheet: {p['text']}")
+    for proc in sheet["procedures"]:
+        for p in proc["problems"]:
+            report = problems.error if p["reference"] else problems.warn
+            report(f'test sheet, tab "{proc["title"]}": {p["text"]}')
+    measured = {m["tpm"] for proc in sheet["procedures"] for m in proc["measures"]}
+    for tpm in reg.tpms:
+        if tpm["id"] not in measured and not tpm.get("none"):
+            problems.warn(f"{reg.doc_of(tpm)}.toml: {tpm['id']}: no test procedure measures it yet")
+    return len(sheet["procedures"])
 
 
-def fill_test_runs(reg, markdown, runs, problems, note=""):
-    """The page with each test-runs marker replaced by tables of the runs read from the sheet.
-    runs: {procedure id: [run]}; problems: {procedure id: [text]}; note: why there are none."""
-    tpms = {tpm["id"]: tpm for tpm in reg.tpms}
-    procs = {proc["id"]: proc for proc in reg.procedures}
+def registry_csvs(reg):
+    """{file name: CSV text}: the lists the test sheet's dropdowns choose from. The website
+    publishes them in design/registry/, and the sheet's Nodes, Interfaces, and TPMs tabs
+    import them."""
+    import csv
+    import io
 
-    def summary():
-        rows = []
-        for proc in reg.procedures:
-            latest = {}
-            for run in runs.get(proc["id"], []):
-                if run["layer"] not in latest or run["date"] >= latest[run["layer"]]["date"]:
-                    latest[run["layer"]] = run
-            rows.append([proc_link(proc), *[f"{run_result(proc, latest[l])}, {latest[l]['date'].isoformat()}"
-                                            if l in latest else "Not run" for l in LAYERS]])
-        return table(["Procedure", *LAYERS], rows)
+    def text(rows):
+        out = io.StringIO()
+        csv.writer(out, lineterminator="\n").writerows(rows)
+        return out.getvalue()
 
-    def one(proc):
-        out = [f"> **The sheet's tab:** {p}." for p in problems.get(proc["id"], [])]
-        found = sorted(runs.get(proc["id"], []), key=lambda r: (r["date"], LAYERS.index(r["layer"])))
-        if not found:
-            return out + (["", "None yet."] if out else ["None yet."])
-        rows = []
-        for run in found:
-            got = ", ".join(f"{tid} {number(v)} {tpms[tid]['unit']}" for tid, v in run["values"].items())
-            run_notes = "; ".join(run["notes"][k] for k in ("Layer", "Date", "Log") if k in run["notes"])
-            rows.append([run["date"].isoformat(), run["layer"], run_result(proc, run), got or "None",
-                         run["log"] or "None", run_notes])
-        out += ([""] if out else []) + table(["Date", "Layer", "Result", "Measured", "Log", "Notes"], rows)
-        # Each pass line and value, run by run, with the note beside it.
-        heads = [f"{r['date'].isoformat()}, {r['layer']}" for r in found]
-        detail = []
-        for line in checkable(proc):
-            label = plain(line["text"])
-            cells = []
-            for r in found:
-                mark = {True: "Pass", False: "Fail", None: "Not marked"}[r["passes"].get(line["text"])]
-                cells.append(mark + (f": {r['notes'][label]}" if label in r["notes"] else ""))
-            detail.append([label, *cells])
-        for tid in proc.get("measures", []):
-            label = f"{tid} ({tpms[tid]['unit']})"
-            detail.append([label, *[(number(r["values"][tid]) if tid in r["values"] else "None")
-                                    + (f": {r['notes'][label]}" if label in r["notes"] else "") for r in found]])
-        return out + ["", "Each pass line and value, run by run:", ""] + table(["Line", *heads], detail)
+    def bare(value):
+        return value.replace("`", "")
 
-    def measured():
-        found = measurements(reg, runs)
-        rows = []
-        for tpm in reg.tpms:
-            if tpm.get("none"):
-                continue
-            cells = []
-            for layer in LAYERS:
-                got = found.get(tpm["id"], {}).get(layer)
-                cells.append(f"{number(got[1])} {tpm['unit']}, {got[0].isoformat()}: {judge(tpm, got[1])}"
-                             if got else "Not measured")
-            rows.append([tpm["id"], *cells])
-        return table(["TPM", *LAYERS], rows)
-
-    def replace(match):
-        what = match.group(1)
-        if note:
-            return f"> {note}"
-        if what == "summary":
-            body = summary()
-        elif what == "measurements":
-            body = measured()
-        elif what in procs:
-            body = one(procs[what])
-        else:
-            return match.group(0)
-        return "\n".join(body)
-
-    return re.sub(r"<!-- test-runs: ([\w-]+) -->", replace, markdown)
+    nodes = [["ID", "Name", "Runs on", "Design doc", "What it does"]]
+    nodes += [[n["id"], bare(n["name"]), n["runs_on"], f"{reg.doc_of(n)}.md", n["does"]]
+              for n in by_element(reg.nodes.values())]
+    interfaces = [["ID", "Name", "Kind", "Type", "Publisher or server", "Defined in"]]
+    interfaces += [[i["id"], bare(i["name"]), i["kind"], i["type"], bare(names(reg.publishers(i))),
+                    f"{reg.doc_of(i)}.toml"] for i in sorted(reg.interfaces.values(), key=lambda i: i["id"])]
+    tpms = [["ID", "Measure", "Unit", "Threshold", "Goal"]]
+    tpms += [[t["id"], t["measure"], t["unit"], t["threshold"], t["goal"]] for t in reg.tpms]
+    return {"nodes.csv": text(nodes), "interfaces.csv": text(interfaces), "tpms.csv": text(tpms)}
 
 
-def proc_link(proc, page=""):
-    return f"[{proc['title']}]({page}#{slugify(proc['title'])})"
+def sheet_registry(reg):
+    """What the website's reader needs from the registries: each ID with how to show it."""
+    return {
+        "nodes": {n["id"]: n["name"] for n in reg.nodes.values()},
+        "interfaces": {i["id"]: i["name"] for i in reg.interfaces.values()},
+        "tpms": {t["id"]: {"anchor": slugify(tpm_title(t)), "measure": t["measure"], "unit": t["unit"],
+                           "none": bool(t.get("none")), "better": t.get("better"),
+                           "threshold_value": t.get("threshold_value"), "goal_value": t.get("goal_value")}
+                 for t in reg.tpms},
+    }
+
+
+def inline_html(text):
+    """Text as HTML: escaped, with `code` in code font."""
+    import html
+    return re.sub(r"`([^`]+)`", r"<code>\1</code>", html.escape(text, quote=False))
+
+
+def procedure_snapshot(reg, proc):
+    """A procedure as plain HTML, for site search and for readers without JavaScript. The
+    website's script replaces it with the full view, read from the sheet."""
+    out = [f"<p>{inline_html(proc['purpose'])}</p>"] if proc["purpose"] else []
+    if proc["steps"]:
+        out.append("<ol>")
+        for step in proc["steps"]:
+            node = reg.nodes.get(step["node"], {}).get("name", step["node"])
+            who = ", through the ".join(x for x in (step["actor"], node) if x)
+            iface = reg.interfaces.get(step["interface"], {}).get("name", step["interface"])
+            if iface and "[" not in iface:
+                iface = f"`{iface}`"
+            uses = ", ".join(x for x in (iface, step["tpm"]) if x)
+            out.append(f"<li>{inline_html(who)}: {inline_html(step['does'])}"
+                       + (f" ({inline_html(uses)})" if uses else "") + "</li>")
+        out.append("</ol>")
+    if proc["passes"]:
+        out.append("<p><strong>It passes when:</strong></p>")
+        out.append("<ul>" + "".join(f"<li>{inline_html(p['text'])}</li>" for p in proc["passes"]) + "</ul>")
+    return "\n".join(out)
+
+
+def sheet_markers(proc):
+    """Each [TBD] or [TBR] in a procedure: (row, text of the cell that holds it)."""
+    cells = [("Purpose", proc["purpose"])]
+    cells += [(s["row"], s[key]) for s in proc["steps"] for key in ("actor", "does")]
+    cells += [(p["row"], p["text"]) for p in proc["passes"]] + [(m["row"], m["what"]) for m in proc["measures"]]
+    return [(row, value) for row, value in cells if re.search(r"\[(?:TBD|TBR)\b", value)]
 
 
 def render_procedures_page(reg):
-    tpms = {tpm["id"]: tpm for tpm in reg.tpms}
     sheet = (reg.sheet or {}).get("edit_url", "")
+    link = f"[test sheet]({sheet})" if sheet else "test sheet [TBD: its address, end-to-end-tests.toml]"
+    script = "https://github.com/STAR-Robotics-Team/starrt-luna-software/blob/main/scripts/test-sheet.gs"
     out = [
         "# End-to-end test procedures",
         "",
         "Each procedure follows one thing the robot does through every node it crosses, from",
-        "the operator or the hardware to the motors. Each step names the node that acts, the",
-        "interface it uses, and the budget it spends, and the pass lines come from the",
+        "the operator or the hardware to the motors. Each step names who acts, the interface it",
+        "uses, and the budget it spends, and the pass lines come from the",
         "[performance budgets](performance-budgets.md) and the design docs' requirements.",
         "",
         "- **Before anything runs, the design review walks each procedure on paper,** with",
         "  whoever works on each step explaining it. A step nobody can explain, or a name still",
         "  `[TBD]`, is a gap to settle.",
         "- **Then each one runs at Sim, Bench, and Robot,** as [Testing layers](testing-layers.md)",
-        "  describes, and each run is recorded in the test-run sheet.",
+        "  describes, and each run is recorded beside its steps.",
         "",
-        "This page is generated from `docs/design/end-to-end-tests.toml` by",
-        "`scripts/design render`. The results come from the test-run sheet when the website builds.",
+        f"The procedures and their runs live in the {link}, one tab per procedure. This page",
+        "reads the sheet each time it opens, so it shows the sheet as it is now.",
+        "",
+        "## Writing a procedure",
+        "",
+        f"In the {link}, choose **Test procedures > New procedure** and give it a name: the",
+        "name is its title here. Write its purpose above the table, then one row for each:",
+        "",
+        "- **Step:** who acts (a node, or an actor such as the operator), what happens, the",
+        "  interface it uses, and the TPM whose budget it spends, in order.",
+        "- **Pass:** what must be true for a run to pass, and the TPM it checks, if any.",
+        "- **Measure:** a TPM each run records.",
+        "",
+        "Pick nodes, interfaces, and TPMs from the dropdowns. They come from the design",
+        "registries, so a procedure names only what the design docs define. A pull request that",
+        "renames or removes a node, interface, or TPM that a procedure uses fails",
+        "`scripts/design check` until the procedure is updated too.",
         "",
         "## Recording a run",
         "",
-        (f"Open the procedure's tab in the [test-run sheet]({sheet}). " if sheet else
-         "Open the procedure's tab in the test-run sheet [TBD: the sheet's address, end-to-end-tests.toml]. ")
-        + "Each run takes two columns, Result and Note. In the first empty pair, pick the layer (Sim, "
-        "Bench, or Robot) and type the date, such as 2026-12-02. Mark each pass line Pass or Fail, "
-        "type each value it measured, link the log, and write a note beside any row. "
-        "Leave the first column alone: it must match each procedure's pass lines here, and the "
-        "website flags any row that drifts. `scripts/design sheet` prints the first column for "
-        "every procedure, for a new tab.",
+        "Open the procedure's tab. Each run takes two columns, Result and Note. In the first",
+        "empty pair, pick the layer (Sim, Bench, or Robot) and type the date, such as",
+        "2026-12-02. Mark each step and pass line Pass or Fail as you go, type each value",
+        "measured, link the log, and write a note beside any row.",
+        "",
+        "## How this page stays current",
+        "",
+        "- **The page reads the sheet in your browser each time it opens.** Google takes up to",
+        "  about 5 minutes to publish an edit, so an edit shows here a few minutes after it is",
+        "  made. When the page can't read the sheet, it shows the sheet as of the website's last",
+        "  build, and says so.",
+        "- **Site search knows the procedures as of the last build.** Once edits have stopped",
+        "  for six minutes, by when Google has published them, the sheet asks GitHub to rebuild",
+        "  the website. The website also rebuilds every hour, so search catches up within about",
+        "  10 minutes, or within the hour.",
+        f"- **The sheet's script asks for the rebuilds:** [`scripts/test-sheet.gs`]({script}). It",
+        "  needs a GitHub token in its script properties. When the token stops working, the",
+        "  sheet's \"How to record a run\" tab says so, and the hourly rebuild carries on. To",
+        "  renew it, a STAR-Robotics-Team admin creates a fine-grained token (GitHub, Settings,",
+        "  Developer settings, Fine-grained tokens) owned by STAR-Robotics-Team, for this",
+        "  repository only, with the Actions permission set to read and write. Then, in the",
+        "  sheet, open Extensions, Apps Script, Project settings, and set the script property",
+        "  `GITHUB_TOKEN` to it.",
         "",
         "## Results",
         "",
-        "The latest run of each procedure at each layer. A run is Fail when any pass line failed,",
-        "Pass when every one passed, and Incomplete until each is marked.",
+        "The latest run of each procedure at each layer. A run is Fail when any step or pass",
+        "line failed, Pass when every one passed, and Incomplete until each is marked.",
         "",
-        TEST_RUNS.format("summary"),
+        TEST_SHEET.format("summary"),
+        "",
+        TEST_SHEET.format("procedures"),
+        "",
+        TEST_SHEET.format("data"),
     ]
-    for proc in reg.procedures:
-        out += ["", f"## {proc['title']}", "", proc["purpose"]]
-        if proc.get("measures"):
-            links = ", ".join(f"[{tid}]({tpm_link(tpms[tid], BUDGETS_PAGE.name)})" for tid in proc["measures"])
-            out += ["", f"**Measures:** {links}."]
-        rows = []
-        for n, step in enumerate(proc.get("step", []), 1):
-            node = reg.nodes.get(step.get("node"))
-            if node and step.get("actor"):
-                who = f"{step['actor']}, through the {node['name']}"
-            else:
-                who = node["name"] if node else step.get("actor", "")
-            iface = reg.interfaces.get(step.get("interface"))
-            budget = step.get("budget")
-            rows.append([str(n), who, step["does"], code(iface["name"]) if iface else "",
-                         f"[{budget}]({tpm_link(tpms[budget], BUDGETS_PAGE.name)})" if budget else ""])
-        out += [""] + table(["Step", "Who", "What happens", "Interface", "Budget"], rows)
-        if proc.get("pass"):
-            out += ["", "**It passes when:**", ""]
-            for line in proc["pass"]:
-                text = line["text"]
-                if line.get("tpm"):
-                    text = f"{text.rstrip('.')} ({line['tpm']})."
-                out.append(f"- {text}")
-        tab = f"{sheet}#gid={proc['sheet_gid']}" if sheet and "sheet_gid" in proc else ""
-        out += ["", f"**Runs,** from [its tab in the test-run sheet]({tab}):" if tab else
-                "**Runs,** from its tab in the test-run sheet [TBD: the tab, end-to-end-tests.toml]:", "",
-                TEST_RUNS.format(proc["id"])]
     return "\n".join(out) + "\n"
 
 
@@ -1305,13 +1478,6 @@ def registry_markers(reg):
         for key, v in fields:
             if isinstance(v, str) and re.search(r"\[(TBD|TBR)\b", v):
                 found.append((reg.doc_of(tpm), tpm["id"], key, plain(v)))
-    for proc in reg.procedures:
-        fields = [(key, v) for key, v in proc.items() if key not in ("step", "pass")]
-        fields += [(f"step {n}", s["does"]) for n, s in enumerate(proc.get("step", []), 1)]
-        fields += [(f"pass {n}", line["text"]) for n, line in enumerate(proc.get("pass", []), 1)]
-        for key, v in fields:
-            if isinstance(v, str) and re.search(r"\[(TBD|TBR)\b", v):
-                found.append((reg.doc_of(proc), f"procedure {proc['id']}", key, plain(v)))
     return found
 
 
@@ -1364,6 +1530,11 @@ def render_open_items_page(reg):
         out += ["", f"### `{stem}.toml`", ""]
         out += table(["Entry", "Field", "Value"], by_doc[stem])
 
+    out += ["", "## Marked in the test sheet", "",
+            "Every `[TBD]` and `[TBR]` in the end-to-end test procedures, which live in the",
+            f"[test sheet]({PROCEDURES_PAGE.name}). This page reads the sheet each time it opens.", "",
+            TEST_SHEET.format("open-items")]
+
     out += ["", "## Marked in the docs", "",
             "Every `[TBD]` and `[TBR]` in the docs' own text, by page and section."]
     pages = sorted(p for p in DOCS.rglob("*.md") if p not in GENERATED_PAGES and p not in EXAMPLE_PAGES)
@@ -1377,7 +1548,7 @@ def render_open_items_page(reg):
         rows = [[f"[{title}]({link}#{anchor})" if anchor else title, f"[{kind}: {text}]"]
                 for anchor, title, kind, text in found]
         out += table(["Section", "Marked"], rows)
-    return "\n".join(out) + "\n"
+    return "\n".join(out + ["", TEST_SHEET.format("data")]) + "\n"
 
 
 # ----------------------------------------------------------------------------------------
@@ -1431,6 +1602,7 @@ def cmd_check(_args):
     reg = load(problems)
     if not problems.errors:
         validate(problems, reg)
+    procedures = None
     if not problems.errors:
         for path, text in outputs(problems, reg).items():
             if path.read_text(encoding="utf-8") != text:
@@ -1439,27 +1611,28 @@ def cmd_check(_args):
         for path, render in PAGES:
             if not path.exists() or path.read_text(encoding="utf-8") != render(reg):
                 problems.error(f"{path.relative_to(REPO)} is out of date: run scripts/design render")
+        procedures = check_sheet(problems, reg)
     if not problems.errors:
         print(f"OK: {len(reg.elements)} elements, {len(reg.nodes)} nodes, {len(reg.interfaces)} interfaces, "
               f"{sum(len(q) for q in reg.questions.values())} questions, {len(reg.tpms)} TPMs, "
-              f"{len(reg.procedures)} test procedures; "
-              "every generated table is up to date.")
+              f"{procedures} test procedures in the test sheet; every generated table is up to date.")
     return problems.report()
 
 
-def cmd_sheet(_args):
+def cmd_sheet_json(args):
+    """The test sheet as read_sheet reads it, with the IDs it was checked against, as JSON:
+    what scripts/test-sheet-readers.js compares the website's reader with."""
+    import json
     problems = Problems()
     reg = load(problems)
     if not problems.errors:
         validate(problems, reg)
     if problems.errors:
         return problems.report()
-    for proc in reg.procedures:
-        gid = proc.get("sheet_gid", "no tab yet")
-        print(f"# {proc['title']} (tab gid {gid})")
-        print("\n".join(sheet_labels(reg, proc)))
-        print()
-    return problems.report()
+    ids = sheet_ids(reg)
+    data = Path(args.xlsx).read_bytes() if args.xlsx else fetch(f"{reg.sheet['published']}?output=xlsx")
+    print(json.dumps({"ids": ids, "sheet": read_sheet(read_workbook(data), ids)}, indent=1, ensure_ascii=False))
+    return 0
 
 
 def main():
@@ -1468,7 +1641,9 @@ def main():
     commands = parser.add_subparsers(dest="command", required=True)
     commands.add_parser("render", help="Rewrite every generated table and page.").set_defaults(run=cmd_render)
     commands.add_parser("check", help="Check the registries and that everything generated is current.").set_defaults(run=cmd_check)
-    commands.add_parser("sheet", help="Print each procedure's first column for the test-run sheet.").set_defaults(run=cmd_sheet)
+    sheet_json = commands.add_parser("sheet-json", help="Print the test sheet as the build reads it, as JSON.")
+    sheet_json.add_argument("xlsx", nargs="?", help="An .xlsx file to read instead of the published sheet")
+    sheet_json.set_defaults(run=cmd_sheet_json)
     args = parser.parse_args()
     return args.run(args)
 

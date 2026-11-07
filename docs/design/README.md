@@ -32,7 +32,8 @@ Four pages are generated from the docs' [registries](#registries):
   how each is split across the software, and what the tests have measured.
 - [End-to-end test procedures](end-to-end-tests.md) follow one thing the robot does
   through every node it crosses, with the interface and budget each step relies on. The
-  design review walks them on paper, and then they run at Sim, Bench, and Robot.
+  design review walks them on paper, and then they run at Sim, Bench, and Robot. They
+  live in the test sheet, a Google Sheet that testers edit, and the page reads it live.
 - [Open items](open-items.md) lists everything not settled yet, from open questions to
   each `[TBD]` and `[TBR]` in the docs.
 
@@ -155,10 +156,7 @@ text = "Which access point and robot radio?"
 | `[[question]]` | Each doc's registry | A question in the doc's section 9, open or decided |
 | `[[tpm]]` | `performance-budgets.toml` | A technical performance measure and its budget |
 | `[[tpm.row]]` | Under its `[[tpm]]` | One part of the TPM's budget |
-| `[[procedure]]` | `end-to-end-tests.toml` | An end-to-end test procedure: one thing the robot does, through every node it crosses |
-| `[[procedure.step]]` | Under its `[[procedure]]` | One step, in order |
-| `[[procedure.pass]]` | Under its `[[procedure]]` | A line a run must meet to pass |
-| `[[sheet]]` | `end-to-end-tests.toml` | The Google Sheet that records test runs, one tab per procedure |
+| `[[sheet]]` | `end-to-end-tests.toml` | The test sheet: the Google Sheet that holds the end-to-end test procedures and their runs, one tab per procedure |
 
 | Entry | Field | Required | What it holds |
 | --- | --- | --- | --- |
@@ -235,20 +233,8 @@ text = "Which access point and robot radio?"
 | `[[tpm.row]]` | `amounts` | No | One number per case, for a TPM with cases |
 | `[[tpm.row]]` | `basis` | No | Where the value comes from |
 | `[[tpm.row]]` | `unit` | No | This row's unit, when it differs from the TPM's |
-| `[[procedure]]` | `id` | Yes | A short key, such as `link-loss` |
-| `[[procedure]]` | `title` | Yes | What happens, such as The operator link drops |
-| `[[procedure]]` | `purpose` | Yes | What it checks, and the requirements it comes from |
-| `[[procedure]]` | `measures` | No | IDs of the TPMs a run of it measures |
-| `[[procedure]]` | `sheet_gid` | No | Its tab in the test-run sheet: the number after gid= in the tab's address |
-| `[[procedure.step]]` | `does` | Yes | What happens in this step |
-| `[[procedure.step]]` | `node` | No | The ID of the node that acts |
-| `[[procedure.step]]` | `actor` | No | Who acts, when it is not a node or as well as one: the operator, a tester, or hardware |
-| `[[procedure.step]]` | `interface` | No | The ID of the interface the step uses |
-| `[[procedure.step]]` | `budget` | No | The ID of the TPM whose budget the step spends |
-| `[[procedure.pass]]` | `text` | Yes | What must be true |
-| `[[procedure.pass]]` | `tpm` | No | The ID of the TPM it checks, which the procedure measures |
-| `[[sheet]]` | `edit_url` | Yes | The sheet's address, where testers record runs |
-| `[[sheet]]` | `published` | No | Its published address (File, Share, Publish to web), ending in /pub; the website reads runs from it |
+| `[[sheet]]` | `edit_url` | Yes | The sheet's address, where testers write procedures and record runs |
+| `[[sheet]]` | `published` | No | Its published address (File, Share, Publish to web), ending in /pub; the website reads the sheet from it |
 
 <!-- /design -->
 
@@ -259,7 +245,11 @@ Beyond each field, the check fails when:
 - two nodes define the same interface, or no node publishes a shared topic;
 - a doc has two questions with one number, or a decided question has no date;
 - a TPM's counted parts add up to more than its `limit`;
-- a value holds a `|` or a line break, which would break a table.
+- a value holds a `|` or a line break, which would break a table;
+- a procedure in the test sheet names a node, interface, or TPM that no registry defines.
+  The sheet's dropdowns offer only what the registries define, so this happens when a
+  pull request renames or removes one that a procedure uses: update the procedure in the
+  same change.
 
 ### Blocks
 
