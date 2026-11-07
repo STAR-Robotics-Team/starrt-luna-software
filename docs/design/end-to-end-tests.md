@@ -1,15 +1,18 @@
 # End-to-end test procedures
 
-Each procedure follows one thing the robot does through every node it crosses, from
-the operator or the hardware to the motors. Each step names who acts, the interface it
-uses, and the budget it spends, and the pass lines come from the
-[performance budgets](performance-budgets.md) and the design docs' requirements.
+Each procedure is a step-by-step walkthrough of one thing the robot does, through every
+node it crosses, from the operator or the hardware to the motors. Each step says exactly
+what to do and exactly what must be seen for it to pass, and names the node and
+interface it checks, the [performance budget](performance-budgets.md) it spends, and the
+TPM it measures.
 
 - **Before anything runs, the design review walks each procedure on paper,** with
   whoever works on each step explaining it. A step nobody can explain, or a name still
   `[TBD]`, is a gap to settle.
-- **Then each one runs at Sim, Bench, and Robot,** as [Testing layers](testing-layers.md)
-  describes, and each run is recorded beside its steps.
+- **Then each one runs with each hardware system in the modes of
+  [Hardware test modes](hardware-test-modes.md),** from stand-ins on a laptop to the
+  rover, as [Testing layers](testing-layers.md) describes, and each run is recorded
+  beside its steps.
 
 The procedures and their runs live in the [test sheet](https://docs.google.com/spreadsheets/d/1qYh5hzQPgHA6WQpqN9SrjHDDrfeMzqhxvYa_3uOBYCk/edit), one tab per procedure. This page
 reads the sheet each time it opens, so it shows the sheet as it is now.
@@ -17,24 +20,43 @@ reads the sheet each time it opens, so it shows the sheet as it is now.
 ## Writing a procedure
 
 In the [test sheet](https://docs.google.com/spreadsheets/d/1qYh5hzQPgHA6WQpqN9SrjHDDrfeMzqhxvYa_3uOBYCk/edit), choose **Test procedures > New procedure** and give it a name: the
-name is its title here. Write its purpose above the table, then one row for each:
+name is its title here. Write its purpose above the table, then:
 
-- **Step:** who acts (a node, or an actor such as the operator), what happens, the
-  interface it uses, and the TPM whose budget it spends, in order.
-- **Pass:** what must be true for a run to pass, and the TPM it checks, if any.
-- **Measure:** a TPM each run records.
+- **One row for each hardware system the procedure uses,** under Date, with the
+  system's name in column A, such as Radio link. Each run picks that system's mode.
+- **One Step row for each step, in the order it happens,** from setting up (the
+  recording, the launch, each terminal to watch) to tearing down (stopping the
+  recording, noting the commit, linking the log). Write each step so that someone who has
+  never run it can follow it:
+    - **Do:** exactly what to do, where, and with which tool or exact command.
+    - **Pass when:** exactly what must be seen, where, and within what limit.
+    - **Applies when:** a system mode, such as Radio link: Bench, when the step is only
+      for runs with that system in that mode. Leave it blank for every run.
+    - **Actor, Node, and Interface:** who acts, and the node and interface the step checks.
+    - **Budget:** the TPM whose budget the step spends.
+    - **Measures:** the TPM the step measures. A run can then type the measured number
+      instead of Pass or Fail.
 
-Pick nodes, interfaces, and TPMs from the dropdowns. They come from the design
-registries, so a procedure names only what the design docs define. A pull request that
-renames or removes a node, interface, or TPM that a procedure uses fails
-`scripts/design check` until the procedure is updated too.
+Write a name that is not settled yet, such as a launch argument, as a `[TBR]` or `[TBD]`
+marker that says where it gets settled, as in any doc; the
+[open items](open-items.md#marked-in-the-test-sheet) page lists each one.
+
+Pick nodes, interfaces, TPMs, and test modes from the dropdowns. They come from the
+design registries and the headings of Hardware test modes, so a procedure names only
+what the design docs define. A pull request that renames or removes one that a procedure
+uses fails `scripts/design check` until the procedure is updated too.
 
 ## Recording a run
 
 Open the procedure's tab. Each run takes two columns, Result and Note. In the first
-empty pair, pick the layer (Sim, Bench, or Robot) and type the date, such as
-2026-12-02. Mark each step and pass line Pass or Fail as you go, type each value
-measured, link the log, and write a note beside any row.
+empty pair, type the date, such as 2026-12-02, and pick each system's mode. Then follow
+the steps in order, skipping a step whose Applies when names another mode, and mark each
+one Pass or Fail as you go. For a step that measures a TPM, you can type the measured
+number instead: this page judges it against the TPM, and a number that misses the
+threshold fails the step. Link the log, and write a note beside any row.
+
+A run's layer is the highest layer among its systems' modes, so a run on the drive base
+with every sensor on its stub counts as Robot.
 
 ## How this page stays current
 
@@ -57,8 +79,8 @@ measured, link the log, and write a note beside any row.
 
 ## Results
 
-The latest run of each procedure at each layer. A run is Fail when any step or pass
-line failed, Pass when every one passed, and Incomplete until each is marked.
+The latest run of each procedure at each layer. A run is Fail when any of its steps
+failed, Pass when every one passed, and Incomplete until each is marked.
 
 <!-- test-sheet: summary -->
 

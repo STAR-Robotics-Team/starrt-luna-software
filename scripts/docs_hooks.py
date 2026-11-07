@@ -33,8 +33,9 @@ show them read the sheet live, in the browser (docs/javascripts/test-sheet.js). 
 reads it too, and fills in the <!-- test-sheet: ... --> markers that scripts/design writes:
 each procedure's heading and text, so site search finds them, and the sheet as the build
 read it, which the page shows until it has read the sheet itself, or when it cannot. The
-build also publishes the registries' IDs as CSV in design/registry/, which the sheet's
-dropdowns import.
+build also publishes the registries' IDs, and the test modes from the headings of
+docs/design/hardware-test-modes.md, as CSV in design/registry/, which the sheet's dropdowns
+import.
 """
 
 import html
@@ -139,7 +140,8 @@ def fill_test_sheet(markdown, page, files):
     def url(src):
         return get_relative_url(files.get_file_from_path(src).url, page.url)
 
-    links = {"procedures": url("design/end-to-end-tests.md"), "budgets": url("design/performance-budgets.md")}
+    links = {"procedures": url("design/end-to-end-tests.md"), "budgets": url("design/performance-budgets.md"),
+             "modes": url("design/hardware-test-modes.md")}
     procedures = sheet["procedures"] if sheet else []
     edit = (reg.sheet or {}).get("edit_url", "")
     waiting = (f'<p class="test-sheet-status">This comes from the <a href="{html.escape(edit)}">test sheet</a>, '
@@ -176,7 +178,7 @@ def fill_test_sheet(markdown, page, files):
 
     def measured_by(match):
         found = [f'<a href="{links["procedures"]}#{p["slug"]}">{html.escape(p["title"])}</a>' for p in procedures
-                 if any(m["tpm"] == match.group(2) for m in p["measures"])]
+                 if any(s["measures"] == match.group(2) for s in p["steps"])]
         return match.group(1) + (", ".join(found) or ("None yet" if sheet else "")) + match.group(3)
 
     markdown = re.sub(r'(<span class="test-sheet" data-view="measured-by" data-tpm="([^"]+)">)(</span>)',

@@ -14,10 +14,13 @@
   "use strict";
 
   const LAYERS = ["Sim", "Bench", "Robot"];
-  const SHEET_COLUMNS = new Map([["row", "kind"], ["actor", "actor"], ["node", "node"],
-    ["interface", "interface"], ["tpm", "tpm"], ["what happens", "does"]]);
+  const SHEET_COLUMNS = new Map([["row", "kind"], ["do", "do"], ["pass when", "pass_when"], ["applies when", "applies"],
+    ["actor", "actor"], ["node", "node"], ["interface", "interface"], ["budget", "budget"], ["measures", "measures"]]);
+  const STEP_FIELDS = ["applies", "actor", "node", "do", "pass_when", "interface", "budget", "measures"];
   const TEMPLATE_TAB = "Template";
-  const MARKS = new Map([["pass", "Pass"], ["fail", "Fail"], ["", ""]]);
+  const MARKS = new Map([["pass", "Pass"], ["fail", "Fail"]]);
+  // How a measured value compares with its TPM, and whether the step passes.
+  const LEVELS = {goal: "Pass", threshold: "Pass", recorded: "Pass", missed: "Fail"};
   const NUMBER = /^[-+]?(?:[0-9]+\.?[0-9]*|\.[0-9]+)(?:[eE][-+]?[0-9]+)?$/;
 
   // ------------------------------------------------------------------------------------
@@ -172,10 +175,28 @@
     return NUMBER.test(text) ? Number(text) : null;
   }
 
-  // The test sheet's procedures and their problems: {procedures, problems}. ids holds the
-  // IDs the registries define, under nodes, interfaces, and tpms.
+  function modeName(text) {
+    return text.trim().replace(/\s*\((?:Sim|Bench|Robot)\)$/, "");
+  }
+
+  // How a measured value compares with its TPM: "goal", "threshold" (it meets the threshold
+  // but not the goal), "missed", or "recorded" when the TPM has no numbers yet.
+  function judge(tpm, value) {
+    const better = tpm.better;
+    const goal = tpm.goal_value ?? null;
+    const threshold = tpm.threshold_value ?? null;
+    if ((better !== "lower" && better !== "higher") || (goal === null && threshold === null)) return "recorded";
+    const fits = (limit) => (better === "lower" ? value <= limit : value >= limit);
+    if (goal !== null && fits(goal)) return "goal";
+    if (threshold !== null && fits(threshold)) return "threshold";
+    return "missed";
+  }
+
+  // The test sheet's procedures and their problems: {procedures, problems}. ids is what a
+  // procedure may name: nodes, interfaces, tpms (each with its numbers), and modes (each
+  // hardware system's test modes).
   function readSheet(tabs, ids) {
-    const known = {nodes: new Set(ids.nodes), interfaces: new Set(ids.interfaces), tpms: new Set(ids.tpms)};
+    const known = {nodes: new Set(ids.nodes), interfaces: new Set(ids.interfaces), tpms: ids.tpms, modes: ids.modes};
     const procedures = [];
     for (const {name, rows} of tabs) {
       const title = name.replace(/\s+/g, " ").trim();
@@ -196,9 +217,10 @@
 
   function readProcedure(title, rows, ids) {
     const text = (r, c) => (r && c ? cellText(rows.get(r)?.get(c) ?? "") : "");
+    const has = (map, key) => Object.prototype.hasOwnProperty.call(map, key);
     const numbers = [...rows.keys()].sort((a, b) => a - b);
     const header = numbers.find((r) => text(r, 1).toLowerCase() === "row" &&
-      [...rows.get(r).values()].some((v) => cellText(v).toLowerCase() === "what happens"));
+      [...rows.get(r).values()].some((v) => cellText(v).toLowerCase() === "do"));
     if (header === undefined) return null;
     const headerCells = [...rows.get(header).entries()].sort((a, b) => a[0] - b[0]);
     const columns = {};
@@ -208,8 +230,15 @@
     }
     const runs = headerCells.filter(([, v]) => cellText(v).toLowerCase() === "result")
       .map(([c]) => [c, text(header, c + 1).toLowerCase() === "note" ? c + 1 : null]);
-    const proc = {title, slug: anchor(title), purpose: "", steps: [], passes: [], measures: [], runs: [], problems: []};
+    const proc = {title, slug: anchor(title), purpose: "", systems: [], steps: [], runs: [], problems: []};
     const say = (message, reference = false) => proc.problems.push({text: message, reference});
+    const check = (r, kind, value) => {
+      const set = kind === "tpm" ? null : ids[`${kind}s`];
+      if (value && (set ? !set.has(value) : !has(ids.tpms, value))) {
+        const tab = {node: "Nodes", interface: "Interfaces", tpm: "TPMs"}[kind];
+        say(`Row ${r}: no ${kind === "tpm" ? "TPM" : kind} "${value}" in the design registries. Pick one from the ${tab} tab.`, true);
+      }
+    };
 
     for (const r of numbers) {
       if (r < header && text(r, 1).toLowerCase() === "purpose" && !proc.purpose) {
@@ -217,96 +246,140 @@
         proc.purpose = found ? cellText(found[1]) : "";
       }
     }
+    const systems = new Map(Object.keys(ids.modes).map((s) => [s.toLowerCase(), s]));
     const fixed = {};
-    const entries = [];
     for (const r of numbers.filter((n) => n > header)) {
       const kind = text(r, 1);
       const fields = {};
-      for (const key of ["actor", "node", "interface", "tpm", "does"]) fields[key] = text(r, columns[key]);
+      for (const key of STEP_FIELDS) fields[key] = text(r, columns[key]);
       const used = Object.values(fields).some(Boolean) || runs.some(([rc, nc]) => text(r, rc) || text(r, nc));
       const k = kind.toLowerCase();
-      if (k === "layer" || k === "date" || k === "log") {
+      if (k === "date" || k === "log") {
         if (!(k in fixed)) fixed[k] = r;
+      } else if (systems.has(k)) {
+        const system = systems.get(k);
+        if (proc.systems.some((s) => s.system === system)) say(`Row ${r}: ${system} has another row above.`);
+        else proc.systems.push({row: r, system});
       } else if (!used) continue;
-      else if (k === "step") entries.push(["step", {row: r, ...fields}]);
-      else if (k === "pass") entries.push(["pass", {row: r, tpm: fields.tpm, text: fields.does}]);
-      else if (k === "measure") entries.push(["measure", {row: r, tpm: fields.tpm, what: fields.does}]);
-      else if (!kind) say(`Row ${r}: say what the row is in column A: Step, Pass, or Measure.`);
-      else say(`Row ${r}: "${kind}" is not a kind of row: use Step, Pass, or Measure.`);
+      else if (k === "step") proc.steps.push({row: r, ...fields});
+      else if (!kind) say(`Row ${r}: say what the row is in column A: Step, Date, Log, or a system from the Test modes tab.`);
+      else say(`Row ${r}: "${kind}" is not a kind of row: use Step, Date, Log, or a system from the Test modes tab.`);
     }
-    for (const name of ["Layer", "Date"]) {
-      if (!(name.toLowerCase() in fixed)) say(`The tab has no ${name} row: add one under the header, with "${name}" in column A.`);
+    if (!("date" in fixed)) say('The tab has no Date row: add one under the header, with "Date" in column A.');
+    if (!proc.systems.length) {
+      say("List the hardware systems the procedure uses: a row for each, under Date, with its name from the " +
+        "Test modes tab in column A.");
     }
     if (!proc.purpose) say(`Write the procedure's purpose beside "Purpose", above the table.`);
 
-    const check = (r, kind, value) => {
-      if (value && !ids[`${kind}s`].has(value)) {
-        const tab = {node: "Nodes", interface: "Interfaces", tpm: "TPMs"}[kind];
-        say(`Row ${r}: no ${kind === "tpm" ? "TPM" : kind} "${value}" in the design registries. Pick one from the ${tab} tab.`, true);
+    const listed = new Set(proc.systems.map((s) => s.system));
+    for (const step of proc.steps) {
+      const r = step.row;
+      const applies = step.applies;
+      step.applies = null;
+      if (applies) {
+        const at = applies.indexOf(":");
+        const system = at < 0 ? applies : applies.slice(0, at);
+        const canonical = systems.get(system.trim().toLowerCase());
+        const names = at < 0 ? [] : applies.slice(at + 1).split(",").filter((n) => n.trim()).map(modeName);
+        if (at < 0 || !names.length) {
+          say(`Row ${r}: write Applies when as "System: Mode", such as "Radio link: Bench", not "${applies}".`);
+        } else if (canonical === undefined) {
+          say(`Row ${r}: no system "${system.trim()}" in Hardware test modes. Pick one from the Test modes tab.`, true);
+        } else {
+          const known = new Map(ids.modes[canonical].map((m) => [m.mode.toLowerCase(), m.mode]));
+          const modes = [];
+          for (const name of names) {
+            if (known.has(name.toLowerCase())) modes.push(known.get(name.toLowerCase()));
+            else say(`Row ${r}: ${canonical} has no mode "${name}" in Hardware test modes. Pick one from the Test modes tab.`, true);
+          }
+          if (!listed.has(canonical)) {
+            say(`Row ${r} applies when ${canonical} is in a given mode, but the procedure has no ${canonical} row: add one under Date.`);
+          }
+          step.applies = {text: applies, system: canonical, modes};
+        }
       }
-    };
-    const measured = entries.filter(([k, e]) => k === "measure" && e.tpm).map(([, e]) => e.tpm);
-    const seen = new Set();
-    for (const [kind, e] of entries) {
-      const r = e.row;
-      if (kind === "step") {
-        if (!e.actor && !e.node) say(`Row ${r}: say who acts: pick the node, or write the actor.`);
-        check(r, "node", e.node);
-        check(r, "interface", e.interface);
-        check(r, "tpm", e.tpm);
-        if (!e.does) say(`Row ${r}: say what happens.`);
-        proc.steps.push(e);
-      } else if (kind === "pass") {
-        if (!e.text) say(`Row ${r}: write what must be true, under What happens.`);
-        check(r, "tpm", e.tpm);
-        if (ids.tpms.has(e.tpm) && !measured.includes(e.tpm)) say(`Row ${r} checks ${e.tpm}, which no Measure row records.`);
-        proc.passes.push(e);
-      } else {
-        if (!e.tpm) say(`Row ${r}: pick the TPM it measures.`);
-        check(r, "tpm", e.tpm);
-        if (e.tpm && seen.has(e.tpm)) say(`Row ${r}: ${e.tpm} has another Measure row above.`);
-        seen.add(e.tpm);
-        proc.measures.push(e);
-      }
+      const tbd = step.do.startsWith("[TBD") || step.pass_when.startsWith("[TBD");
+      if (!step.do && !tbd) say(`Row ${r}: say what to do, under Do.`);
+      if (!step.pass_when && !tbd) say(`Row ${r}: say what must be seen for the step to pass, under Pass when.`);
+      check(r, "node", step.node);
+      check(r, "interface", step.interface);
+      check(r, "tpm", step.budget);
+      check(r, "tpm", step.measures);
     }
 
-    const lines = [...proc.steps, ...proc.passes];
     for (const [rc, nc] of runs) {
-      const used = [fixed.layer, fixed.date, fixed.log, ...lines.map((e) => e.row), ...proc.measures.map((e) => e.row)];
+      const used = [fixed.date, fixed.log, ...proc.systems.map((s) => s.row), ...proc.steps.map((s) => s.row)];
       if (!used.some((r) => r && (text(r, rc) || text(r, nc)))) continue;
       const where = `Run in column ${columnLetters(rc)}`;
-      const layerText = text(fixed.layer, rc);
-      const layer = LAYERS.find((name) => name.toLowerCase() === layerText.toLowerCase()) || null;
       const dateValue = rows.get(fixed.date)?.get(rc) ?? "";
       const when = dateValue !== "" ? readDate(dateValue) : null;
-      if (!layerText) say(`${where}: pick its layer: Sim, Bench, or Robot.`);
-      else if (!layer) say(`${where}: its layer is "${layerText}", not Sim, Bench, or Robot.`);
       if (dateValue === "") say(`${where}: give its date, such as 2026-12-02.`);
       else if (!when) say(`${where}: "${cellText(dateValue)}" is not a date such as 2026-12-02.`);
-      if (!layer || !when) continue;
+      const modes = {};
+      let ready = Boolean(when);
+      for (const s of proc.systems) {
+        const got = text(s.row, rc);
+        const mode = ids.modes[s.system].find((m) => m.mode.toLowerCase() === modeName(got).toLowerCase()) ?? null;
+        if (!got) {
+          say(`${where}: pick its ${s.system} mode.`);
+          ready = false;
+        } else if (mode === null) {
+          say(`${where}: "${got}" is not a ${s.system} mode in Hardware test modes.`);
+          ready = false;
+        } else modes[s.system] = mode;
+      }
+      if (!ready || !Object.keys(modes).length) continue;
 
-      const mark = (e) => {
-        const got = text(e.row, rc);
-        if (!MARKS.has(got.toLowerCase())) say(`${where}, row ${e.row}: mark Pass or Fail, not "${got}".`);
-        return {mark: MARKS.get(got.toLowerCase()) ?? "", note: text(e.row, nc)};
-      };
-      const value = (e) => {
-        const raw = rows.get(e.row)?.get(rc) ?? "";
-        const got = raw !== "" ? readNumber(raw) : null;
-        if (raw !== "" && got === null) say(`${where}, row ${e.row}: ${e.tpm || "the value"} must be a number, not "${cellText(raw)}".`);
-        return {value: got, note: text(e.row, nc)};
-      };
-      const run = {column: columnLetters(rc), layer, date: when, steps: proc.steps.map(mark),
-        passes: proc.passes.map(mark), values: proc.measures.map(value), log: text(fixed.log, rc),
-        notes: {layer: text(fixed.layer, nc), date: text(fixed.date, nc), log: text(fixed.log, nc)}};
-      const marks = [...run.steps, ...run.passes];
-      const markable = lines.map((e, i) => [e, marks[i].mark])
-        .filter(([e]) => !(e.does || e.text || "").startsWith("[TBD")).map(([, m]) => m);
-      run.marked = markable.filter(Boolean).length;
-      run.markable = markable.length;
-      run.result = markable.includes("Fail") ? "Fail"
-        : markable.length && markable.every((m) => m === "Pass") ? "Pass" : "Incomplete";
-      proc.runs.push(run);
+      const results = [];
+      for (const step of proc.steps) {
+        const r = step.row;
+        const a = step.applies;
+        const raw = rows.get(r)?.get(rc) ?? "";
+        const got = raw !== "" ? cellText(raw) : "";
+        const applies = a === null || a.modes.includes(modes[a.system]?.mode);
+        const entry = {applies, mark: "", value: null, level: "", note: text(r, nc)};
+        const value = got ? readNumber(raw) : null;
+        if (!applies) {
+          if (got) {
+            const current = modes[a.system]?.mode;
+            const which = current ? `${a.system}: ${current}` : `no ${a.system} mode`;
+            say(`${where}, row ${r}: the step does not apply to this run (${which}), so leave it blank.`);
+          }
+        } else if (!got) {
+          // Not marked yet.
+        } else if (value !== null && step.measures) {
+          const tpm = has(ids.tpms, step.measures) ? ids.tpms[step.measures] : null;
+          entry.value = value;
+          entry.level = tpm ? judge(tpm, value) : "recorded";
+          entry.mark = LEVELS[entry.level];
+        } else if (value !== null) {
+          say(`${where}, row ${r}: ${got} is a number, but the step measures no TPM. Mark Pass or Fail, or pick ` +
+            "the TPM it measures under Measures.");
+        } else if (MARKS.has(got.toLowerCase())) {
+          entry.mark = MARKS.get(got.toLowerCase());
+        } else {
+          const also = step.measures ? ", or type the measured number" : "";
+          say(`${where}, row ${r}: mark Pass or Fail${also}, not "${got}".`);
+        }
+        results.push(entry);
+      }
+      const considered = proc.steps.map((s, i) => [s, results[i]])
+        .filter(([s, e]) => e.applies && !(s.do.startsWith("[TBD") || s.pass_when.startsWith("[TBD")));
+      const marks = considered.map(([, e]) => e.mark);
+      const modeNotes = {};
+      for (const s of proc.systems) modeNotes[s.system] = text(s.row, nc);
+      const byLayer = Object.values(modes).map((m) => m.layer).sort((x, y) => LAYERS.indexOf(x) - LAYERS.indexOf(y));
+      proc.runs.push({
+        column: columnLetters(rc), date: when, layer: byLayer[byLayer.length - 1],
+        modes: Object.fromEntries(Object.entries(modes).map(([system, m]) => [system, m.mode])),
+        steps: results, log: text(fixed.log, rc),
+        notes: {date: text(fixed.date, nc), log: text(fixed.log, nc)},
+        mode_notes: modeNotes,
+        marked: marks.filter(Boolean).length, markable: marks.length,
+        result: marks.includes("Fail") ? "Fail" : marks.length && marks.every((m) => m === "Pass") ? "Pass" : "Incomplete",
+        threshold_only: [...new Set(considered.filter(([, e]) => e.level === "threshold").map(([s]) => s.measures))],
+      });
     }
     return proc;
   }
@@ -372,15 +445,37 @@
     return gid ? `${data.sheet.edit}#gid=${gid}` : data.sheet.edit;
   }
 
-  function mark(m) {
-    const word = m.mark || "Not marked";
-    const note = m.note ? `: ${inline(m.note)}` : "";
-    return `<span class="test-sheet-mark test-sheet-mark--${(m.mark || "none").toLowerCase()}">${word}</span>${note}`;
+  const VERDICT = {goal: "meets the goal", threshold: "meets the threshold, not the goal", missed: "misses the threshold",
+    recorded: "recorded: the TPM has no numbers to judge it by yet"};
+
+  function modeLink(system, mode) {
+    const found = own(data.registry.modes, system) ? data.registry.modes[system].find((m) => m.mode === mode) : null;
+    const label = found && found.mode !== found.layer ? `${mode} (${found.layer})` : mode;
+    return found ? `<a href="${esc(links.modes)}#${found.anchor}">${esc(label)}</a>` : esc(mode);
+  }
+
+  function measuredText(step, entry) {
+    const tpm = own(data.registry.tpms, step.measures) ? data.registry.tpms[step.measures] : null;
+    const noThreshold = tpm && (tpm.threshold_value ?? null) === null;
+    const verdict = entry.level === "missed" && noThreshold ? "misses the goal" : VERDICT[entry.level];
+    const css = entry.level === "missed" ? "fail" : entry.level === "threshold" ? "threshold" : "pass";
+    return `<span class="test-sheet-mark test-sheet-mark--${css}">${number(entry.value)}${unit(step.measures)}</span>` +
+      (verdict ? `: ${verdict}` : "");
+  }
+
+  function stepCell(step, entry) {
+    let out;
+    if (!entry.applies) return '<span class="test-sheet-mark test-sheet-mark--none">Not in this run</span>';
+    if (entry.value !== null) out = measuredText(step, entry);
+    else out = `<span class="test-sheet-mark test-sheet-mark--${(entry.mark || "none").toLowerCase()}">${entry.mark || "Not marked"}</span>`;
+    return out + (entry.note ? `: ${inline(entry.note)}` : "");
   }
 
   function result(run) {
     const counts = run.result === "Incomplete" ? ` (${run.marked} of ${run.markable} marked)` : "";
-    return `<span class="test-sheet-mark test-sheet-mark--${run.result.toLowerCase()}">${run.result}</span>${counts}`;
+    const level = run.result === "Pass" && run.threshold_only.length
+      ? ` (${run.threshold_only.map(tpmLink).join(", ")} at threshold)` : "";
+    return `<span class="test-sheet-mark test-sheet-mark--${run.result.toLowerCase()}">${run.result}</span>${level}${counts}`;
   }
 
   function who(step) {
@@ -405,40 +500,46 @@
   function procedureView(proc) {
     const out = [];
     if (proc.purpose) out.push(`<p>${inline(proc.purpose)}</p>`);
-    if (proc.measures.length) {
-      out.push(`<p><strong>Measures:</strong> ${proc.measures.map((m) => m.tpm ? tpmLink(m.tpm) : "").filter(Boolean).join(", ")}.</p>`);
+    if (proc.systems.length) {
+      out.push(`<p><strong>Uses:</strong> ${proc.systems.map((s) => `<a href="${esc(links.modes)}#${anchor(s.system)}">${esc(s.system)}</a>`).join(", ")}.</p>`);
     }
+    const measured = [...new Set(proc.steps.map((s) => s.measures).filter(Boolean))];
+    if (measured.length) out.push(`<p><strong>Measures:</strong> ${measured.map(tpmLink).join(", ")}.</p>`);
     out.push(`<p class="test-sheet-tab">Written in <a href="${esc(tabUrl(proc))}">its tab in the test sheet</a>.</p>`);
     if (proc.problems.length) {
       out.push(problemList(proc.problems, proc.problems.length === 1 ? "The tab needs a fix" : `The tab needs ${proc.problems.length} fixes`));
     }
     if (proc.steps.length) {
-      out.push(table(["Step", "Who", "What happens", "Interface", "Budget"], proc.steps.map((s, i) => [
-        String(i + 1), who(s), inline(s.does), s.interface ? interfaceName(s.interface) : "", s.tpm ? tpmLink(s.tpm) : ""])));
-    }
-    if (proc.passes.length) {
-      out.push("<p><strong>It passes when:</strong></p><ul>" + proc.passes.map((p) =>
-        `<li>${inline(p.text)}${p.tpm ? ` (${tpmLink(p.tpm)})` : ""}</li>`).join("") + "</ul>");
+      // A walkthrough reads top to bottom: each step's Do and Pass when in full, with what it
+      // applies to, who acts, and what it names on a line above.
+      out.push('<ol class="test-sheet-steps">' + proc.steps.map((s) => {
+        const meta = [
+          s.applies ? `For ${esc(s.applies.system)}: ${s.applies.modes.map((m) => modeLink(s.applies.system, m)).join(", ")}` : "",
+          s.actor || s.node ? who(s) : "",
+          s.interface ? interfaceName(s.interface) : "",
+          s.budget ? `Budget ${tpmLink(s.budget)}` : "",
+          s.measures ? `Measures ${tpmLink(s.measures)}` : "",
+        ].filter(Boolean);
+        return "<li>" + (meta.length ? `<p class="test-sheet-step-meta">${meta.join(" · ")}</p>` : "") +
+          `<p><strong>Do:</strong> ${inline(s.do)}</p>` +
+          (s.pass_when ? `<p><strong>Pass when:</strong> ${inline(s.pass_when)}</p>` : "") + "</li>";
+      }).join("") + "</ol>");
     }
     const runs = [...proc.runs].sort((a, b) => a.date.localeCompare(b.date) || LAYERS.indexOf(a.layer) - LAYERS.indexOf(b.layer));
     if (!runs.length) {
       out.push("<p><strong>Runs:</strong> none yet.</p>");
       return out.join("\n");
     }
-    out.push("<p><strong>Runs:</strong></p>", table(["Date", "Layer", "Result", "Measured", "Log", "Notes"], runs.map((r) => {
-      const values = proc.measures.map((m, i) => [m, r.values[i].value]).filter(([, v]) => v !== null)
-        .map(([m, v]) => `${tpmLink(m.tpm)} ${number(v)}${unit(m.tpm)}`);
-      const notes = [r.notes.layer, r.notes.date, r.notes.log].filter(Boolean).map(inline).join("; ");
-      return [r.date, r.layer, result(r), values.join(", ") || "None", logCell(r.log), notes];
+    out.push("<p><strong>Runs:</strong></p>", table(["Date", "Layer", "Modes", "Result", "Measured", "Log", "Notes"], runs.map((r) => {
+      const modes = Object.entries(r.modes).map(([system, mode]) => `${esc(system)}: ${modeLink(system, mode)}`).join("<br>");
+      const values = proc.steps.map((s, i) => [s, r.steps[i]]).filter(([, e]) => e.value !== null)
+        .map(([s, e]) => `${tpmLink(s.measures)} ${measuredText(s, e)}`);
+      const notes = [r.notes.date, r.notes.log, ...Object.entries(r.mode_notes).filter(([, n]) => n).map(([system, n]) => `${system}: ${n}`)]
+        .filter(Boolean).map(inline).join("; ");
+      return [r.date, r.layer, modes, result(r), values.join("<br>") || "None", logCell(r.log), notes];
     })));
-    const value = (v) => (v.value === null ? "None" : number(v.value)) + (v.note ? `: ${inline(v.note)}` : "");
-    const rows = [
-      ...proc.steps.map((s, i) => [`Step ${i + 1}`, ...runs.map((r) => mark(r.steps[i]))]),
-      ...proc.passes.map((p, i) => [inline(p.text), ...runs.map((r) => mark(r.passes[i]))]),
-      ...proc.measures.map((m, i) => [`${m.tpm ? tpmLink(m.tpm) : "Measure"}${unit(m.tpm) ? ` (${unit(m.tpm).trim()})` : ""}`,
-        ...runs.map((r) => value(r.values[i]))]),
-    ];
-    out.push("<p>Each step, pass line, and value, run by run:</p>", table(["Line", ...runs.map((r) => `${r.date}, ${r.layer}`)], rows));
+    const rows = proc.steps.map((s, i) => [`Step ${i + 1}`, ...runs.map((r) => stepCell(s, r.steps[i]))]);
+    out.push("<p>Each step, run by run:</p>", table(["Step", ...runs.map((r) => `${r.date}, ${r.layer}`)], rows));
     return out.join("\n");
   }
 
@@ -456,45 +557,34 @@
     }));
   }
 
-  function judge(tpm, value) {
-    const {better, goal_value: goal, threshold_value: threshold} = tpm;
-    if (better !== "lower" && better !== "higher") return "not judged: the TPM has no numbers to compare with";
-    const fits = (limit) => (better === "lower" ? value <= limit : value >= limit);
-    if (goal !== null && goal !== undefined && fits(goal)) return "meets the goal";
-    if (threshold !== null && threshold !== undefined && fits(threshold)) return "meets the threshold, not the goal";
-    return threshold !== null && threshold !== undefined ? "misses the threshold" : "misses the goal";
-  }
-
   function measurementsView(sheet) {
     const found = {};
     for (const proc of sheet.procedures) {
       for (const run of proc.runs) {
-        proc.measures.forEach((m, i) => {
-          const value = run.values[i].value;
-          if (!m.tpm || value === null) return;
-          const layers = (found[m.tpm] = found[m.tpm] || {});
-          if (!layers[run.layer] || run.date >= layers[run.layer].date) layers[run.layer] = {date: run.date, value, proc};
+        proc.steps.forEach((step, i) => {
+          const entry = run.steps[i];
+          if (!step.measures || entry.value === null) return;
+          const layers = (found[step.measures] = found[step.measures] || {});
+          if (!layers[run.layer] || run.date >= layers[run.layer].date) layers[run.layer] = {date: run.date, step, entry, proc};
         });
       }
     }
-    const rows = Object.entries(data.registry.tpms).filter(([, t]) => !t.none).map(([id, t]) => [id, ...LAYERS.map((l) => {
+    const rows = Object.entries(data.registry.tpms).filter(([, t]) => !t.none).map(([id]) => [id, ...LAYERS.map((l) => {
       const got = (found[id] || {})[l];
-      return got ? `${number(got.value)} ${esc(t.unit)}, ${procedureLink(got.proc, got.date)}: ${judge(t, got.value)}` : "Not measured";
+      return got ? `${measuredText(got.step, got.entry)}, ${procedureLink(got.proc, got.date)}` : "Not measured";
     })]);
     return table(["TPM", ...LAYERS], rows);
   }
 
   function measuredByView(sheet, id) {
-    const found = sheet.procedures.filter((p) => p.measures.some((m) => m.tpm === id));
+    const found = sheet.procedures.filter((p) => p.steps.some((s) => s.measures === id));
     return found.map((p) => procedureLink(p, p.title)).join(", ") || "None yet";
   }
 
   // The same cells as sheet_markers in scripts/design.
   function markers(proc) {
     const cells = [["Purpose", proc.purpose]];
-    for (const s of proc.steps) cells.push([s.row, s.actor], [s.row, s.does]);
-    for (const p of proc.passes) cells.push([p.row, p.text]);
-    for (const m of proc.measures) cells.push([m.row, m.what]);
+    for (const s of proc.steps) cells.push([s.row, s.actor], [s.row, s.do], [s.row, s.pass_when]);
     return cells.filter(([, text]) => /\[(?:TBD|TBR)\b/.test(text));
   }
 
@@ -552,13 +642,20 @@
     holder.dataset.started = "1";
     data = JSON.parse(holder.textContent);
     links = data.links;
+    // Drawing changes the height of what is above a linked heading, so scroll to it again after
+    // each drawing, unless the reader has scrolled away since.
     const target = decodeURIComponent(location.hash.slice(1));
-    const waiting = target && !document.getElementById(target);
+    let placed = null;
     const draw = (sheet, state) => {
       try {
         render(sheet, state);
       } catch (error) {
         console.error("test-sheet.js could not draw the test sheet:", error);
+      }
+      const heading = target && document.getElementById(target);
+      if (heading && (placed === null || Math.abs(window.scrollY - placed) < 2)) {
+        heading.scrollIntoView();
+        placed = window.scrollY;
       }
     };
     if (!data.sheet.published) {
@@ -570,13 +667,11 @@
       const response = await fetch(`${data.sheet.published}?output=xlsx`, {cache: "no-store", signal: AbortSignal.timeout(20000)});
       if (!response.ok) throw new Error(`Google answered ${response.status}`);
       const ids = {nodes: Object.keys(data.registry.nodes), interfaces: Object.keys(data.registry.interfaces),
-        tpms: Object.keys(data.registry.tpms)};
+        tpms: data.registry.tpms, modes: data.registry.modes};
       draw(readSheet(await readXlsx(await response.arrayBuffer()), ids), {kind: "live", at: new Date()});
     } catch (error) {
       draw(data.snapshot, {kind: "failed", error: error.message || String(error)});
     }
-    // A link to a procedure added since the last build finds its heading only now.
-    if (waiting) document.getElementById(target)?.scrollIntoView();
   }
 
   // Material loads pages without a full reload (instant navigation), so run on each page.

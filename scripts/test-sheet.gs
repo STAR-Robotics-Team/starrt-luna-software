@@ -30,17 +30,19 @@ const REFERENCE = [
   ["Nodes", "design/registry/nodes.csv"],
   ["Interfaces", "design/registry/interfaces.csv"],
   ["TPMs", "design/registry/tpms.csv"],
+  // Each hardware system's test modes, from the headings of docs/design/hardware-test-modes.md.
+  ["Test modes", "design/registry/test-modes.csv"],
 ];
-const COLUMNS = ["Row", "Actor", "Node", "What happens", "Interface", "TPM"];
-const WIDTHS = [80, 110, 170, 380, 190, 75];
-// Row, Actor, Node, and What happens stay in view while the run columns scroll.
-const FROZEN = 4;
+const COLUMNS = ["Row", "Do", "Pass when", "Applies when", "Actor", "Node", "Interface", "Budget", "Measures"];
+const WIDTHS = [110, 360, 300, 190, 90, 150, 170, 70, 80];
+// Row, Do, and Pass when stay in view while the run columns scroll.
+const FROZEN = 3;
+const WRAPPED = ["do", "pass when", "applies when", "note"];
 const RUNS = 10;
-const RESULT_WIDTH = 75;
+const RESULT_WIDTH = 95;
 const NOTE_WIDTH = 200;
-const KINDS = ["Step", "Pass", "Measure", "Layer", "Date", "Log"];
-const LAYERS = ["Sim", "Bench", "Robot"];
-const COLORS = {header: "#e8eaf6", Layer: "#f3f3f3", Date: "#f3f3f3", Log: "#f3f3f3", Pass: "#eef7ee", Measure: "#edf2fb"};
+const KINDS = ["Step", "Date", "Log"];
+const COLORS = {header: "#e8eaf6", Date: "#f3f3f3", Log: "#f3f3f3", system: "#f3f3f3"};
 const STATUS = "Rebuild on save:";
 
 // ---------------------------------------------------------------------------------------
@@ -92,7 +94,13 @@ function setUp() {
   const book = SpreadsheetApp.getActive();
   for (const [name, path] of REFERENCE) {
     const sheet = book.getSheetByName(name) || book.insertSheet(name, book.getNumSheets());
-    sheet.getRange("A1").setFormula(`=IMPORTDATA("${SITE}${path}")`);
+    // Google keeps an import's result for an address, even a "not found", so a broken import is
+    // asked for at a new address; the website ignores the ?v= part. A working one is left alone,
+    // so its list stays filled while the dropdowns below are built from it.
+    const cell = sheet.getRange("A1");
+    if (!cell.getFormula().includes(`${SITE}${path}`) || cell.getDisplayValue().startsWith("#")) {
+      cell.setFormula(`=IMPORTDATA("${SITE}${path}?v=${Date.now()}")`);
+    }
     sheet.getRange("1:1").setFontWeight("bold").setBackground(COLORS.header);
     sheet.setFrozenRows(1);
     sheet.setTabColor("#9e9e9e");
@@ -105,6 +113,7 @@ function setUp() {
   // The instructions first; the template and the reference tabs last.
   book.setActiveSheet(book.getSheetByName(HOW_TO));
   book.moveActiveSheet(1);
+  SpreadsheetApp.flush();
   for (const name of [TEMPLATE, ...REFERENCE.map(([n]) => n)]) {
     book.setActiveSheet(book.getSheetByName(name));
     book.moveActiveSheet(book.getNumSheets());
@@ -124,12 +133,15 @@ function setUp() {
 // Rebuilding the website
 // ---------------------------------------------------------------------------------------
 
-/** On every edit: note when it happened, and fix the row's dropdowns if its kind changed. */
+/** On every edit: note when it happened, and fix a row's dropdowns if its kind or Measures changed. */
 function recordEdit(e) {
   PropertiesService.getScriptProperties().setProperty("LAST_EDIT", String(Date.now()));
   const sheet = e.range.getSheet();
   const header = headerRow(sheet);
-  if (header && e.range.getColumn() === 1 && e.range.getLastRow() > header) {
+  if (!header || e.range.getLastRow() <= header) return;
+  const titles = sheet.getRange(header, 1, 1, sheet.getLastColumn()).getDisplayValues()[0].map((v) => v.trim().toLowerCase());
+  const measures = titles.indexOf("measures") + 1;
+  if (e.range.getColumn() === 1 || (measures && e.range.getColumn() <= measures && e.range.getLastColumn() >= measures)) {
     const first = Math.max(e.range.getRow(), header + 1);
     tidyRows(sheet, header, first, e.range.getLastRow() - first + 1);
   }
@@ -211,7 +223,7 @@ function headerRow(sheet) {
   if (last < 1) return 0;
   const values = sheet.getRange(1, 1, last, Math.max(sheet.getLastColumn(), 1)).getDisplayValues();
   const i = values.findIndex((row) => row[0].trim().toLowerCase() === "row" &&
-    row.some((v) => v.trim().toLowerCase() === "what happens"));
+    row.some((v) => v.trim().toLowerCase() === "do"));
   return i + 1;
 }
 
@@ -219,10 +231,16 @@ function makeTemplate(book) {
   const sheet = book.insertSheet(TEMPLATE, book.getNumSheets());
   const header = [...COLUMNS];
   for (let i = 0; i < RUNS; i++) header.push("Result", "Note");
-  const rows = [["Purpose"], header, ["Layer"], ["Date"], ["Step"], ["Step"], ["Step"], ["Step"], ["Step"],
-    ["Pass"], ["Pass"], ["Pass"], ["Measure"], ["Log"]];
+  // A new tab has 26 columns; the header needs more.
+  if (sheet.getMaxColumns() < header.length) {
+    sheet.insertColumnsAfter(sheet.getMaxColumns(), header.length - sheet.getMaxColumns());
+  }
+  const rows = [["Purpose"], header, ["Date"], [""], [""], ["Step"], ["Step"], ["Step"], ["Step"], ["Step"],
+    ["Step"], ["Step"], ["Step"], ["Step"], ["Step"], ["Log"]];
   rows.forEach((row, i) => sheet.getRange(i + 1, 1, 1, row.length).setValues([row]));
   sheet.getRange(1, 2).setNote("What this procedure checks, and the requirements it comes from.");
+  sheet.getRange(4, 1).setNote("One row for each hardware system the procedure uses: pick its name in column A. " +
+    "Each run then picks that system's mode.");
   tidy(sheet);
   return sheet;
 }
@@ -246,11 +264,10 @@ function tidy(sheet) {
       sheet.setColumnWidth(i + 1, RESULT_WIDTH);
     } else if (title === "note") {
       sheet.setColumnWidth(i + 1, NOTE_WIDTH);
-      sheet.getRange(header + 1, i + 1, lastRow - header, 1).setWrap(true);
     }
+    if (WRAPPED.includes(title)) sheet.getRange(header + 1, i + 1, lastRow - header, 1).setWrap(true);
   });
   sheet.getRange(1, 1, lastRow, lastColumn).setVerticalAlignment("top");
-  sheet.getRange(header + 1, 4, lastRow - header, 1).setWrap(true);
   sheet.getRange(header, 1, 1, lastColumn).setFontWeight("bold").setBackground(COLORS.header);
   for (let row = 1; row < header; row++) {
     if (sheet.getRange(row, 1).getDisplayValue().trim().toLowerCase() === "purpose") {
@@ -275,45 +292,63 @@ function tidy(sheet) {
   tidyRows(sheet, header, header + 1, lastRow - header);
 }
 
+/** Each system and its mode choices, such as "One computer (Sim)", from the Test modes tab. */
+function testModes(book) {
+  const sheet = book.getSheetByName("Test modes");
+  const choices = {};
+  if (!sheet || sheet.getLastRow() < 2) return choices;
+  for (const [system, , , choice] of sheet.getRange(2, 1, sheet.getLastRow() - 1, 4).getDisplayValues()) {
+    if (system && choice) (choices[system] = choices[system] || []).push(choice);
+  }
+  return choices;
+}
+
 /** Each row's dropdowns and color, by its kind in column A, set in one call per block. */
 function tidyRows(sheet, header, first, count) {
   if (count < 1) return;
   const book = sheet.getParent();
   const lastColumn = sheet.getLastColumn();
   const titles = sheet.getRange(header, 1, 1, lastColumn).getDisplayValues()[0].map((v) => v.trim().toLowerCase());
-  const column = (name) => titles.indexOf(name.toLowerCase()) + 1;
+  const column = (name) => titles.indexOf(name) + 1;
   const results = new Set(titles.map((t, i) => (t === "result" ? i + 1 : 0)).filter(Boolean));
   const list = (values) => SpreadsheetApp.newDataValidation().requireValueInList(values, true).setAllowInvalid(true).build();
-  const from = (tab) => {
+  const from = (tab, a1) => {
     const reference = book.getSheetByName(tab);
     return reference ? SpreadsheetApp.newDataValidation()
-      .requireValueInRange(reference.getRange("A2:A"), true).setAllowInvalid(true).build() : null;
+      .requireValueInRange(reference.getRange(a1), true).setAllowInvalid(true).build() : null;
   };
-  const marks = {
-    Layer: list(LAYERS),
-    Date: SpreadsheetApp.newDataValidation().requireDate().setAllowInvalid(true).build(),
-    Step: list(["Pass", "Fail"]),
-    Pass: list(["Pass", "Fail"]),
-    Measure: SpreadsheetApp.newDataValidation().requireNumberBetween(-1e15, 1e15).setAllowInvalid(true).build(),
-  };
-  const names = {[column("Node")]: [from("Nodes"), ["Step"]], [column("Interface")]: [from("Interfaces"), ["Step"]],
-    [column("TPM")]: [from("TPMs"), ["Step", "Pass", "Measure"]]};
-  const kindRule = list(KINDS);
-  const range = sheet.getRange(first, 1, count, lastColumn);
+  const modes = testModes(book);
+  const systems = Object.keys(modes);
+  const modeRules = {};
+  for (const system of systems) modeRules[system] = list(modes[system]);
+  const passFail = list(["Pass", "Fail"]);
+  const date = SpreadsheetApp.newDataValidation().requireDate().setAllowInvalid(true).build();
+  const stepLists = {[column("applies when")]: from("Test modes", "E2:E"), [column("node")]: from("Nodes", "A2:A"),
+    [column("interface")]: from("Interfaces", "A2:A"), [column("budget")]: from("TPMs", "A2:A"),
+    [column("measures")]: from("TPMs", "A2:A")};
+  const kindRule = list([...KINDS, ...systems]);
+  const values = sheet.getRange(first, 1, count, lastColumn).getDisplayValues();
   const validations = [];
   const backgrounds = [];
-  for (const [typed] of sheet.getRange(first, 1, count, 1).getDisplayValues()) {
-    const kind = KINDS.find((k) => k.toLowerCase() === typed.trim().toLowerCase()) || "";
-    const row = [];
+  for (const row of values) {
+    const typed = row[0].trim().toLowerCase();
+    const kind = KINDS.find((k) => k.toLowerCase() === typed) || "";
+    const system = systems.find((s) => s.toLowerCase() === typed) || "";
+    // A step that measures a TPM takes Pass, Fail, or the measured number, so no dropdown.
+    const measures = column("measures") ? row[column("measures") - 1].trim() : "";
+    const out = [];
     for (let c = 1; c <= lastColumn; c++) {
-      if (c === 1) row.push(kindRule);
-      else if (names[c]) row.push(names[c][1].includes(kind) ? names[c][0] : null);
-      else if (results.has(c)) row.push(marks[kind] || null);
-      else row.push(null);
+      if (c === 1) out.push(kindRule);
+      else if (kind === "Step" && stepLists[c] !== undefined) out.push(stepLists[c]);
+      else if (results.has(c) && kind === "Step") out.push(measures ? null : passFail);
+      else if (results.has(c) && kind === "Date") out.push(date);
+      else if (results.has(c) && system) out.push(modeRules[system]);
+      else out.push(null);
     }
-    validations.push(row);
-    backgrounds.push(new Array(lastColumn).fill(COLORS[kind] || "#ffffff"));
+    validations.push(out);
+    backgrounds.push(new Array(lastColumn).fill(system ? COLORS.system : COLORS[kind] || "#ffffff"));
   }
+  const range = sheet.getRange(first, 1, count, lastColumn);
   range.setDataValidations(validations);
   range.setBackgrounds(backgrounds);
 }
@@ -324,15 +359,18 @@ function writeInstructions(book) {
   const lines = [
     ["How to record a run", true],
     ["1. Open the procedure's tab. Each run takes two columns: Result and Note."],
-    ["2. In the first empty pair, pick the layer (Sim, Bench, or Robot) and type the date, such as 2026-12-02."],
-    ["3. Mark each step and pass line Pass or Fail as you go. Leave a row blank until it is checked. Type each value measured, in its TPM's unit."],
-    ["4. Link the log in the Log row. Write a note beside any row, in its Note column."],
+    ["2. In the first empty pair, type the date, such as 2026-12-02, and pick each hardware system's mode in the rows under Date."],
+    ["3. Follow the steps in order. Skip a step whose Applies when names another mode: leave it blank."],
+    ["4. Mark each step Pass or Fail as you go. For a step that measures a TPM, you can type the measured number instead, in the TPM's unit."],
+    ["5. Link the log in the Log row, and write a note beside any row, in its Note column."],
     [""],
     ["How to write a procedure", true],
     ["Test procedures > New procedure copies the Template tab under the name you give. The name is the procedure's title on the website."],
-    ["Write its purpose at the top. Then each row is a Step (who acts and what happens, in order), a Pass line (what must be true for a run to pass), or a Measure (a TPM each run records)."],
-    ["Pick nodes, interfaces, and TPMs from the dropdowns. They come from the design registries, in the Nodes, Interfaces, and TPMs tabs, which the website keeps current."],
-    ["To add a row, insert it among the rows of its kind, and set its kind in column A."],
+    ["Write its purpose at the top. Under Date, add a row for each hardware system the procedure uses, with its name from the dropdown in column A."],
+    ["Then write one Step row for each step, in the order it happens, from setting up to tearing down. Do says exactly what to do, where, and with which tool or command; Pass when says exactly what must be seen, where, and within what limit."],
+    ["Applies when limits a step to runs with a system in given modes, such as Radio link: Bench. Leave it blank for every run."],
+    ["Pick nodes, interfaces, TPMs, and modes from the dropdowns. They come from the design registries and Hardware test modes, in the Nodes, Interfaces, TPMs, and Test modes tabs, which the website keeps current."],
+    ["To add a row, insert it where it happens, and set its kind in column A."],
     [""],
     ["The website", true],
     [`The website shows every procedure tab live: ${SITE}design/end-to-end-tests/`],

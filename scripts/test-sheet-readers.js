@@ -6,10 +6,14 @@
 // procedures the website flags.
 //
 //   node scripts/test-sheet-readers.js [file.xlsx]
+//   node scripts/test-sheet-readers.js --published
 //
-// Reads scripts/test-sheet-sample.xlsx by default: a sample sheet exported by Google
-// Sheets, with runs and mistakes of every kind each reader reports. Needs Node 20.12 or
-// newer and Python 3.11 or newer. CI runs it on every pull request (.github/workflows/design.yml).
+// Reads scripts/test-sheet-sample.xlsx by default: a sample sheet with runs and mistakes of
+// every kind each reader reports. --published downloads the test sheet once, as Google
+// publishes it, and reads those same bytes with both readers, so Google's own way of
+// writing a workbook is covered too; when the sheet cannot be downloaded, it says so and
+// passes. Needs Node 20.12 or newer and Python 3.11 or newer. CI runs both on every pull
+// request (.github/workflows/design.yml).
 "use strict";
 
 const assert = require("node:assert");
@@ -18,10 +22,31 @@ const fs = require("node:fs");
 const path = require("node:path");
 
 const repo = path.resolve(__dirname, "..");
-const file = process.argv[2] || path.join(repo, "scripts", "test-sheet-sample.xlsx");
 const reader = require(path.join(repo, "docs", "javascripts", "test-sheet.js"));
 
+/** The published test sheet, downloaded once to a temporary file, or null. */
+async function download() {
+  const registry = fs.readFileSync(path.join(repo, "docs", "design", "end-to-end-tests.toml"), "utf-8");
+  const published = /^published\s*=\s*"([^"]+)"/m.exec(registry);
+  if (!published) return null;
+  try {
+    const response = await fetch(`${published[1]}?output=xlsx`, {signal: AbortSignal.timeout(30000)});
+    if (!response.ok) throw new Error(`Google answered ${response.status}`);
+    const file = path.join(fs.mkdtempSync(path.join(require("node:os").tmpdir(), "test-sheet-")), "published.xlsx");
+    fs.writeFileSync(file, Buffer.from(await response.arrayBuffer()));
+    return file;
+  } catch (error) {
+    console.log(`Skipped: could not download the published test sheet (${error.message}).`);
+    return null;
+  }
+}
+
 async function main() {
+  let file = process.argv[2] || path.join(repo, "scripts", "test-sheet-sample.xlsx");
+  if (file === "--published") {
+    file = await download();
+    if (!file) return;
+  }
   const python = JSON.parse(execFileSync("python3", [path.join(repo, "scripts", "design"), "sheet-json", file],
     {encoding: "utf-8", stdio: ["ignore", "pipe", "inherit"]}));
   const javascript = reader.readSheet(await reader.readXlsx(fs.readFileSync(file)), python.ids);
