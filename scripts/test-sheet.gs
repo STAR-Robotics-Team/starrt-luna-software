@@ -159,7 +159,8 @@ function askForRebuild() {
       "live, and rebuilds every hour.");
     return {ok: false, why: "the script has no GitHub token (script property GITHUB_TOKEN)."};
   }
-  const when = Utilities.formatDate(new Date(), SpreadsheetApp.getActive().getSpreadsheetTimeZone(), "MMM d, h:mm a");
+  // The time zone is the spreadsheet's (File, Settings), so name it.
+  const when = Utilities.formatDate(new Date(), SpreadsheetApp.getActive().getSpreadsheetTimeZone(), "MMM d, h:mm a z");
   let response;
   try {
     response = UrlFetchApp.fetch(`https://api.github.com/repos/${REPOSITORY}/actions/workflows/${WORKFLOW}/dispatches`, {
