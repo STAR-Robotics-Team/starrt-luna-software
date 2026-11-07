@@ -1,6 +1,11 @@
 # Builds the documentation website on every pull request that touches the docs, failing on
 # broken links, pages missing from mkdocs.yml, or lists that would look different than on
 # GitHub (scripts/docs_hooks.py), and publishes it to GitHub Pages when main changes.
+#
+# It also rebuilds main when the test sheet changes, so site search knows its procedures:
+# the sheet's script asks for a rebuild once edits have stopped for six minutes
+# (workflow_dispatch; scripts/test-sheet.gs), and the schedule rebuilds every hour in case
+# it cannot. The pages read the sheet live either way.
 name: Docs
 
 on:
@@ -10,23 +15,32 @@ on:
   pull_request:
     paths: [docs/**, overrides/**, mkdocs.yml, scripts/docs_hooks.py, .github/workflows/docs.yml]
   workflow_dispatch:
+  schedule:
+    - cron: "17 * * * *"
 
 permissions:
   contents: read
+  # The build lists each design doc's reviewers and commenters (scripts/docs_hooks.py).
+  pull-requests: read
 
 env:
   # Hides a notice about MkDocs 2.0 that does not apply; see mkdocs.yml.
   NO_MKDOCS_2_WARNING: "1"
 
+# A newer pull request build replaces an older one. On main, a build runs to the end, and
+# only the newest one waiting runs after it.
 concurrency:
   group: docs-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   build:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
+        with:
+          # Every commit, so each design doc's contributors come from its whole history.
+          fetch-depth: 0
       - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
@@ -34,6 +48,8 @@ jobs:
           cache-dependency-path: docs/requirements.txt
       - run: pip install -r docs/requirements.txt
       - run: mkdocs build --strict
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - uses: actions/upload-pages-artifact@v5
         if: github.ref == 'refs/heads/main'
         with:

@@ -1,0 +1,6 @@
+/* The "Last updated" line under each page's title (scripts/docs_hooks.py). */
+.md-typeset .last-updated {
+  margin-top: -1em;
+  color: var(--md-default-fg-color--light);
+  font-size: 0.75rem;
+}

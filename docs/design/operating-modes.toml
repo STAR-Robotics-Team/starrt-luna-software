@@ -1,0 +1,107 @@
+# Registry for the operating modes design (operating-modes.md): the mode manager, the power
+# panel reading, their interfaces, and the open questions. See "Registries" in README.md,
+# then run scripts/design render.
+
+[[node]]
+id = "mode_manager"
+name = "`mode_manager`"
+package = "`luna_modes` [TBR: proposed name]"
+runs_on = "Robot computer"
+element = "SW.1.1"
+does = "Owns the robot state and task mode, runs the boot self-test, watches the heartbeat, faults, and battery, and accepts or refuses mode requests"
+subscribes = ["/operator/heartbeat", "/diagnostics", "/power/battery", "/mechanism/status"]
+
+[[node.publishes]]
+name = "/robot/mode"
+type = "luna_interfaces/msg/RobotMode"
+rate = "10 Hz and on change"
+qos = "reliable, transient local, depth 1"
+
+[[node.serves]]
+name = "/robot/request_mode"
+type = "luna_interfaces/srv/RequestMode"
+rate = "On demand"
+qos = "default"
+
+[[node.serves]]
+name = "/robot/request_task"
+type = "luna_interfaces/srv/RequestTask"
+rate = "On demand"
+qos = "default"
+
+[[node]]
+id = "power_panel"
+name = "Power panel reading node"
+package = "[TBD: operating modes v1 (1.19)]"
+runs_on = "Robot computer"
+element = "SW.1.4"
+does = "Decodes the PDP's CAN frames from can0 (section 5) and publishes the battery voltage, each channel's current, and the energy used. It is a node of its own, since reading the PDP needs no Phoenix library."
+
+[[node.publishes]]
+name = "/power/battery"
+type = "sensor_msgs/msg/BatteryState"
+rate = "10 Hz"
+qos = "best effort, depth 1"
+
+# ----------------------------------------------------------------------------------------
+# Open questions (section 9). Who answers each one, and by when, is in Turgor.
+# ----------------------------------------------------------------------------------------
+
+[[question]]
+number = 1
+status = "decided"
+decided = 2026-10-27
+text = "Keep the 4S LiPo (16.8 V full), and charge the rover's packs to at most 4.00 V per cell (16.0 V) while the rover still has the Victor SPX ([User's Guide, p. 3](../sources.md#ctre-victor-spx-guide)), PDP ([User's Guide, p. 6](../sources.md#ctre-pdp-guide)), and VRM ([User's Guide, p. 5](../sources.md#ctre-vrm-guide)), which are rated to 16 V. That keeps all three in range, at about 73% of the energy a full charge stores ([BU-808, section \"What Causes Lithium-ion to Age?\"](../sources.md#battery-university-bu-808)). The bench testbed charges its packs fully, since every part on it is rated to 18 V or more. The ToolkitRC M7 charges LiPo to 4.20 V per cell ([M7 Manual, p. 14](../sources.md#toolkitrc-m7-manual)) and can lower that by only 50 mV ([M7 Manual, p. 19](../sources.md#toolkitrc-m7-manual)), so the team is buying a charger that can stop at 4.00 V [TBR: the iCharger X6, whose retailer lists a per-pack end voltage of 3.85 to 4.35 V per cell]. [TBR: The boot self-test refuses to enable while the PDP reads above 16.0 V, so one full charge cannot slip through.]"
+
+[[question]]
+number = 2
+status = "open"
+turgor = ["4.1"]
+text = "Does the robot drive while digging? A comment on the Spring 2026 power budget (cell M3) asks the same. If not, EXCAVATE allows no drive. [TBR: the software lead answered yes, at creep output, in the teleoperation review on 2026-10-23; for Mechanical to confirm.]"
+
+[[question]]
+number = 3
+status = "open"
+turgor = ["4.1"]
+text = "Does the conveyor run during DUMP? [TBR: the software lead answered yes in the teleoperation review on 2026-10-23; for Mechanical to confirm.]"
+
+[[question]]
+number = 4
+status = "open"
+turgor = ["4.1"]
+text = "Which sensors tell software that the excavator is stowed and the hatch is closed? The entry guards need them. For Mechanical and Electrical."
+
+[[question]]
+number = 5
+status = "open"
+turgor = ["4.3"]
+text = "Which motor controller runs each mechanism motor? Motors that need a current limit must be on a Talon SRX: the excavator's 775 RedLine (130 A stall, [test report, p. 1](../sources.md#andymark-775-redline-report)) and the depth actuators (about 50 A stall, [Pololu product page, section \"Using the actuator\"](../sources.md#pololu-lact18-500apl)). For Electrical."
+
+[[question]]
+number = 6
+status = "open"
+turgor = ["3.6"]
+text = "Does one process's Phoenix enable keep another process's motor controllers enabled? This decides which node feeds the enable. With Phoenix 5 and Phoenix 6 in separate nodes (section 5), also check whether either library's enable reaches the other's controllers. Test on the bench."
+
+[[question]]
+number = 7
+status = "decided"
+decided = 2026-10-28
+text = "The robot computer gets its own battery ([§13.2.11, p. 42](../sources.md#nasa-lunabotics-guidebook-2027)) and its own energy logger, with the two batteries' negatives tied at one point, so an E-stop does not reboot it or cut its logs (section 5)."
+
+[[question]]
+number = 8
+status = "open"
+text = "Ask the organizers: does energy used during the 10-minute setup count, and does a separate compute battery have to go through the energy logger?"
+
+[[question]]
+number = 9
+status = "open"
+turgor = ["5.6"]
+text = "Should `link_timeout` be longer in AUTO, to ride through Wi-Fi dropouts? Measure dropouts in the pits first."
+
+[[question]]
+number = 10
+status = "open"
+turgor = ["4.1"]
+text = "Does anything deploy after the run starts (stowed envelope 150 × 75 × 75 cm, [§13.3, p. 42](../sources.md#nasa-lunabotics-guidebook-2027))? If so, add a DEPLOY step. For Mechanical."

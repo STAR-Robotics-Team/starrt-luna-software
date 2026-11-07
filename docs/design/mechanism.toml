@@ -1,0 +1,20 @@
+# Registry for the mechanism design (mechanism.md, deliverable 4.2, not written yet).
+# These rows are the contract the other docs build against until the mechanism doc
+# confirms or changes them. See "Registries" in README.md, then run scripts/design render.
+
+[[node]]
+id = "mechanism"
+name = "Mechanism node"
+package = "`luna_mechanism`"
+runs_on = "Robot computer"
+element = "SW.1.3"
+does = "Runs each mechanism actuator only when the mode allows it, within the mode's limits, and reports whether the excavator is stowed and the hatch is closed"
+subscribes = ["/robot/mode", "mechanism-command"]
+publishes_shared = ["/diagnostics"]
+
+[[node.publishes]]
+name = "/mechanism/status"
+type = "[TBD: mechanism doc (4.2)]"
+rate = "[TBD: mechanism doc (4.2)]"
+qos = "[TBD: mechanism doc (4.2)]"
+

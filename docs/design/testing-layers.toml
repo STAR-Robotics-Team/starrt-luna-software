@@ -1,0 +1,14 @@
+# Registry for testing layers (testing-layers.md): its open questions. See "Registries" in
+# README.md, then run scripts/design render.
+
+[[question]]
+number = 1
+status = "open"
+turgor = ["1.3"]
+text = "Where do bench procedures, robot procedures, and test logs live: beside each package's code, or in one folder? The answer becomes a template."
+
+[[question]]
+number = 2
+status = "open"
+turgor = ["1.4"]
+text = "The launch arguments' names and values (1.4). These pages use `backend` for the whole robot and each system's name, such as `drivetrain`, for one system, with the values `stub`, `fake_motor_controllers`, `gazebo`, and `real`, as an example."

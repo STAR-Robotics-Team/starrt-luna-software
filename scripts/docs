@@ -35,6 +35,16 @@ run=(docker run --rm --user "$(id -u):$(id -g)" --volume "$repo:/docs"
 if [ -t 0 ]; then
   run+=(--interactive --tty)
 fi
+# With a GitHub token, each design doc's people table matches usernames to names and lists
+# reviewers, as on the published site (scripts/docs_hooks.py). Use GITHUB_TOKEN if it is
+# set, or the GitHub CLI's token if you are signed in with gh auth login.
+if [ -z "${GITHUB_TOKEN:-}" ] && command -v gh > /dev/null 2>&1; then
+  GITHUB_TOKEN=$(gh auth token 2> /dev/null || true)
+fi
+if [ -n "${GITHUB_TOKEN:-}" ]; then
+  export GITHUB_TOKEN
+  run+=(--env GITHUB_TOKEN)
+fi
 
 case "${1:-}" in
   serve)

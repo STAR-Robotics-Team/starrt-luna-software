@@ -68,6 +68,19 @@ checked = 2026-10-07
 notes = "Drive motor data at 12 V: free and stall current, stall torque, torque constant."
 
 [[source]]
+id = "meanwell-rsd-30-spec"
+primary = true
+group = "Datasheets and manuals"
+title = "RSD-30 series: 30W Reliable Railway DC-DC Converter"
+publisher = "Mean Well"
+version = "RSD-30-SPEC 2026-07-09"
+url = "https://www.meanwell.com/Upload/PDF/RSD-30/RSD-30-SPEC.PDF"
+format = "pdf"
+sha256 = "fe0b78cce95fea8e43848c43e6995d0e11e2417be5b8d9f92f8a2bc1b36404c8"
+checked = 2026-10-28
+notes = "The 12 V and 5 V sensor converters the grant budgets: 9 to 36 V input, 4 kV input-to-output isolation, and shutdown below 9 V with automatic recovery."
+
+[[source]]
 id = "andymark-775-redline-report"
 primary = true
 group = "Datasheets and manuals"
@@ -142,8 +155,34 @@ version = "3/28/2018"
 url = "https://ctre.download/files/user-manual/PDP%20User's%20Guide.pdf"
 format = "pdf"
 sha256 = "224b3486e9db72e89f9a192870d2093d7c75b22a3680fd9ea2e20b9e9087fc65"
-checked = 2026-10-07
-notes = "Channels, fused outputs, wire sizes, input range, CAN rate, and the termination jumper."
+checked = 2026-10-26
+notes = "Channels, fused outputs, wire sizes, input range and absolute maximum, CAN rate, the termination jumper, and the firmware needed for correct power and energy."
+
+[[source]]
+id = "toolkitrc-m7-manual"
+primary = true
+group = "Datasheets and manuals"
+title = "M7 Manual"
+publisher = "ToolkitRC"
+version = "V1.0 2021.01"
+url = "https://download.toolkitrc.com/wp-content/uploads/2024/09/M7-Manual-V1.0-2.pdf"
+format = "pdf"
+sha256 = "2c402a03fc9fec1ea05e303e80b8bf874c691265348dc80855ea1cf612d3709c"
+checked = 2026-10-26
+notes = "The LiPo full charge voltage, and how far the charge cutoff can be lowered from it."
+
+[[source]]
+id = "ctre-pdp2-guide"
+primary = true
+group = "Datasheets and manuals"
+title = "PDP 2.0 User's Guide"
+publisher = "CTRE"
+version = "Revision 1.1, 30-Jun-2025"
+url = "https://ctre.download/files/user-manual/PDP%202.0%20User's%20Guide.pdf"
+format = "pdf"
+sha256 = "9d8817584c691a2a02d5220c498d17b6a817c6b47577447e03e6fe0f21db865c"
+checked = 2026-10-26
+notes = "The PDP 2.0 is a passive panel: breaker slots and wire terminals, with no CAN and no current sensing. Not a spare for our PDP."
 
 [[source]]
 id = "nvidia-orin-nano-carrier-spec"
@@ -382,6 +421,44 @@ checked = 2026-10-07
 notes = "FeedEnable(timeoutMs): the controllers disable themselves when the enable is not fed again within the timeout."
 
 [[source]]
+id = "ctre-phoenix6-enabling-actuators"
+primary = true
+group = "Software references"
+title = "Phoenix 6 documentation: Enabling Actuators"
+publisher = "CTRE"
+url = "https://v6.docs.ctr-electronics.com/en/stable/docs/api-reference/api-usage/enabling-actuators.html"
+format = "web"
+expect = "Non-FRC Applications"
+checked = 2026-10-27
+notes = "Outside FRC, Phoenix 6 actuators need Unmanaged.feedEnable() called periodically; a device used with a roboRIO stays FRC-locked until factory-defaulted."
+
+[[source]]
+id = "ctre-phoenix5-primer"
+primary = true
+group = "Software references"
+title = "Phoenix 5 documentation: Primer: What is Phoenix v5 Software"
+publisher = "CTRE"
+url = "https://docs.ctre-phoenix.com/en/stable/ch03_PrimerPhoenixSoft.html"
+format = "web"
+expect = "PCM and PDP API are built into the core WPI distribution"
+checked = 2026-10-26
+notes = "Phoenix 5 does not include the PDP's API; WPILib does."
+
+[[source]]
+id = "wpilib-ctre-pdp-driver"
+primary = false
+group = "Software references"
+title = "allwpilib: hal/src/main/native/systemcore/CTREPDP.cpp"
+publisher = "WPILib"
+version = "Commit 4817543"
+url = "https://github.com/wpilibsuite/allwpilib/blob/4817543253e343afcf2b630537e995d74d21db62/hal/src/main/native/systemcore/CTREPDP.cpp"
+fetch_url = "https://raw.githubusercontent.com/wpilibsuite/allwpilib/4817543253e343afcf2b630537e995d74d21db62/hal/src/main/native/systemcore/CTREPDP.cpp"
+format = "web"
+expect = "PdpStatusEnergy"
+checked = 2026-10-26
+notes = "The PDP's status frames and their layout, read without sending any request. WPILib's code, not CTRE's: CTRE does not publish the frames."
+
+[[source]]
 id = "ros-rep-145"
 primary = true
 group = "Software references"
@@ -469,3 +546,15 @@ format = "pdf"
 sha256 = "52d22b3e3ae7630e13078f9144793cc4e78d897d9c1599a05e20d0a949af5f83"
 checked = 2026-10-07
 notes = "NASA Glenn's own 30% power growth practice. Its AIAA S-120A growth table is a reproduction; the standard itself is paywalled."
+
+[[source]]
+id = "battery-university-bu-808"
+primary = false
+group = "Engineering practice"
+title = "BU-808: How to Prolong Lithium-based Batteries"
+publisher = "Battery University"
+url = "https://batteryuniversity.com/article/bu-808-how-to-prolong-lithium-based-batteries"
+format = "web"
+expect = "Discharge cycles and capacity as a function of charge voltage limit"
+checked = 2026-10-26
+notes = "Table 4: the energy a cobalt-based lithium cell stores when charged to less than 4.20 V. Estimates, not a datasheet for our packs."

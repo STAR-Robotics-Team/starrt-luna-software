@@ -34,10 +34,11 @@ settled, so nobody builds on it as if it were:
 | Marker | Means | Example | On the website |
 | --- | --- | --- | --- |
 | `[TBD: ...]` | To be determined: not decided or not known yet | `[TBD: the sensor suite evaluation (6.1) picks it]` | [TBD: the sensor suite evaluation (6.1) picks it] |
-| `[TBR: ...]` | To be resolved: written down, but not confirmed. A proposal, an estimate, an assumption, or something not tested yet. | `[TBR: 30 A, for the electrical lead to confirm]` | [TBR: 30 A, for the electrical lead to confirm] |
+| `[TBR: ...]` | To be resolved: written down, but not confirmed. A proposal, an estimate, an assumption, or something not tested yet. | `[TBR: 30 A, for Electrical to confirm]` | [TBR: 30 A, for Electrical to confirm] |
 
-- **Say who settles it,** such as a deliverable, an open question, or a person, so readers
-  know where to look.
+- **Say where it gets settled:** a Turgor deliverable, an open question, or another team,
+  so readers know where to look. Never name a person: who works on it, and by when, is in
+  Turgor, and changes there without a pull request.
 - **Use `[TBD]` or `[TBR]` alone** in a table cell that says nothing else, or after a
   table column's name to mark every value in that column.
 - **Keep each marker inside one paragraph, list item, or table cell.** The website build

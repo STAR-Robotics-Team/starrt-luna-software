@@ -1,0 +1,9 @@
+# The test sheet: the Google Sheet that holds the end-to-end test procedures and their
+# runs, one tab per procedure. Testers write procedures and record runs there, not here.
+# The website reads the sheet live (docs/javascripts/test-sheet.js), and scripts/design
+# check reads it to make sure each procedure names only the nodes, interfaces, and TPMs
+# the registries define. See docs/design/end-to-end-tests.md.
+
+[[sheet]]
+edit_url = "https://docs.google.com/spreadsheets/d/1qYh5hzQPgHA6WQpqN9SrjHDDrfeMzqhxvYa_3uOBYCk/edit"
+published = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSEq7UiHTIVmG_7BxFXVImzK7gJyREeR-F4SsWEld4z7hvEtR7XihwR2nUI1nQNEwGXuo1uRkYja8dO/pub"

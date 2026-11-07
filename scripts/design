@@ -1,0 +1,1652 @@
+#!/usr/bin/env python3
+"""Keeps the design docs' shared tables in registries, and checks that they fit together.
+
+Each design doc has a registry beside it, docs/design/<doc>.toml, that holds its software
+elements, nodes, and open questions. Each node defines the topics it publishes and the
+services and actions it serves, so every interface lives with its only publisher or
+server; a topic many nodes publish by design is a [[shared]] entry instead. A doc shows
+them in tables that this script writes between two markers:
+
+    <!-- design: interfaces -->
+    (the generated table)
+    <!-- /design -->
+
+It also writes pages built from every registry: docs/design/interfaces.md (every node and
+interface), docs/design/performance-budgets.md (every technical performance measure, its
+budget, and its measurements, from performance-budgets.toml), docs/design/end-to-end-tests.md
+(the end-to-end test procedures), and docs/design/open-items.md (every open question, and
+every [TBD] and [TBR] marker in the docs).
+
+The end-to-end test procedures, and their runs, live in the test sheet: a Google Sheet,
+one tab per procedure (the [[sheet]] in end-to-end-tests.toml). The pages read it live in
+the browser; this script reads it too, to check it against the registries.
+
+    scripts/design render       Rewrite every generated table and page. Offline.
+    scripts/design check        Check the registries, that every generated table and page is
+                                up to date, and that the test sheet names only what the
+                                registries define. CI runs it on every pull request.
+    scripts/design sheet-json   Print the test sheet as this script reads it, as JSON.
+
+Needs only Python 3.11 or newer. See "Registries" in docs/design/README.md.
+"""
+import argparse
+import re
+import sys
+import tomllib
+import unicodedata
+from datetime import date
+from pathlib import Path
+
+REPO = Path(__file__).resolve().parent.parent
+DOCS = REPO / "docs"
+DESIGN = DOCS / "design"
+INTERFACES_PAGE = DESIGN / "interfaces.md"
+OPEN_ITEMS_PAGE = DESIGN / "open-items.md"
+BUDGETS_PAGE = DESIGN / "performance-budgets.md"
+PROCEDURES_PAGE = DESIGN / "end-to-end-tests.md"
+LAYERS = ("Sim", "Bench", "Robot")
+TEMPLATE = DESIGN / "template.md"
+# Pages generated from other data, which the open items scan skips.
+GENERATED_PAGES = {INTERFACES_PAGE, OPEN_ITEMS_PAGE, BUDGETS_PAGE, PROCEDURES_PAGE, DOCS / "sources.md"}
+# Pages that show markers as examples of how to write them.
+EXAMPLE_PAGES = {DOCS / "writing-docs.md"}
+# Docs listed first, in this order; the rest follow alphabetically.
+DOC_ORDER = ["system", "operating-modes"]
+
+IFACE = [
+    ("name", True, "Its name, or a marker while it has none"),
+    ("type", True, "Its message, service, or action type"),
+    ("rate", True, "How often it is published, or `On demand`"),
+    ("qos", True, "Its QoS"),
+    ("id", False, "The key other nodes use for it when its name is a marker; otherwise its name"),
+    ("note", False, "A sentence shown under the table on the Interfaces page"),
+]
+# Every kind of registry entry: (where it goes, what it is), then its fields as (field,
+# required, what it holds). The README's field reference is generated from this.
+SCHEMA = {
+    "element": (("`system.toml`", "A software element from the PDR's system hierarchy"), [
+        ("id", True, "Its ID in the hierarchy, such as `SW.1.2`"),
+        ("name", True, "Its name"),
+        ("function", True, "What it does, in one sentence"),
+        ("doc", True, "The design doc that designs it, such as `drivetrain.md`"),
+        ("parent", False, "The ID of the element above it"),
+        ("connects_to", False, "What it connects to outside software"),
+        ("turgor", False, "The Turgor deliverables that write its design doc, such as `[\"3.1\"]`"),
+    ]),
+    "node": (("Each doc's registry", "A node the doc designs"), [
+        ("id", True, "The key other entries use for it: its ROS name, once it has one"),
+        ("name", True, "What tables show: the ROS name in code font, or plain words while it has none"),
+        ("element", True, "The ID of its element"),
+        ("runs_on", True, "The computer it runs on"),
+        ("does", True, "What it does"),
+        ("package", False, "Its ROS package"),
+        ("subscribes", False, "IDs of the topics it subscribes to"),
+        ("calls", False, "IDs of the services it calls and the actions it sends goals to"),
+        ("publishes_shared", False, "IDs of the shared topics it publishes, such as `/diagnostics`"),
+    ]),
+    "node.publishes": (("Under its `[[node]]`", "A topic the node publishes. No other node publishes it."), IFACE),
+    "node.serves": (("Under its `[[node]]`", "A service the node serves. No other node serves it."), IFACE),
+    "node.serves_actions": (("Under its `[[node]]`", "An action the node serves. No other node serves it."), IFACE),
+    "shared": (("`system.toml`", "A topic many nodes publish by design, such as `/diagnostics`"), IFACE),
+    "question": (("Each doc's registry", "A question in the doc's section 9, open or decided"), [
+        ("number", True, "Its number in the doc, which never changes"),
+        ("text", True, "The question, or once decided, the decision"),
+        ("status", True, "`open` or `decided`"),
+        ("decided", False, "The date it was decided, such as 2026-10-27; required once decided"),
+        ("turgor", False, "The Turgor deliverables that answer it, such as `[\"5.7\"]`"),
+    ]),
+    "tpm": (("`performance-budgets.toml`", "A technical performance measure and its budget"), [
+        ("id", True, "Its ID, such as `TPM-2`"),
+        ("measure", True, "The one quantity it measures"),
+        ("unit", True, "Its one unit"),
+        ("source", True, "The PMP TPM and guidebook rule it tracks, or Derived and what it protects"),
+        ("threshold", True, "The least acceptable value"),
+        ("goal", True, "The target value"),
+        ("budget", False, "The title of its budget table"),
+        ("part", False, "The heading of the budget table's first column"),
+        ("elements_header", False, "The heading of its elements column"),
+        ("allocation", False, "The heading of its allocation column"),
+        ("budget_unit", False, "The unit of each row's allocation, shown in each doc's Budgets table"),
+        ("cases", False, "Column names when the budget differs by case, such as TELEOP and AUTO"),
+        ("limit", False, "The most the counted parts may add up to; the check enforces it"),
+        ("notes", False, "Sentences shown under the budget table"),
+        ("total_label", False, "The total row's label, when it is not Total"),
+        ("total_role", False, "The element that owns the total"),
+        ("none", False, "Why it has no budget, shown instead of one"),
+        ("better", False, "`lower` or `higher`: which way is better, so a measurement can be judged"),
+        ("threshold_value", False, "The threshold as a number in its unit, to judge measurements against"),
+        ("goal_value", False, "The goal as a number in its unit, to judge measurements against"),
+    ]),
+    "tpm.row": (("Under its `[[tpm]]`", "One part of the TPM's budget"), [
+        ("part", True, "This part of the budget"),
+        ("elements", False, "IDs of the elements it falls to; each doc's Budgets table shows the rows that name its elements"),
+        ("role", False, "What each element does for this part, shown instead of the IDs"),
+        ("value", False, "The allocation as shown, such as `≤150`; required unless the TPM has cases"),
+        ("amount", False, "The number the total counts; leave it out for a part the total does not count"),
+        ("amounts", False, "One number per case, for a TPM with cases"),
+        ("basis", False, "Where the value comes from"),
+        ("unit", False, "This row's unit, when it differs from the TPM's"),
+    ]),
+    "sheet": (("`end-to-end-tests.toml`", "The test sheet: the Google Sheet that holds the end-to-end test procedures and their runs, one tab per procedure"), [
+        ("edit_url", True, "The sheet's address, where testers write procedures and record runs"),
+        ("published", False, "Its published address (File, Share, Publish to web), ending in /pub; the website reads the sheet from it"),
+    ]),
+}
+# Tables written under an entry: (parent kind, key) -> schema name.
+SUBTABLES = {"row": "tpm.row"}
+
+
+def fields(table):
+    """(required, optional) field names of one kind of entry."""
+    entries = SCHEMA[table][1]
+    return [f for f, req, _ in entries if req], [f for f, req, _ in entries if not req]
+
+
+# The interfaces a node defines, under it, and the kind each one is.
+NESTED = {"publishes": "topic", "serves": "service", "serves_actions": "action"}
+FIELDS = {t: fields(t) for t in ("element", "node", "shared", "question", "tpm", "sheet")}
+FIELDS["node"][1].extend(NESTED)
+FIELDS["tpm"][1].append("row")
+LISTS = {"subscribes", "calls", "publishes_shared", "turgor", "elements", "cases", "notes"}
+NUMBERS = {"limit", "amount", "threshold_value", "goal_value"}
+TURGOR = re.compile(r"\d+\.\d+")
+
+START = re.compile(r"<!-- design: ([a-z]+)((?: [a-z]+)*)(?: \([^)]*\))? -->")
+END = "<!-- /design -->"
+# Each block a doc can hold: (its options, what it shows). The README's list is generated
+# from this.
+BLOCK_HELP = {
+    "nodes": (["connected"], "The nodes in this doc's registry. With `connected`, also every node that publishes or subscribes to this doc's interfaces, with its design doc."),
+    "interfaces": ([], "The topics, services, and actions this doc's nodes define, then the ones they use from other docs"),
+    "questions": ([], "This doc's open and decided questions"),
+    "budgets": ([], "Every budget row in `performance-budgets.toml` that names one of this doc's elements"),
+    "elements": ([], "Every software element"),
+    "graph": ([], "A diagram of every node, with an arrow for each topic and call"),
+    "fields": ([], "This reference of registry fields"),
+    "blocks": ([], "This list of blocks"),
+}
+BLOCKS = {kind: options for kind, (options, _) in BLOCK_HELP.items()}
+# Blocks that show the doc's own registry, so the doc needs one beside it.
+OWN_REGISTRY = {"nodes", "interfaces", "questions", "budgets"}
+NOTE = "generated from {registry} by scripts/design render: edit that file, not this table"
+
+
+class Problems:
+    """Collects errors and warnings so a check can report all of them at once."""
+
+    def __init__(self):
+        self.errors = []
+        self.warnings = []
+
+    def error(self, message):
+        self.errors.append(message)
+
+    def warn(self, message):
+        self.warnings.append(message)
+
+    def report(self):
+        for message in self.warnings:
+            print(f"warning: {message}", file=sys.stderr)
+        for message in self.errors:
+            print(f"error: {message}", file=sys.stderr)
+        return 1 if self.errors else 0
+
+
+# ----------------------------------------------------------------------------------------
+# Registries
+# ----------------------------------------------------------------------------------------
+
+class Registry:
+    """Every registry's entries, keyed for lookup, and where each one is defined."""
+
+    def __init__(self):
+        self.elements = {}    # id -> entry
+        self.nodes = {}       # id -> entry
+        self.interfaces = {}  # id -> entry
+        self.owner = {}       # id(interface) -> id of the node that publishes or serves it
+        self.questions = {}   # doc stem -> [entries]
+        self.tpms = []        # entries, in order
+        self.sheet = None     # the test sheet, if one is set
+        self.home = {}        # id(entry) -> doc stem of the registry that defines it
+
+    def doc_of(self, entry):
+        return self.home[id(entry)]
+
+    def publishers(self, iface):
+        if iface.get("shared"):
+            return [n for n in self.nodes.values() if iface["id"] in n.get("publishes_shared", [])]
+        return [self.nodes[self.owner[id(iface)]]]
+
+    def subscribers(self, iface):
+        verb = "subscribes" if iface["kind"] == "topic" else "calls"
+        return [n for n in self.nodes.values() if iface["id"] in n.get(verb, [])]
+
+
+def registry_files():
+    return sorted(DESIGN.glob("*.toml"), key=doc_sort_key)
+
+
+def doc_sort_key(path):
+    stem = path.stem
+    return (DOC_ORDER.index(stem) if stem in DOC_ORDER else len(DOC_ORDER), stem)
+
+
+def check_value(problems, where, key, value):
+    if key in LISTS:
+        if not isinstance(value, list) or not all(isinstance(v, str) for v in value):
+            problems.error(f"{where}: {key} must be a list of strings")
+            return
+        values = value
+    elif key in NUMBERS:
+        if not isinstance(value, (int, float)) or isinstance(value, bool):
+            problems.error(f"{where}: {key} must be a number")
+        return
+    elif key == "amounts":
+        if not isinstance(value, list) or not all(isinstance(v, (int, float)) for v in value):
+            problems.error(f"{where}: amounts must be a list of numbers")
+        return
+    elif key in SUBTABLES:
+        name = SUBTABLES[key]
+        if not isinstance(value, list) or not all(isinstance(v, dict) for v in value):
+            problems.error(f"{where}: {key} must be [[{name}]] entries")
+            return
+        for n, row in enumerate(value, 1):
+            check_entry(problems, f"{where}, {key} {n}", row, *fields(name))
+        return
+    elif key in NESTED:
+        if not isinstance(value, list) or not all(isinstance(v, dict) for v in value):
+            problems.error(f"{where}: {key} must be [[node.{key}]] entries, one per interface")
+        return
+    elif key == "number":
+        if not isinstance(value, int):
+            problems.error(f"{where}: number must be a whole number")
+        return
+    elif key in ("decided", "date"):
+        if not isinstance(value, date):
+            problems.error(f"{where}: {key} must be a date, such as 2026-10-27")
+        return
+    else:
+        if not isinstance(value, str) or not value.strip():
+            problems.error(f"{where}: {key} must be text")
+            return
+        values = [value]
+    for v in values:
+        if "|" in v or "\n" in v:
+            problems.error(f"{where}: {key} may not contain | or a line break, which would break the table")
+        if v.count("[") != v.count("]"):
+            problems.error(f"{where}: {key} has unbalanced brackets: {v!r}")
+
+
+def check_entry(problems, where, entry, required, optional):
+    for key in required:
+        if key not in entry:
+            problems.error(f"{where} has no {key}")
+    for key, value in entry.items():
+        if key not in required and key not in optional:
+            problems.error(f"{where} has an unknown field {key!r}")
+        else:
+            check_value(problems, where, key, value)
+
+
+def add_interface(problems, reg, where, stem, entry):
+    entry.setdefault("id", entry.get("name", ""))
+    reg.home[id(entry)] = stem
+    key = entry["id"]
+    if key in reg.interfaces:
+        problems.error(f"{where}: {key!r} is also defined in {reg.doc_of(reg.interfaces[key])}.toml. "
+                       "Only one node publishes or serves an interface; others subscribe to it or call it.")
+    reg.interfaces[key] = entry
+
+
+def load(problems):
+    reg = Registry()
+    for path in registry_files():
+        stem = path.stem
+        try:
+            with path.open("rb") as f:
+                data = tomllib.load(f)
+        except tomllib.TOMLDecodeError as e:
+            problems.error(f"{path.name}: {e}")
+            continue
+        for table in data:
+            if table not in FIELDS:
+                problems.error(f"{path.name}: unknown table [[{table}]]; use {', '.join(FIELDS)}")
+        for kind, (required, optional) in FIELDS.items():
+            for n, entry in enumerate(data.get(kind, []), 1):
+                label = entry.get("id") or entry.get("name") or entry.get("number") or n
+                where = f"{path.name}: {kind} {label}"
+                check_entry(problems, where, entry, required, optional)
+                reg.home[id(entry)] = stem
+                if kind == "shared":
+                    entry["kind"], entry["shared"] = "topic", True
+                    add_interface(problems, reg, where, stem, entry)
+                    continue
+                if kind == "node":
+                    for verb, iface_kind in NESTED.items():
+                        subs = entry.get(verb, [])
+                        for sub in subs if isinstance(subs, list) else []:
+                            if not isinstance(sub, dict):
+                                continue
+                            sub_where = f"{where} {verb} {sub.get('id') or sub.get('name')}"
+                            if "kind" in sub:
+                                sub.pop("kind")
+                                problems.error(f"{sub_where} has a kind, but the table says it: "
+                                               "[[node.publishes]] holds topics, [[node.serves]] services, "
+                                               "and [[node.serves_actions]] actions")
+                            check_entry(problems, sub_where, sub, *fields(f"node.{verb}"))
+                            sub["kind"] = iface_kind
+                            reg.owner[id(sub)] = entry.get("id")
+                            add_interface(problems, reg, sub_where, stem, sub)
+                if kind == "question":
+                    reg.questions.setdefault(stem, []).append(entry)
+                    continue
+                if kind == "tpm":
+                    reg.tpms.append(entry)
+                    continue
+                if kind == "sheet":
+                    if reg.sheet is not None:
+                        problems.error(f"{where}: there is one test sheet; this is a second [[sheet]]")
+                    reg.sheet = entry
+                    continue
+                store = {"element": reg.elements, "node": reg.nodes}[kind]
+                key = entry.get("id", "")
+                if key in store:
+                    problems.error(f"{where}: {kind} {key!r} is also defined in {reg.doc_of(store[key])}.toml")
+                store[key] = entry
+    return reg
+
+
+def validate(problems, reg):
+    for e in reg.elements.values():
+        where = f"{reg.doc_of(e)}.toml: element {e['id']}"
+        if e.get("parent") and e["parent"] not in reg.elements:
+            problems.error(f"{where}: no element {e['parent']!r} for its parent")
+        doc = e.get("doc", "")
+        if not re.fullmatch(r"[a-z0-9-]+\.md", doc):
+            problems.error(f"{where}: doc must be a design doc's file name, such as drivetrain.md")
+        elif not (DESIGN / doc).exists() and not (DESIGN / doc).with_suffix(".toml").exists():
+            problems.error(f"{where}: no {doc} or {Path(doc).stem}.toml in docs/design")
+        for t in e.get("turgor", []):
+            if not TURGOR.fullmatch(t):
+                problems.error(f"{where}: turgor holds deliverable numbers, such as 3.1, not {t!r}")
+    for n in reg.nodes.values():
+        where = f"{reg.doc_of(n)}.toml: node {n['id']}"
+        if n.get("element") not in reg.elements:
+            problems.error(f"{where}: no element {n.get('element')!r}")
+        for verb, kinds, defined_under in (("subscribes", ("topic",), "[[node.publishes]]"),
+                                           ("calls", ("service", "action"),
+                                            "[[node.serves]] or [[node.serves_actions]]")):
+            for ref in n.get(verb, []):
+                iface = reg.interfaces.get(ref)
+                if iface is None:
+                    problems.error(f"{where} {verb} {ref!r}, which no registry defines. The node that "
+                                   f"{'publishes' if verb == 'subscribes' else 'serves'} it defines it, "
+                                   f"under {defined_under} in its own registry.")
+                elif iface.get("kind") not in kinds:
+                    problems.error(f"{where} {verb} {ref!r}, which is a {iface.get('kind')}: "
+                                   f"a node {verb} only a {' or '.join(kinds)}")
+        for ref in n.get("publishes_shared", []):
+            iface = reg.interfaces.get(ref)
+            if iface is None or not iface.get("shared"):
+                whose = f", which {reg.owner[id(iface)]} publishes" if iface else ""
+                problems.error(f"{where} lists {ref!r} under publishes_shared{whose}. publishes_shared "
+                               "is for a topic many nodes publish by design, defined as a [[shared]] entry; "
+                               "a topic with one publisher is defined under that node's [[node.publishes]].")
+    for i in reg.interfaces.values():
+        where = f"{reg.doc_of(i)}.toml: {'shared topic' if i.get('shared') else 'interface'} {i['id']}"
+        if i.get("shared") and not reg.publishers(i):
+            problems.error(f"{where}: no node publishes it; list it under a node's publishes_shared")
+        if not reg.subscribers(i):
+            problems.warn(f"{where}: nothing uses it yet")
+    seen = set()
+    for tpm in reg.tpms:
+        where = f"{reg.doc_of(tpm)}.toml: {tpm.get('id')}"
+        if tpm.get("id") in seen:
+            problems.error(f"{where} appears twice")
+        seen.add(tpm.get("id"))
+        cases = tpm.get("cases", [])
+        for n, row in enumerate(tpm.get("row", []), 1):
+            for e in row.get("elements", []):
+                if e not in reg.elements:
+                    problems.error(f"{where}, row {n}: no element {e!r}")
+            if cases:
+                if len(row.get("amounts", [])) != len(cases):
+                    problems.error(f"{where}, row {n}: give amounts, one for each of the {len(cases)} cases")
+            elif "value" not in row:
+                problems.error(f"{where}, row {n} has no value")
+        for case, total, limit, _ in budget_totals(tpm):
+            if limit is not None and total > limit:
+                label = f" in {case}" if case else ""
+                problems.error(f"{where}: its parts{label} add up to {number(total)}, over its limit of {number(limit)}")
+    if reg.sheet:
+        for key, start in (("edit_url", "https://docs.google.com/spreadsheets/d/"),
+                           ("published", "https://docs.google.com/spreadsheets/d/e/")):
+            if key in reg.sheet and not str(reg.sheet[key]).startswith(start):
+                problems.error(f"end-to-end-tests.toml: the sheet's {key} must start with {start}")
+    for tpm in reg.tpms:
+        if ("threshold_value" in tpm or "goal_value" in tpm) and tpm.get("better") not in ("lower", "higher"):
+            problems.error(f"{reg.doc_of(tpm)}.toml: {tpm.get('id')}: better must be lower or higher, "
+                           "so a measurement can be judged against its values")
+    for stem, questions in reg.questions.items():
+        seen = set()
+        for q in questions:
+            where = f"{stem}.toml: question {q.get('number')}"
+            if q.get("number") in seen:
+                problems.error(f"{where} appears twice")
+            seen.add(q.get("number"))
+            status = q.get("status")
+            if status not in ("open", "decided"):
+                problems.error(f"{where}: status must be open or decided")
+            elif status == "decided" and "decided" not in q:
+                problems.error(f"{where}: a decided question needs the date it was decided")
+            elif status == "open" and "decided" in q:
+                problems.error(f"{where}: an open question has no decided date")
+            for t in q.get("turgor", []):
+                if not TURGOR.fullmatch(t):
+                    problems.error(f"{where}: turgor holds deliverable numbers, such as 5.7, not {t!r}")
+
+
+# ----------------------------------------------------------------------------------------
+# Rendering helpers
+# ----------------------------------------------------------------------------------------
+
+def table(header, rows):
+    out = ["| " + " | ".join(header) + " |", "| " + " | ".join("---" for _ in header) + " |"]
+    for row in rows:
+        out.append("| " + " | ".join(cell or " " for cell in row) + " |")
+    return out
+
+
+def code(name):
+    """Interface names in code font, unless they are not decided yet."""
+    return name if "[" in name else f"`{name}`"
+
+
+def doc_link(stem, reg=None):
+    """A link to a design doc from another page in docs/design, or its file name when it
+    is not written yet."""
+    path = DESIGN / f"{stem}.md"
+    if path.exists():
+        return f"[{doc_title(path)}]({path.name})"
+    deliverables = sorted({t for e in (reg.elements.values() if reg else []) if e["doc"] == f"{stem}.md"
+                           for t in e.get("turgor", [])})
+    when = f", not written yet ({', '.join(deliverables)})" if deliverables else ", not written yet"
+    return f"`{stem}.md`{when}"
+
+
+def doc_title(path):
+    for line in path.read_text(encoding="utf-8").splitlines():
+        if line.startswith("# "):
+            return line[2:].strip()
+    return path.stem
+
+
+def element_key(element_id):
+    """SW.1.10 after SW.1.9: the parts of an element's id, compared as numbers."""
+    return [int(p) if p.isdigit() else -1 for p in element_id.split(".")]
+
+
+def by_element(nodes):
+    return sorted(nodes, key=lambda n: (element_key(n["element"]), n["name"]))
+
+
+def element_label(reg, element_id):
+    e = reg.elements.get(element_id)
+    return f"{element_id} {e['name']}" if e else element_id
+
+
+def nodes_of(reg, stem):
+    return [n for n in reg.nodes.values() if reg.doc_of(n) == stem]
+
+
+def interfaces_of(reg, stem):
+    """Interfaces this doc defines, then the ones its nodes use from other docs."""
+    own_nodes = nodes_of(reg, stem)
+    used = set()
+    for n in own_nodes:
+        for verb in ("subscribes", "calls", "publishes_shared"):
+            used.update(n.get(verb, []))
+    defined = [i for i in reg.interfaces.values() if reg.doc_of(i) == stem]
+    others = [i for i in reg.interfaces.values() if i["id"] in used and reg.doc_of(i) != stem]
+    return defined + others
+
+
+def names(nodes):
+    return ", ".join(n["name"] for n in by_element(nodes))
+
+
+def interface_rows(reg, interfaces, defined_in=False):
+    rows = []
+    for i in interfaces:
+        row = [code(i["name"]), i["kind"], code(i["type"]), i["rate"],
+               names(reg.publishers(i)), names(reg.subscribers(i)) or "None yet", i["qos"]]
+        if defined_in:
+            row.append(doc_link(reg.doc_of(i), reg=reg))
+        rows.append(row)
+    return rows
+
+
+INTERFACE_HEADER = ["Name", "Kind", "Type", "Rate", "Publisher or server", "Subscriber or client", "QoS"]
+
+
+# ----------------------------------------------------------------------------------------
+# Blocks inside docs
+# ----------------------------------------------------------------------------------------
+
+def block_nodes(reg, stem, options):
+    nodes = nodes_of(reg, stem)
+    if "connected" in options:
+        ids = {n["id"] for n in nodes}
+        others = {}
+        for i in interfaces_of(reg, stem):
+            for n in reg.publishers(i) + reg.subscribers(i):
+                if n["id"] not in ids:
+                    others[n["id"]] = n
+        nodes += by_element(others.values())
+        rows = [[n["name"], n.get("package", "[TBD]"), n["runs_on"], element_label(reg, n["element"]),
+                 doc_link(reg.doc_of(n), reg=reg), n["does"]] for n in nodes]
+        return table(["Node", "Package", "Runs on", "Element", "Design doc", "What it does"], rows)
+    rows = [[n["name"], n.get("package", "[TBD]"), n["runs_on"], element_label(reg, n["element"]), n["does"]]
+            for n in nodes]
+    return table(["Node", "Package", "Runs on", "Element", "What it does"], rows)
+
+
+def block_interfaces(reg, stem, options):
+    return table(INTERFACE_HEADER, interface_rows(reg, interfaces_of(reg, stem)))
+
+
+def block_questions(reg, stem, options):
+    rows = []
+    for q in reg.questions.get(stem, []):
+        status = "Open" if q["status"] == "open" else f"Decided {q['decided'].isoformat()}"
+        rows.append([f"{q['number']}. {q['text']}", status, ", ".join(q.get("turgor", [])) or "None"])
+    return table(["Question", "Status", "Turgor"], rows)
+
+
+def block_elements(reg, stem, options):
+    rows = []
+    for e in sorted(reg.elements.values(), key=lambda e: element_key(e["id"])):
+        rows.append([e["id"], e["name"], e["function"], e.get("connects_to", "None"),
+                     doc_link(Path(e["doc"]).stem, reg=reg), ", ".join(e.get("turgor", [])) or "None"])
+    return table(["ID", "Element", "Function", "Connects to (other teams' parts)", "Design doc", "Turgor"], rows)
+
+
+def mermaid_text(text):
+    """Mermaid cannot show markers or code font, so it gets plain words and a short tag."""
+    tag = ""
+    if "[TBD" in text:
+        tag = " (TBD)"
+    elif "[TBR" in text:
+        tag = " (TBR)"
+    bare = re.fullmatch(r"\[(?:TBD|TBR): ([^,\]]+)[^\]]*\]", text.strip())
+    if bare:
+        # A name that is only a marker, such as "[TBD: obstacle map topic, ...]".
+        text = bare.group(1)
+    text = re.sub(r"\s*\[(?:TBD|TBR)(?::[^\]]*)?\]", "", text)
+    text = text.replace("`", "").replace('"', "#quot;").strip()
+    return (text or "not named yet") + tag
+
+
+def block_graph(reg, stem, options):
+    """Every node, grouped by the computer it runs on, with an arrow per topic or call.
+    Shared topics, such as /diagnostics, would add an arrow from nearly every node, so the
+    text around the graph names them instead."""
+    out = ["```mermaid", "flowchart LR"]
+    ids = {}
+    groups = {}
+    for n in by_element(reg.nodes.values()):
+        ids[n["id"]] = "n" + re.sub(r"[^A-Za-z0-9]", "_", n["id"])
+        groups.setdefault(mermaid_text(n["runs_on"]), []).append(n)
+    for g, (where, nodes) in enumerate(groups.items()):
+        out.append(f'  subgraph g{g}["{where}"]')
+        for n in nodes:
+            out.append(f'    {ids[n["id"]]}["{mermaid_text(n["name"])}"]')
+        out.append("  end")
+    for i in reg.interfaces.values():
+        if i.get("shared"):
+            continue
+        label = mermaid_text(i["name"])
+        arrow = "-->" if i["kind"] == "topic" else "-.->"
+        for p in reg.publishers(i):
+            for s in reg.subscribers(i):
+                if i["kind"] == "topic":
+                    out.append(f'  {ids[p["id"]]} {arrow}|"{label}"| {ids[s["id"]]}')
+                else:
+                    out.append(f'  {ids[s["id"]]} {arrow}|"{label}"| {ids[p["id"]]}')
+    out.append("```")
+    return out
+
+
+# ----------------------------------------------------------------------------------------
+# Performance budgets
+# ----------------------------------------------------------------------------------------
+
+def number(n):
+    """150 -> "150", 1000 -> "1,000", 11.5 -> "11.5"."""
+    if isinstance(n, float) and n.is_integer():
+        n = int(n)
+    return f"{n:,}" if isinstance(n, int) else f"{n:,.2f}".rstrip("0").rstrip(".")
+
+
+def unknown(row):
+    """A part of the budget that is not decided yet, so the total cannot count it."""
+    return "amount" not in row and "amounts" not in row and "[TBD" in row.get("value", "")
+
+
+def counted(row):
+    return "amount" in row or "amounts" in row
+
+
+def budget_totals(tpm):
+    """(case, total, limit, any part unknown) for each case, or one with case None."""
+    rows = tpm.get("row", [])
+    if not any(counted(r) for r in rows):
+        return []
+    limit = tpm.get("limit")
+    if tpm.get("cases"):
+        return [(case, sum(r["amounts"][i] for r in rows if len(r.get("amounts", [])) > i), limit, False)
+                for i, case in enumerate(tpm["cases"])]
+    return [(None, sum(r["amount"] for r in rows if "amount" in r), limit, any(unknown(r) for r in rows))]
+
+
+def tpm_title(tpm):
+    return f"{tpm['id']}: {tpm['measure'].split(' (')[0]}"
+
+
+def tpm_link(tpm, page=""):
+    return f"{page}#{slugify(tpm_title(tpm))}"
+
+
+def budget_table(tpm):
+    rows = tpm.get("row", [])
+    cases = tpm.get("cases", [])
+    has_unit = any("unit" in r for r in rows)
+    has_basis = any("basis" in r for r in rows)
+    header = [tpm.get("part", "Part"), tpm.get("elements_header", "Elements")]
+    header += cases or [tpm.get("allocation", "Allocation")]
+    header += ["Unit"] * has_unit + ["Basis"] * has_basis
+
+    def cells(r):
+        out = [r["part"], r.get("role") or ", ".join(r.get("elements", [])) or "None"]
+        out += [number(a) for a in r.get("amounts", [])] if cases else [r.get("value", "")]
+        return out + [r.get("unit", "")] * has_unit + [r.get("basis", "")] * has_basis
+
+    totals = budget_totals(tpm)
+    if not totals:
+        return table(header, [cells(r) for r in rows])
+    # Parts that add up come first, then the total, then rows the total does not count.
+    before = [r for r in rows if counted(r) or unknown(r)]
+    after = [r for r in rows if not (counted(r) or unknown(r))]
+    total_cells = []
+    for case, total, limit, missing in totals:
+        text = f"**{number(total)}**"
+        if limit is not None:
+            text += f" of {number(limit)}, leaving {number(limit - total)}"
+        if missing:
+            text += ", not counting the parts still TBD"
+        total_cells.append(text)
+    units = {r.get("unit") for r in rows if counted(r)}
+    total_row = [f"**{tpm.get('total_label', 'Total')}**", tpm.get("total_role", "")] + total_cells
+    total_row += [units.pop() if len(units) == 1 and None not in units else ""] * has_unit + [""] * has_basis
+    return table(header, [cells(r) for r in before] + [total_row] + [cells(r) for r in after])
+
+
+def carries(reg):
+    """{element id: set of TPM ids}: the TPMs each element's budgets name, and a parent
+    carries what its children carry."""
+    found = {e: set() for e in reg.elements}
+    for tpm in reg.tpms:
+        for r in tpm.get("row", []):
+            for e in r.get("elements", []):
+                found.setdefault(e, set()).add(tpm["id"])
+    for e in sorted(reg.elements, key=element_key, reverse=True):
+        parent = reg.elements[e].get("parent")
+        if parent in found:
+            found[parent] |= found[e]
+    return found
+
+
+def tpm_number(tpm_id):
+    return int(tpm_id.split("-")[1]) if tpm_id.split("-")[-1].isdigit() else 0
+
+
+def render_budgets_page(reg):
+    out = [
+        "# Performance budgets",
+        "",
+        "The technical performance measures (TPMs) the robot software is held to, and how each",
+        "one is split across the software elements in the",
+        "[system design](system.md#software-elements). Each TPM is one measurable quantity with",
+        "one unit:",
+        "",
+        "- **Source** is the higher-level requirement it tracks: a TPM in the PMP's Table 3, and",
+        "  the guidebook rule behind it. \"Derived\" means the PMP has no matching TPM, and the",
+        "  measure protects the ones it names.",
+        "- **Threshold** is the least acceptable value, and **goal** is the target, as in PMP",
+        "  Table 3.",
+        "- **Not allocated to software:** berm volume (software affects it only through TPM-1),",
+        "  dimensions, and dust tolerance. They belong to the hardware.",
+        "",
+        "Each design doc shows its own elements' budgets in its Budgets table. To change a",
+        "budget, edit `performance-budgets.toml` and run `scripts/design render`. The check",
+        "fails when a budget's parts add up to more than its limit, and every margin and total",
+        "here is computed, not typed.",
+        "",
+        "This page is generated from `docs/design/performance-budgets.toml` by",
+        "`scripts/design render`.",
+        "",
+        "## Measures",
+        "",
+    ]
+    rows = []
+    for tpm in reg.tpms:
+        budget = tpm.get("none") or f"[{tpm.get('budget', 'Budget')}]({tpm_link(tpm)})"
+        # The procedures that measure it are in the test sheet, which the page reads live.
+        by = f'<span class="test-sheet" data-view="measured-by" data-tpm="{tpm["id"]}"></span>'
+        rows.append([tpm["id"], tpm["measure"], tpm["unit"], tpm["source"], tpm["threshold"], tpm["goal"], budget, by])
+    out += table(["ID", "Measure", "Unit", "Source", "Threshold", "Goal", "Budget", "Measured by"], rows)
+    out += ["", "## Measurements", "",
+            "The latest value each TPM measured at each layer, from the runs in the",
+            f"[test sheet]({PROCEDURES_PAGE.name}#recording-a-run), judged against its threshold and",
+            "goal. This page reads the sheet each time it opens.", "", TEST_SHEET.format("measurements")]
+    out += ["", "## Budgets"]
+    for tpm in reg.tpms:
+        if not tpm.get("row"):
+            continue
+        out += ["", f"### {tpm_title(tpm)}", "", f"{tpm.get('budget', 'Budget')}.", ""]
+        out += budget_table(tpm)
+        if tpm.get("notes"):
+            out += [""] + [f"- {note}" for note in tpm["notes"]]
+    out += ["", "## What each element carries", "",
+            "The TPMs whose budgets name each element. A parent carries what its children carry,",
+            "and every element also carries TPM-13 (0 kg).", ""]
+    found = carries(reg)
+    rows = [[f"{e} {reg.elements[e]['name']}", ", ".join(sorted(found[e], key=tpm_number)) or "None"]
+            for e in sorted(reg.elements, key=element_key)]
+    out += table(["Element", "TPMs"], rows)
+    return "\n".join(out + ["", TEST_SHEET.format("data")]) + "\n"
+
+
+def block_budgets(reg, stem, options):
+    own = {eid for eid, e in reg.elements.items() if e["doc"] == f"{stem}.md"}
+    rows = []
+    for tpm in reg.tpms:
+        for r in tpm.get("row", []):
+            mine = [e for e in r.get("elements", []) if e in own]
+            if not mine:
+                continue
+            unit = r.get("unit") or tpm.get("budget_unit", "")
+            if tpm.get("cases"):
+                budget = ", ".join(f"{number(a)} {unit} in {case}" for a, case in zip(r["amounts"], tpm["cases"]))
+            else:
+                value = r.get("value", "")
+                budget = f"{value} {unit}" if unit and re.fullmatch(r"[≤≥]?[\d.,]+", value) else value
+            part = r["part"] + (f" ({r['role']})" if r.get("role") else "")
+            rows.append([f"[{tpm['id']}]({tpm_link(tpm, BUDGETS_PAGE.name)})", ", ".join(mine), part, budget])
+    if not rows:
+        rows = [["None", "", "", ""]]
+    return table(["TPM", "Element", "Part", "Budget"], rows)
+
+
+# ----------------------------------------------------------------------------------------
+# The test sheet: end-to-end test procedures and their runs
+# ----------------------------------------------------------------------------------------
+
+# Testers write each end-to-end test procedure, and record its runs, in one tab of a Google
+# Sheet (the [[sheet]] in end-to-end-tests.toml). A tab is a procedure when it has a
+# header row that starts with "Row" and has a "What happens" column. Each row below the
+# header is a Step, a Pass line, or a Measure, or one of the run rows: Layer, Date, and
+# Log. Each run takes a Result column and the Note column beside it.
+#
+# The website reads the sheet in the reader's browser (docs/javascripts/test-sheet.js), and
+# the build and the check read it here. Both readers turn the sheet into the same data,
+# and scripts/test-sheet-readers.js checks that they agree on a sample sheet: change them
+# together.
+TEST_SHEET = "<!-- test-sheet: {} -->"
+SHEET_COLUMNS = {"row": "kind", "actor": "actor", "node": "node", "interface": "interface",
+                 "tpm": "tpm", "what happens": "does"}
+TEMPLATE_TAB = "Template"
+MARKS = {"pass": "Pass", "fail": "Fail", "": ""}
+XLSX = "{http://schemas.openxmlformats.org/spreadsheetml/2006/main}"
+XLSX_RELS = "{http://schemas.openxmlformats.org/package/2006/relationships}"
+XLSX_ID = "{http://schemas.openxmlformats.org/officeDocument/2006/relationships}id"
+NUMBER = re.compile(r"[-+]?(?:[0-9]+\.?[0-9]*|\.[0-9]+)(?:[eE][-+]?[0-9]+)?")
+
+
+def read_workbook(data):
+    """[(tab name, {row: {column: value}})] from an .xlsx file's bytes, in tab order. Rows
+    and columns count from 1. A value is text, or a number for a number cell."""
+    import io
+    import xml.etree.ElementTree as ET
+    import zipfile
+    book = zipfile.ZipFile(io.BytesIO(data))
+
+    def part(name):
+        return ET.fromstring(book.read(name))
+
+    def words(item):
+        # A string's words are in its t element, or in the t of each rich-text run.
+        return "".join(t.text or "" for t in [*item.findall(XLSX + "t"), *item.findall(f"{XLSX}r/{XLSX}t")])
+
+    names = book.namelist()
+    shared = [words(si) for si in part("xl/sharedStrings.xml").findall(XLSX + "si")] \
+        if "xl/sharedStrings.xml" in names else []
+    targets = {rel.get("Id"): rel.get("Target") for rel in part("xl/_rels/workbook.xml.rels").iter(XLSX_RELS + "Relationship")}
+    tabs = []
+    for sheet in part("xl/workbook.xml").iter(XLSX + "sheet"):
+        target = targets[sheet.get(XLSX_ID)]
+        rows = {}
+        for cell in part(target[1:] if target.startswith("/") else f"xl/{target}").iter(XLSX + "c"):
+            kind, v = cell.get("t", "n"), cell.find(XLSX + "v")
+            raw = v.text or "" if v is not None else ""
+            if kind == "s":
+                value = shared[int(raw)]
+            elif kind == "inlineStr":
+                item = cell.find(XLSX + "is")
+                value = words(item) if item is not None else ""
+            elif kind == "b":
+                value = "TRUE" if raw == "1" else "FALSE"
+            elif kind in ("str", "e", "d"):
+                value = raw
+            else:
+                value = whole(float(raw)) if raw else ""
+            if value == "":
+                continue
+            ref = re.fullmatch(r"([A-Z]+)(\d+)", cell.get("r", ""))
+            column = 0
+            for letter in ref.group(1):
+                column = column * 26 + ord(letter) - 64
+            rows.setdefault(int(ref.group(2)), {})[column] = value
+        tabs.append((sheet.get("name"), rows))
+    return tabs
+
+
+def anchor(text):
+    """The anchor the website gives a heading with this plain text: Python-Markdown's toc
+    rule, which keeps underscores (slugify drops them, as Markdown would)."""
+    text = unicodedata.normalize("NFKD", text).encode("ascii", "ignore").decode("ascii")
+    return re.sub(r"[-\s]+", "-", re.sub(r"[^\w\s-]", "", text).strip().lower())
+
+
+def whole(n):
+    """812.0 -> 812, so a number reads the same in Python and JavaScript."""
+    return int(n) if n.is_integer() and abs(n) < 2 ** 53 else n
+
+
+def cell_text(value):
+    return value.strip() if isinstance(value, str) else str(value)
+
+
+def column_letters(column):
+    out = ""
+    while column:
+        column, rest = divmod(column - 1, 26)
+        out = chr(65 + rest) + out
+    return out
+
+
+def read_date(value):
+    """The ISO date in a date cell (a day count from 1899-12-30) or in text such as
+    2026-12-02 or 12/2/2026, or None."""
+    import datetime
+    if isinstance(value, (int, float)):
+        if not 1 <= value < 2958466:
+            return None
+        return (datetime.date(1899, 12, 30) + datetime.timedelta(days=int(value // 1))).isoformat()
+    text = value.strip()
+    if match := re.fullmatch(r"([0-9]{4})-([0-9]{1,2})-([0-9]{1,2})", text):
+        year, month, day = map(int, match.groups())
+    elif match := re.fullmatch(r"([0-9]{1,2})/([0-9]{1,2})/([0-9]{4})", text):
+        month, day, year = map(int, match.groups())
+    else:
+        return None
+    try:
+        return datetime.date(year, month, day).isoformat()
+    except ValueError:
+        return None
+
+
+def read_number(value):
+    """The number in a number cell, or in text such as 1,200; None if there is none."""
+    if isinstance(value, (int, float)):
+        return value
+    text = value.strip().replace(",", "")
+    return whole(float(text)) if NUMBER.fullmatch(text) else None
+
+
+def read_sheet(tabs, ids):
+    """The test sheet's procedures and their problems, from read_workbook's tabs:
+    {"procedures": [procedure], "problems": [problem]}. ids holds the IDs the registries
+    define, under "nodes", "interfaces", and "tpms". A problem is {"text", "reference"},
+    where reference means it names something no registry defines."""
+    ids = {kind: set(values) for kind, values in ids.items()}
+    procedures = []
+    for name, rows in tabs:
+        title = re.sub(r"\s+", " ", name).strip()
+        if title != TEMPLATE_TAB and (proc := read_procedure(title, rows, ids)):
+            procedures.append(proc)
+    problems, seen = [], {}
+    for proc in procedures:
+        if proc["slug"] in seen:
+            problems.append({"text": f'The tabs "{seen[proc["slug"]]}" and "{proc["title"]}" would have the same '
+                                     "link on the website: rename one.", "reference": False})
+        seen.setdefault(proc["slug"], proc["title"])
+    return {"procedures": procedures, "problems": problems}
+
+
+def read_procedure(title, rows, ids):
+    """One tab as a procedure, or None when it is not one (it has no header row)."""
+    def text(row, column):
+        return cell_text(rows.get(row, {}).get(column, "")) if row and column else ""
+
+    header = next((r for r in sorted(rows) if text(r, 1).lower() == "row"
+                   and "what happens" in {cell_text(v).lower() for v in rows[r].values()}), None)
+    if header is None:
+        return None
+    columns = {}
+    for column, value in sorted(rows[header].items()):
+        if key := SHEET_COLUMNS.get(cell_text(value).lower()):
+            columns.setdefault(key, column)
+    runs = [(c, c + 1 if text(header, c + 1).lower() == "note" else None)
+            for c, value in sorted(rows[header].items()) if cell_text(value).lower() == "result"]
+    proc = {"title": title, "slug": anchor(title), "purpose": "", "steps": [], "passes": [],
+            "measures": [], "runs": [], "problems": []}
+
+    def say(message, reference=False):
+        proc["problems"].append({"text": message, "reference": reference})
+
+    for r in sorted(rows):
+        if r < header and text(r, 1).lower() == "purpose" and not proc["purpose"]:
+            proc["purpose"] = next((cell_text(v) for c, v in sorted(rows[r].items()) if c > 1 and cell_text(v)), "")
+    fixed, entries = {}, []
+    for r in sorted(r for r in rows if r > header):
+        kind = text(r, 1)
+        fields = {key: text(r, columns.get(key)) for key in ("actor", "node", "interface", "tpm", "does")}
+        used = any(fields.values()) or any(text(r, rc) or text(r, nc) for rc, nc in runs)
+        if kind.lower() in ("layer", "date", "log"):
+            fixed.setdefault(kind.lower(), r)
+        elif not used:
+            continue
+        elif kind.lower() == "step":
+            entries.append(("step", {"row": r, **fields}))
+        elif kind.lower() == "pass":
+            entries.append(("pass", {"row": r, "tpm": fields["tpm"], "text": fields["does"]}))
+        elif kind.lower() == "measure":
+            entries.append(("measure", {"row": r, "tpm": fields["tpm"], "what": fields["does"]}))
+        elif not kind:
+            say(f"Row {r}: say what the row is in column A: Step, Pass, or Measure.")
+        else:
+            say(f'Row {r}: "{kind}" is not a kind of row: use Step, Pass, or Measure.')
+    for name in ("Layer", "Date"):
+        if name.lower() not in fixed:
+            say(f'The tab has no {name} row: add one under the header, with "{name}" in column A.')
+    if not proc["purpose"]:
+        say('Write the procedure\'s purpose beside "Purpose", above the table.')
+
+    def check(r, kind, value):
+        if value and value not in ids[f"{kind}s"]:
+            tab = {"node": "Nodes", "interface": "Interfaces", "tpm": "TPMs"}[kind]
+            name = "TPM" if kind == "tpm" else kind
+            say(f'Row {r}: no {name} "{value}" in the design registries. Pick one from the {tab} tab.', True)
+
+    measured = [e["tpm"] for kind, e in entries if kind == "measure" and e["tpm"]]
+    seen = set()
+    for kind, e in entries:
+        r = e["row"]
+        if kind == "step":
+            if not e["actor"] and not e["node"]:
+                say(f"Row {r}: say who acts: pick the node, or write the actor.")
+            check(r, "node", e["node"])
+            check(r, "interface", e["interface"])
+            check(r, "tpm", e["tpm"])
+            if not e["does"]:
+                say(f"Row {r}: say what happens.")
+            proc["steps"].append(e)
+        elif kind == "pass":
+            if not e["text"]:
+                say(f"Row {r}: write what must be true, under What happens.")
+            check(r, "tpm", e["tpm"])
+            if e["tpm"] in ids["tpms"] and e["tpm"] not in measured:
+                say(f"Row {r} checks {e['tpm']}, which no Measure row records.")
+            proc["passes"].append(e)
+        else:
+            if not e["tpm"]:
+                say(f"Row {r}: pick the TPM it measures.")
+            check(r, "tpm", e["tpm"])
+            if e["tpm"] and e["tpm"] in seen:
+                say(f"Row {r}: {e['tpm']} has another Measure row above.")
+            seen.add(e["tpm"])
+            proc["measures"].append(e)
+
+    lines = proc["steps"] + proc["passes"]
+    for rc, nc in runs:
+        rows_used = [fixed.get(k) for k in ("layer", "date", "log")] + [e["row"] for e in lines + proc["measures"]]
+        if not any(text(r, rc) or text(r, nc) for r in rows_used if r):
+            continue
+        where = f"Run in column {column_letters(rc)}"
+        layer_text = text(fixed.get("layer"), rc)
+        layer = next((name for name in LAYERS if name.lower() == layer_text.lower()), None)
+        date_value = rows.get(fixed.get("date"), {}).get(rc, "")
+        when = read_date(date_value) if date_value != "" else None
+        if not layer_text:
+            say(f"{where}: pick its layer: Sim, Bench, or Robot.")
+        elif not layer:
+            say(f'{where}: its layer is "{layer_text}", not Sim, Bench, or Robot.')
+        if date_value == "":
+            say(f"{where}: give its date, such as 2026-12-02.")
+        elif not when:
+            say(f'{where}: "{cell_text(date_value)}" is not a date such as 2026-12-02.')
+        if not layer or not when:
+            continue
+
+        def mark(e):
+            got = text(e["row"], rc)
+            if got.lower() not in MARKS:
+                say(f'{where}, row {e["row"]}: mark Pass or Fail, not "{got}".')
+            return {"mark": MARKS.get(got.lower(), ""), "note": text(e["row"], nc)}
+
+        def value(e):
+            raw = rows.get(e["row"], {}).get(rc, "")
+            got = read_number(raw) if raw != "" else None
+            if raw != "" and got is None:
+                say(f'{where}, row {e["row"]}: {e["tpm"] or "the value"} must be a number, not "{cell_text(raw)}".')
+            return {"value": got, "note": text(e["row"], nc)}
+
+        run = {"column": column_letters(rc), "layer": layer, "date": when,
+               "steps": [mark(e) for e in proc["steps"]], "passes": [mark(e) for e in proc["passes"]],
+               "values": [value(e) for e in proc["measures"]],
+               "log": text(fixed.get("log"), rc),
+               "notes": {k: text(fixed.get(k), nc) for k in ("layer", "date", "log")}}
+        markable = [m["mark"] for e, m in zip(lines, run["steps"] + run["passes"])
+                    if not (e.get("does") or e.get("text") or "").startswith("[TBD")]
+        run["marked"], run["markable"] = sum(1 for m in markable if m), len(markable)
+        run["result"] = ("Fail" if "Fail" in markable else
+                         "Pass" if markable and all(m == "Pass" for m in markable) else "Incomplete")
+        proc["runs"].append(run)
+    return proc
+
+
+def sheet_ids(reg):
+    """The IDs a procedure in the test sheet may name, for read_sheet."""
+    return {"nodes": sorted(reg.nodes), "interfaces": sorted(reg.interfaces),
+            "tpms": [tpm["id"] for tpm in reg.tpms]}
+
+
+def fetch(url, timeout=30):
+    import urllib.request
+    request = urllib.request.Request(url, headers={"User-Agent": "starrt-luna-software docs build"})
+    with urllib.request.urlopen(request, timeout=timeout) as response:
+        return response.read()
+
+
+def fetch_sheet(reg):
+    """(the test sheet read by read_sheet, None) from its published address, or (None,
+    why it could not be read)."""
+    published = (reg.sheet or {}).get("published", "")
+    if not published:
+        return None, "the test sheet is not published yet: add its published address to end-to-end-tests.toml"
+    try:
+        return read_sheet(read_workbook(fetch(f"{published}?output=xlsx")), sheet_ids(reg)), None
+    except Exception as error:  # A network, zip, or XML error: say what it was.
+        return None, f"{type(error).__name__}: {error}"
+
+
+def fetch_tab_ids(reg):
+    """{tab name: its gid}, for links to each tab, from the published sheet's web page.
+    That page is not a documented format, so this returns {} when it cannot read it, and
+    links then go to the sheet."""
+    import json
+    published = (reg.sheet or {}).get("published", "")
+    if not published:
+        return {}
+    try:
+        page = fetch(f"{published}html").decode("utf-8")
+    except Exception:
+        return {}
+    found = {}
+    for name, gid in re.findall(r'name: "((?:[^"\\]|\\.)*)", pageUrl: "[^"]*?gid=(\d+)', page):
+        try:
+            found[json.loads('"' + re.sub(r"\\x([0-9a-fA-F]{2})", r"\\u00\1", name) + '"')] = gid
+        except ValueError:
+            continue
+    return found
+
+
+def check_sheet(problems, reg):
+    """Check the test sheet's procedures against the registries: naming a node, interface,
+    or TPM that no registry defines is an error, so a pull request that renames or removes
+    one that a procedure uses fails until the sheet is updated."""
+    sheet, error = fetch_sheet(reg)
+    if sheet is None:
+        problems.warn(f"the test sheet was not checked: {error}")
+        return 0
+    for p in sheet["problems"]:
+        problems.warn(f"test sheet: {p['text']}")
+    for proc in sheet["procedures"]:
+        for p in proc["problems"]:
+            report = problems.error if p["reference"] else problems.warn
+            report(f'test sheet, tab "{proc["title"]}": {p["text"]}')
+    measured = {m["tpm"] for proc in sheet["procedures"] for m in proc["measures"]}
+    for tpm in reg.tpms:
+        if tpm["id"] not in measured and not tpm.get("none"):
+            problems.warn(f"{reg.doc_of(tpm)}.toml: {tpm['id']}: no test procedure measures it yet")
+    return len(sheet["procedures"])
+
+
+def registry_csvs(reg):
+    """{file name: CSV text}: the lists the test sheet's dropdowns choose from. The website
+    publishes them in design/registry/, and the sheet's Nodes, Interfaces, and TPMs tabs
+    import them."""
+    import csv
+    import io
+
+    def text(rows):
+        out = io.StringIO()
+        csv.writer(out, lineterminator="\n").writerows(rows)
+        return out.getvalue()
+
+    def bare(value):
+        return value.replace("`", "")
+
+    nodes = [["ID", "Name", "Runs on", "Design doc", "What it does"]]
+    nodes += [[n["id"], bare(n["name"]), n["runs_on"], f"{reg.doc_of(n)}.md", n["does"]]
+              for n in by_element(reg.nodes.values())]
+    interfaces = [["ID", "Name", "Kind", "Type", "Publisher or server", "Defined in"]]
+    interfaces += [[i["id"], bare(i["name"]), i["kind"], i["type"], bare(names(reg.publishers(i))),
+                    f"{reg.doc_of(i)}.toml"] for i in sorted(reg.interfaces.values(), key=lambda i: i["id"])]
+    tpms = [["ID", "Measure", "Unit", "Threshold", "Goal"]]
+    tpms += [[t["id"], t["measure"], t["unit"], t["threshold"], t["goal"]] for t in reg.tpms]
+    return {"nodes.csv": text(nodes), "interfaces.csv": text(interfaces), "tpms.csv": text(tpms)}
+
+
+def sheet_registry(reg):
+    """What the website's reader needs from the registries: each ID with how to show it."""
+    return {
+        "nodes": {n["id"]: n["name"] for n in reg.nodes.values()},
+        "interfaces": {i["id"]: i["name"] for i in reg.interfaces.values()},
+        "tpms": {t["id"]: {"anchor": slugify(tpm_title(t)), "measure": t["measure"], "unit": t["unit"],
+                           "none": bool(t.get("none")), "better": t.get("better"),
+                           "threshold_value": t.get("threshold_value"), "goal_value": t.get("goal_value")}
+                 for t in reg.tpms},
+    }
+
+
+def inline_html(text):
+    """Text as HTML: escaped, with `code` in code font."""
+    import html
+    return re.sub(r"`([^`]+)`", r"<code>\1</code>", html.escape(text, quote=False))
+
+
+def procedure_snapshot(reg, proc):
+    """A procedure as plain HTML, for site search and for readers without JavaScript. The
+    website's script replaces it with the full view, read from the sheet."""
+    out = [f"<p>{inline_html(proc['purpose'])}</p>"] if proc["purpose"] else []
+    if proc["steps"]:
+        out.append("<ol>")
+        for step in proc["steps"]:
+            node = reg.nodes.get(step["node"], {}).get("name", step["node"])
+            who = ", through the ".join(x for x in (step["actor"], node) if x)
+            iface = reg.interfaces.get(step["interface"], {}).get("name", step["interface"])
+            if iface and "[" not in iface:
+                iface = f"`{iface}`"
+            uses = ", ".join(x for x in (iface, step["tpm"]) if x)
+            out.append(f"<li>{inline_html(who)}: {inline_html(step['does'])}"
+                       + (f" ({inline_html(uses)})" if uses else "") + "</li>")
+        out.append("</ol>")
+    if proc["passes"]:
+        out.append("<p><strong>It passes when:</strong></p>")
+        out.append("<ul>" + "".join(f"<li>{inline_html(p['text'])}</li>" for p in proc["passes"]) + "</ul>")
+    return "\n".join(out)
+
+
+def sheet_markers(proc):
+    """Each [TBD] or [TBR] in a procedure: (row, text of the cell that holds it)."""
+    cells = [("Purpose", proc["purpose"])]
+    cells += [(s["row"], s[key]) for s in proc["steps"] for key in ("actor", "does")]
+    cells += [(p["row"], p["text"]) for p in proc["passes"]] + [(m["row"], m["what"]) for m in proc["measures"]]
+    return [(row, value) for row, value in cells if re.search(r"\[(?:TBD|TBR)\b", value)]
+
+
+def render_procedures_page(reg):
+    sheet = (reg.sheet or {}).get("edit_url", "")
+    link = f"[test sheet]({sheet})" if sheet else "test sheet [TBD: its address, end-to-end-tests.toml]"
+    script = "https://github.com/STAR-Robotics-Team/starrt-luna-software/blob/main/scripts/test-sheet.gs"
+    out = [
+        "# End-to-end test procedures",
+        "",
+        "Each procedure follows one thing the robot does through every node it crosses, from",
+        "the operator or the hardware to the motors. Each step names who acts, the interface it",
+        "uses, and the budget it spends, and the pass lines come from the",
+        "[performance budgets](performance-budgets.md) and the design docs' requirements.",
+        "",
+        "- **Before anything runs, the design review walks each procedure on paper,** with",
+        "  whoever works on each step explaining it. A step nobody can explain, or a name still",
+        "  `[TBD]`, is a gap to settle.",
+        "- **Then each one runs at Sim, Bench, and Robot,** as [Testing layers](testing-layers.md)",
+        "  describes, and each run is recorded beside its steps.",
+        "",
+        f"The procedures and their runs live in the {link}, one tab per procedure. This page",
+        "reads the sheet each time it opens, so it shows the sheet as it is now.",
+        "",
+        "## Writing a procedure",
+        "",
+        f"In the {link}, choose **Test procedures > New procedure** and give it a name: the",
+        "name is its title here. Write its purpose above the table, then one row for each:",
+        "",
+        "- **Step:** who acts (a node, or an actor such as the operator), what happens, the",
+        "  interface it uses, and the TPM whose budget it spends, in order.",
+        "- **Pass:** what must be true for a run to pass, and the TPM it checks, if any.",
+        "- **Measure:** a TPM each run records.",
+        "",
+        "Pick nodes, interfaces, and TPMs from the dropdowns. They come from the design",
+        "registries, so a procedure names only what the design docs define. A pull request that",
+        "renames or removes a node, interface, or TPM that a procedure uses fails",
+        "`scripts/design check` until the procedure is updated too.",
+        "",
+        "## Recording a run",
+        "",
+        "Open the procedure's tab. Each run takes two columns, Result and Note. In the first",
+        "empty pair, pick the layer (Sim, Bench, or Robot) and type the date, such as",
+        "2026-12-02. Mark each step and pass line Pass or Fail as you go, type each value",
+        "measured, link the log, and write a note beside any row.",
+        "",
+        "## How this page stays current",
+        "",
+        "- **The page reads the sheet in your browser each time it opens.** Google takes up to",
+        "  about 5 minutes to publish an edit, so an edit shows here a few minutes after it is",
+        "  made. When the page can't read the sheet, it shows the sheet as of the website's last",
+        "  build, and says so.",
+        "- **Site search knows the procedures as of the last build.** Once edits have stopped",
+        "  for six minutes, by when Google has published them, the sheet asks GitHub to rebuild",
+        "  the website. The website also rebuilds every hour, so search catches up within about",
+        "  10 minutes, or within the hour.",
+        f"- **The sheet's script asks for the rebuilds:** [`scripts/test-sheet.gs`]({script}). It",
+        "  needs a GitHub token in its script properties. When the token stops working, the",
+        "  sheet's \"How to record a run\" tab says so, and the hourly rebuild carries on. To",
+        "  renew it, a STAR-Robotics-Team admin creates a fine-grained token (GitHub, Settings,",
+        "  Developer settings, Fine-grained tokens) owned by STAR-Robotics-Team, for this",
+        "  repository only, with the Actions permission set to read and write. Then, in the",
+        "  sheet, open Extensions, Apps Script, Project settings, and set the script property",
+        "  `GITHUB_TOKEN` to it.",
+        "",
+        "## Results",
+        "",
+        "The latest run of each procedure at each layer. A run is Fail when any step or pass",
+        "line failed, Pass when every one passed, and Incomplete until each is marked.",
+        "",
+        TEST_SHEET.format("summary"),
+        "",
+        TEST_SHEET.format("procedures"),
+        "",
+        TEST_SHEET.format("data"),
+    ]
+    return "\n".join(out) + "\n"
+
+
+def block_fields(reg, stem, options):
+    out = table(["Entry", "Where it goes", "What it is"],
+                [[f"`[[{name}]]`", where, what] for name, ((where, what), _) in SCHEMA.items()])
+    rows = []
+    for name, (_, entries) in SCHEMA.items():
+        for field, required, holds in entries:
+            rows.append([f"`[[{name}]]`", f"`{field}`", "Yes" if required else "No", holds])
+    return out + [""] + table(["Entry", "Field", "Required", "What it holds"], rows)
+
+
+def block_blocks(reg, stem, options):
+    rows = [[f"`<!-- design: {kind} -->`", ", ".join(f"`{o}`" for o in opts) or "None", shows]
+            for kind, (opts, shows) in BLOCK_HELP.items()]
+    return table(["Block", "Options", "What it shows"], rows)
+
+
+RENDERERS = {"elements": block_elements, "graph": block_graph, "nodes": block_nodes,
+             "interfaces": block_interfaces, "questions": block_questions, "budgets": block_budgets,
+             "fields": block_fields, "blocks": block_blocks}
+
+
+def render_doc(problems, reg, path, text):
+    """The doc with every block between markers rewritten from the registries."""
+    stem = path.stem
+    out, pos = [], 0
+    # A marker shown as an example, in code, is not a block.
+    for match in START.finditer(blank_code(text)):
+        kind, options = match.group(1), match.group(2).split()
+        where = f"{path.relative_to(REPO)}"
+        end = text.find(END, match.end())
+        if end < 0:
+            problems.error(f"{where}: the design: {kind} block has no {END} after it")
+            return text
+        if kind not in BLOCKS:
+            problems.error(f"{where}: no block called {kind!r}; use {', '.join(BLOCKS)}")
+            return text
+        for option in options:
+            if option not in BLOCKS[kind]:
+                problems.error(f"{where}: the {kind} block takes no option {option!r}")
+                return text
+        if kind in OWN_REGISTRY and not (DESIGN / f"{stem}.toml").exists():
+            problems.error(f"{where} has a design: {kind} block but no {stem}.toml beside it")
+            return text
+        if kind in ("elements", "graph"):
+            note = "generated from docs/design/*.toml by scripts/design render: edit those files, not this block"
+        elif kind in ("fields", "blocks"):
+            note = "generated from scripts/design by scripts/design render: edit the script, not this table"
+        else:
+            note = NOTE.format(registry=f"{stem}.toml")
+        start = f"<!-- design: {kind}{''.join(' ' + o for o in options)} ({note}) -->"
+        body = RENDERERS[kind](reg, stem, options)
+        out.append(text[pos:match.start()])
+        out.append("\n".join([start, "", *body, "", END]))
+        pos = end + len(END)
+    out.append(text[pos:])
+    return "".join(out)
+
+
+# ----------------------------------------------------------------------------------------
+# Generated pages
+# ----------------------------------------------------------------------------------------
+
+def render_interfaces_page(reg):
+    out = [
+        "# Interfaces",
+        "",
+        "Every node and every topic, service, and action in the robot software, as the design",
+        "docs' registries define them. Each one is defined in exactly one design doc's registry,",
+        "beside the node that publishes or serves it, and that doc owns it. To change one, edit",
+        "that registry and run `scripts/design render`; see",
+        "[Registries](README.md#registries). The [system design](system.md#2-nodes) draws them",
+        "as a graph.",
+        "",
+        "This page is generated from `docs/design/*.toml` by `scripts/design render`.",
+        "",
+        "## Nodes",
+        "",
+    ]
+    rows = [[n["name"], element_label(reg, n["element"]), n["runs_on"], doc_link(reg.doc_of(n), reg=reg), n["does"]]
+            for n in reg.nodes.values()]
+    out += table(["Node", "Element", "Runs on", "Design doc", "What it does"], rows)
+    out += ["", "## Topics, services, and actions", ""]
+    out += table(INTERFACE_HEADER + ["Defined in"], interface_rows(reg, reg.interfaces.values(), defined_in=True))
+    notes = [i for i in reg.interfaces.values() if i.get("note")]
+    if notes:
+        out += ["", "### Notes", ""]
+        out += [f"- {code(i['name'])}: {i['note']}" for i in notes]
+    return "\n".join(out) + "\n"
+
+
+def slugify(text):
+    """The anchor MkDocs gives a heading (Python-Markdown's toc extension)."""
+    text = re.sub(r"\[([^\]]+)\]\([^)]+\)", r"\1", text)
+    text = re.sub(r"[`*_]", "", text)
+    text = unicodedata.normalize("NFKD", text).encode("ascii", "ignore").decode("ascii")
+    text = re.sub(r"[^\w\s-]", "", text).strip().lower()
+    return re.sub(r"[-\s]+", "-", text)
+
+
+def blank(match):
+    return re.sub(r"[^\n]", " ", match.group(0))
+
+
+def blank_code(text):
+    """The text with code blocks and code spans blanked out, keeping positions."""
+    text = re.sub(r"^(```|~~~).*?^\1[^\n]*$", blank, text, flags=re.S | re.M)
+    return re.sub(r"(`+)[^`\n]*?\1", blank, text)
+
+
+def mask(text):
+    """The text with code, comments, and generated blocks blanked out, keeping positions."""
+    text = blank_code(text)
+    text = re.sub(r"<!-- design: .*?" + re.escape(END), blank, text, flags=re.S)
+    return re.sub(r"<!--.*?-->", blank, text, flags=re.S)
+
+
+def headings(text, masked):
+    """(position, anchor, title) for each heading, with MkDocs's numbering of repeats."""
+    found, seen = [], {}
+    for match in re.finditer(r"^(#{1,6}) (.+)$", masked, flags=re.M):
+        title = text[match.start(2):match.end(2)].strip()
+        anchor = slugify(title)
+        if anchor in seen:
+            seen[anchor] += 1
+            anchor = f"{anchor}_{seen[anchor]}"
+        else:
+            seen[anchor] = 0
+        found.append((match.start(), anchor, re.sub(r"\[([^\]]+)\]\([^)]+\)", r"\1", title)))
+    return found
+
+
+def plain(text):
+    text = re.sub(r"\[([^\]]+)\]\([^)]+\)", r"\1", text)
+    return re.sub(r"\s+", " ", text).replace("|", "/").strip()
+
+
+def markers(path):
+    """Each [TBD] or [TBR] in a doc's own text: (heading anchor, heading, kind, text)."""
+    text = path.read_text(encoding="utf-8")
+    masked = mask(text)
+    heads = headings(text, masked)
+    found = []
+    for match in re.finditer(r"\[(TBD|TBR)(?=[:\]])", masked):
+        depth, end = 0, None
+        for k in range(match.start(), len(masked)):
+            if masked[k] == "[":
+                depth += 1
+            elif masked[k] == "]":
+                depth -= 1
+                if depth == 0:
+                    end = k
+                    break
+            elif masked[k] == "\n" and masked[k + 1:k + 2] == "\n":
+                break
+        if end is None:
+            continue
+        kind = match.group(1)
+        inner = text[match.end():end].lstrip(":").strip()
+        if not inner:
+            line_start = text.rfind("\n", 0, match.start()) + 1
+            line_end = text.find("\n", match.end())
+            line = text[line_start:line_end]
+            if line.lstrip().startswith("|"):
+                cells = line.split("|")
+                col = text[line_start:match.start()].count("|")
+                cell = cells[col].replace(f"[{kind}]", "").strip() if col < len(cells) else ""
+                below = text[line_end + 1:text.find("\n", line_end + 1)]
+                is_header = re.fullmatch(r"\s*\|(\s*:?-+:?\s*\|)+\s*", below or "") is not None
+                inner = f"every value in the {plain(cell)} column" if is_header else plain(cell)
+            else:
+                inner = plain(line.replace(f"[{kind}]", ""))
+        anchor, title = "", path.stem
+        for pos, a, t in heads:
+            if pos <= match.start():
+                anchor, title = a, t
+        found.append((anchor, title, kind, plain(inner)))
+    return found
+
+
+def registry_markers(reg):
+    """Each registry value that holds a marker, once: (doc stem, entry, field, text)."""
+    found = []
+    for kind, store in (("element", reg.elements), ("node", reg.nodes), ("interface", reg.interfaces)):
+        for e in store.values():
+            for key, value in e.items():
+                for v in value if isinstance(value, list) else [value]:
+                    if isinstance(v, str) and re.search(r"\[(TBD|TBR)\b", v):
+                        found.append((reg.doc_of(e), f"{kind} {e.get('id')}", key, plain(v)))
+    for tpm in reg.tpms:
+        fields = [(key, v) for key, v in tpm.items() if key not in ("row", "notes")]
+        fields += [("note", note) for note in tpm.get("notes", [])]
+        fields += [(f"row \"{plain(r['part'])}\": {key}", v) for r in tpm.get("row", []) for key, v in r.items()]
+        for key, v in fields:
+            if isinstance(v, str) and re.search(r"\[(TBD|TBR)\b", v):
+                found.append((reg.doc_of(tpm), tpm["id"], key, plain(v)))
+    return found
+
+
+def render_open_items_page(reg):
+    out = [
+        "# Open items",
+        "",
+        "Everything in the docs that is not settled yet, in one place: each design doc's open",
+        "questions, then every marked passage. The markers are explained in",
+        "[Mark what is not settled](../writing-docs.md#mark-what-is-not-settled). Who works on",
+        "an item, and by when, is in Turgor; where a question has a Turgor deliverable, its",
+        "number is given.",
+        "",
+        "To change an item, edit the doc or registry it comes from, then run",
+        "`scripts/design render`. This page is generated from the docs and `docs/design/*.toml`",
+        "by `scripts/design render`.",
+        "",
+        "## Open questions",
+    ]
+    total = 0
+    for stem in sorted(reg.questions, key=lambda s: doc_sort_key(Path(s))):
+        # Links are dropped here, so a source cited in a question is cited only by its doc.
+        rows = [[f"{q['number']}. {plain(q['text'])}", ", ".join(q.get("turgor", [])) or "None"]
+                for q in reg.questions[stem] if q["status"] == "open"]
+        if not rows:
+            continue
+        total += len(rows)
+        md = DESIGN / f"{stem}.md"
+        if md.exists():
+            text = md.read_text(encoding="utf-8")
+            at = text.find("<!-- design: questions")
+            anchor = ""
+            for pos, a, _ in headings(text, mask(text)):
+                if 0 <= at and pos < at:
+                    anchor = a
+            out += ["", f"### [{doc_title(md)}]({md.name}{'#' + anchor if anchor else ''})", ""]
+        else:
+            out += ["", f"### {doc_link(stem, reg=reg)}", ""]
+        out += table(["Question", "Turgor"], rows)
+    if not total:
+        out += ["", "None."]
+
+    out += ["", "## Marked in the registries", "",
+            "Values in the design registries that are not settled yet. They show in every table",
+            "that uses them; each is listed here once."]
+    by_doc = {}
+    for stem, entry, field, text in registry_markers(reg):
+        by_doc.setdefault(stem, []).append([entry, field, text])
+    for stem in sorted(by_doc, key=lambda s: doc_sort_key(Path(s))):
+        out += ["", f"### `{stem}.toml`", ""]
+        out += table(["Entry", "Field", "Value"], by_doc[stem])
+
+    out += ["", "## Marked in the test sheet", "",
+            "Every `[TBD]` and `[TBR]` in the end-to-end test procedures, which live in the",
+            f"[test sheet]({PROCEDURES_PAGE.name}). This page reads the sheet each time it opens.", "",
+            TEST_SHEET.format("open-items")]
+
+    out += ["", "## Marked in the docs", "",
+            "Every `[TBD]` and `[TBR]` in the docs' own text, by page and section."]
+    pages = sorted(p for p in DOCS.rglob("*.md") if p not in GENERATED_PAGES and p not in EXAMPLE_PAGES)
+    pages.sort(key=lambda p: (p.parent != DESIGN, doc_sort_key(p) if p.parent == DESIGN else (0, str(p))))
+    for page in pages:
+        found = markers(page)
+        if not found:
+            continue
+        link = (Path("..", page.relative_to(DOCS)) if page.parent != DESIGN else Path(page.name)).as_posix()
+        out += ["", f"### [{doc_title(page)}]({link})", ""]
+        rows = [[f"[{title}]({link}#{anchor})" if anchor else title, f"[{kind}: {text}]"]
+                for anchor, title, kind, text in found]
+        out += table(["Section", "Marked"], rows)
+    return "\n".join(out + ["", TEST_SHEET.format("data")]) + "\n"
+
+
+# ----------------------------------------------------------------------------------------
+# Commands
+# ----------------------------------------------------------------------------------------
+
+# The open items page reads the other pages' sources, so it is written last.
+PAGES = ((INTERFACES_PAGE, render_interfaces_page), (BUDGETS_PAGE, render_budgets_page),
+         (PROCEDURES_PAGE, render_procedures_page), (OPEN_ITEMS_PAGE, render_open_items_page))
+
+def outputs(problems, reg):
+    """{path: text} for every file render would write."""
+    result = {}
+    for path in sorted(DESIGN.glob("*.md")):
+        # The template's markers are copied into each new doc, which then has a registry.
+        if path in GENERATED_PAGES or path == TEMPLATE:
+            continue
+        text = path.read_text(encoding="utf-8")
+        if "<!-- design:" in text:
+            result[path] = render_doc(problems, reg, path, text)
+    # The pages read the docs, so they come after the docs' blocks are written.
+    return result
+
+
+def cmd_render(_args):
+    problems = Problems()
+    reg = load(problems)
+    if not problems.errors:
+        validate(problems, reg)
+    if problems.errors:
+        return problems.report()
+    written = []
+    for path, text in outputs(problems, reg).items():
+        if path.read_text(encoding="utf-8") != text:
+            path.write_text(text, encoding="utf-8")
+            written.append(path)
+    for path, render in PAGES:
+        text = render(reg)
+        if not path.exists() or path.read_text(encoding="utf-8") != text:
+            path.write_text(text, encoding="utf-8")
+            written.append(path)
+    for path in written:
+        print(f"Wrote {path.relative_to(REPO)}")
+    print(f"{len(reg.elements)} elements, {len(reg.nodes)} nodes, {len(reg.interfaces)} interfaces, "
+          f"{sum(len(q) for q in reg.questions.values())} questions; {len(written)} files changed.")
+    return problems.report()
+
+
+def cmd_check(_args):
+    problems = Problems()
+    reg = load(problems)
+    if not problems.errors:
+        validate(problems, reg)
+    procedures = None
+    if not problems.errors:
+        for path, text in outputs(problems, reg).items():
+            if path.read_text(encoding="utf-8") != text:
+                problems.error(f"{path.relative_to(REPO)} has a generated table that is out of date: "
+                               "run scripts/design render")
+        for path, render in PAGES:
+            if not path.exists() or path.read_text(encoding="utf-8") != render(reg):
+                problems.error(f"{path.relative_to(REPO)} is out of date: run scripts/design render")
+        procedures = check_sheet(problems, reg)
+    if not problems.errors:
+        print(f"OK: {len(reg.elements)} elements, {len(reg.nodes)} nodes, {len(reg.interfaces)} interfaces, "
+              f"{sum(len(q) for q in reg.questions.values())} questions, {len(reg.tpms)} TPMs, "
+              f"{procedures} test procedures in the test sheet; every generated table is up to date.")
+    return problems.report()
+
+
+def cmd_sheet_json(args):
+    """The test sheet as read_sheet reads it, with the IDs it was checked against, as JSON:
+    what scripts/test-sheet-readers.js compares the website's reader with."""
+    import json
+    problems = Problems()
+    reg = load(problems)
+    if not problems.errors:
+        validate(problems, reg)
+    if problems.errors:
+        return problems.report()
+    ids = sheet_ids(reg)
+    data = Path(args.xlsx).read_bytes() if args.xlsx else fetch(f"{reg.sheet['published']}?output=xlsx")
+    print(json.dumps({"ids": ids, "sheet": read_sheet(read_workbook(data), ids)}, indent=1, ensure_ascii=False))
+    return 0
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0],
+                                     formatter_class=argparse.RawDescriptionHelpFormatter)
+    commands = parser.add_subparsers(dest="command", required=True)
+    commands.add_parser("render", help="Rewrite every generated table and page.").set_defaults(run=cmd_render)
+    commands.add_parser("check", help="Check the registries and that everything generated is current.").set_defaults(run=cmd_check)
+    sheet_json = commands.add_parser("sheet-json", help="Print the test sheet as the build reads it, as JSON.")
+    sheet_json.add_argument("xlsx", nargs="?", help="An .xlsx file to read instead of the published sheet")
+    sheet_json.set_defaults(run=cmd_sheet_json)
+    args = parser.parse_args()
+    return args.run(args)
+
+
+if __name__ == "__main__":
+    sys.exit(main())

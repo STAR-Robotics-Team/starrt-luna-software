@@ -1,0 +1,33 @@
+# Checks the design docs' registries (docs/design/*.toml, scripts/design) on every pull
+# request that touches the docs: the registries fit together, every table and page
+# generated from them is up to date, and the test sheet's procedures name only what the
+# registries define. It also checks that the website's reader of the test sheet reads it
+# exactly as scripts/design does (scripts/test-sheet-readers.js).
+name: Design
+
+on:
+  pull_request:
+    paths:
+      - docs/**
+      - scripts/design
+      - scripts/test-sheet-readers.js
+      - scripts/test-sheet-sample.xlsx
+      - .github/workflows/design.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+      - run: scripts/design check
+      - run: node scripts/test-sheet-readers.js
