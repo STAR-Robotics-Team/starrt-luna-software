@@ -246,8 +246,10 @@ Beyond each field, the check fails when:
 - a doc has two questions with one number, or a decided question has no date;
 - a TPM's counted parts add up to more than its `limit`;
 - a value holds a `|` or a line break, which would break a table;
-- a procedure in the test sheet names a node, interface, or TPM that no registry defines.
-  The sheet's dropdowns offer only what the registries define, so this happens when a
+- a procedure in the test sheet names a node, interface, or TPM that no registry defines,
+  or a hardware system or mode that no heading of
+  [Hardware test modes](hardware-test-modes.md) defines, including in a step's Applies
+  when chips. The sheet's dropdowns offer only what these define, so this happens when a
   pull request renames or removes one that a procedure uses: update the procedure in the
   same change.
 

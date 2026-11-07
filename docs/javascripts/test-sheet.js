@@ -248,6 +248,7 @@
     }
     const systems = new Map(Object.keys(ids.modes).map((s) => [s.toLowerCase(), s]));
     const fixed = {};
+    const stepNumbers = [];
     for (const r of numbers.filter((n) => n > header)) {
       const kind = text(r, 1);
       const fields = {};
@@ -261,9 +262,19 @@
         if (proc.systems.some((s) => s.system === system)) say(`Row ${r}: ${system} has another row above.`);
         else proc.systems.push({row: r, system});
       } else if (!used) continue;
-      else if (k === "step") proc.steps.push({row: r, ...fields});
-      else if (!kind) say(`Row ${r}: say what the row is in column A: Step, Date, Log, or a system from the Test modes tab.`);
-      else say(`Row ${r}: "${kind}" is not a kind of row: use Step, Date, Log, or a system from the Test modes tab.`);
+      else if (!kind || k === "step" || /^[0-9]+$/.test(kind)) {
+        // A step: the sheet's script numbers each one in column A.
+        proc.steps.push({row: r, ...fields});
+        stepNumbers.push(/^[0-9]+$/.test(kind) ? parseInt(kind, 10) : null);
+      } else {
+        say(`Row ${r}: "${kind}" is not a kind of row: leave column A for the step number, or use Date, Log, ` +
+          "or a system from the Test modes tab.");
+      }
+    }
+    const wrong = stepNumbers.findIndex((n, i) => n !== null && n !== i + 1);
+    if (wrong >= 0) {
+      say(`Row ${proc.steps[wrong].row}: numbered ${stepNumbers[wrong]}, but it is step ${wrong + 1}. Choose Test ` +
+        "procedures > Set up or repair this sheet to number the steps again.");
     }
     if (!("date" in fixed)) say('The tab has no Date row: add one under the header, with "Date" in column A.');
     if (!proc.systems.length) {
@@ -277,28 +288,36 @@
       const r = step.row;
       const applies = step.applies;
       step.applies = null;
-      if (applies) {
-        const at = applies.indexOf(":");
-        const system = at < 0 ? applies : applies.slice(0, at);
+      // Applies when holds "System: Mode" chips: chips for one system mean any of its modes,
+      // and chips for different systems mean each of them.
+      const conditions = [];
+      for (const chip of applies.split(",").map((c) => c.trim())) {
+        if (!chip) continue;
+        const at = chip.indexOf(":");
+        const system = at < 0 ? chip : chip.slice(0, at);
+        const mode = at < 0 ? "" : chip.slice(at + 1);
         const canonical = systems.get(system.trim().toLowerCase());
-        const names = at < 0 ? [] : applies.slice(at + 1).split(",").filter((n) => n.trim()).map(modeName);
-        if (at < 0 || !names.length) {
-          say(`Row ${r}: write Applies when as "System: Mode", such as "Radio link: Bench", not "${applies}".`);
+        const known = canonical === undefined ? undefined
+          : ids.modes[canonical].find((m) => m.mode.toLowerCase() === modeName(mode).toLowerCase());
+        if (at < 0 || !mode.trim()) {
+          say(`Row ${r}: write each Applies when chip as "System: Mode", such as "Radio link: Bench", not "${chip}".`);
         } else if (canonical === undefined) {
           say(`Row ${r}: no system "${system.trim()}" in Hardware test modes. Pick one from the Test modes tab.`, true);
+        } else if (!known) {
+          say(`Row ${r}: ${canonical} has no mode "${modeName(mode)}" in Hardware test modes. Pick one from the Test modes tab.`, true);
         } else {
-          const known = new Map(ids.modes[canonical].map((m) => [m.mode.toLowerCase(), m.mode]));
-          const modes = [];
-          for (const name of names) {
-            if (known.has(name.toLowerCase())) modes.push(known.get(name.toLowerCase()));
-            else say(`Row ${r}: ${canonical} has no mode "${name}" in Hardware test modes. Pick one from the Test modes tab.`, true);
+          let condition = conditions.find((c) => c.system === canonical);
+          if (!condition) {
+            condition = {system: canonical, modes: []};
+            conditions.push(condition);
+            if (!listed.has(canonical)) {
+              say(`Row ${r} applies when ${canonical} is in a given mode, but the procedure has no ${canonical} row: add one under Date.`);
+            }
           }
-          if (!listed.has(canonical)) {
-            say(`Row ${r} applies when ${canonical} is in a given mode, but the procedure has no ${canonical} row: add one under Date.`);
-          }
-          step.applies = {text: applies, system: canonical, modes};
+          if (!condition.modes.includes(known.mode)) condition.modes.push(known.mode);
         }
       }
+      if (conditions.length) step.applies = {text: applies, conditions};
       const tbd = step.do.startsWith("[TBD") || step.pass_when.startsWith("[TBD");
       if (!step.do && !tbd) say(`Row ${r}: say what to do, under Do.`);
       if (!step.pass_when && !tbd) say(`Row ${r}: say what must be seen for the step to pass, under Pass when.`);
@@ -337,13 +356,13 @@
         const a = step.applies;
         const raw = rows.get(r)?.get(rc) ?? "";
         const got = raw !== "" ? cellText(raw) : "";
-        const applies = a === null || a.modes.includes(modes[a.system]?.mode);
+        const missed = (a ? a.conditions : []).filter((c) => !c.modes.includes(modes[c.system]?.mode));
+        const applies = !missed.length;
         const entry = {applies, mark: "", value: null, level: "", note: text(r, nc)};
         const value = got ? readNumber(raw) : null;
         if (!applies) {
           if (got) {
-            const current = modes[a.system]?.mode;
-            const which = current ? `${a.system}: ${current}` : `no ${a.system} mode`;
+            const which = missed.map((c) => (has(modes, c.system) ? `${c.system}: ${modes[c.system].mode}` : `no ${c.system} mode`)).join(", ");
             say(`${where}, row ${r}: the step does not apply to this run (${which}), so leave it blank.`);
           }
         } else if (!got) {
@@ -394,6 +413,11 @@
 
   const MEANING = {TBD: "To be determined: not decided yet", TBR: "To be resolved: written down, not confirmed"};
   let data, links;
+  // The sheet as last drawn, and what each procedure's pickers show: {run, modes, all} by
+  // procedure, where run is a run's column ("" for none), modes maps a system to the mode
+  // picked for it, and all says to show the steps for other modes too.
+  let drawn = null;
+  const picks = new Map();
 
   function esc(text) {
     return String(text).replace(/[&<>"]/g, (c) => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;"})[c]);
@@ -448,9 +472,10 @@
   const VERDICT = {goal: "meets the goal", threshold: "meets the threshold, not the goal", missed: "misses the threshold",
     recorded: "recorded: the TPM has no numbers to judge it by yet"};
 
-  function modeLink(system, mode) {
+  // A link to a mode's heading in Hardware test modes, with its layer unless layer is false.
+  function modeLink(system, mode, layer = true) {
     const found = own(data.registry.modes, system) ? data.registry.modes[system].find((m) => m.mode === mode) : null;
-    const label = found && found.mode !== found.layer ? `${mode} (${found.layer})` : mode;
+    const label = layer && found && found.mode !== found.layer ? `${mode} (${found.layer})` : mode;
     return found ? `<a href="${esc(links.modes)}#${found.anchor}">${esc(label)}</a>` : esc(mode);
   }
 
@@ -497,6 +522,83 @@
       problems.map((p) => `<li>${inline(p.text)}</li>`).join("") + "</ul></div>";
   }
 
+  function appliesText(applies) {
+    return applies.conditions.map((c) => `${esc(c.system)}: ${c.modes.map((m) => modeLink(c.system, m)).join(" or ")}`)
+      .join(", and ");
+  }
+
+  // The runs in the order they happened.
+  function runsOf(proc) {
+    return [...proc.runs].sort((a, b) => a.date.localeCompare(b.date) || LAYERS.indexOf(a.layer) - LAYERS.indexOf(b.layer));
+  }
+
+  function pickOf(proc) {
+    const pick = picks.get(proc.slug) || {run: "", modes: {}, all: false};
+    if (pick.run && !proc.runs.some((r) => r.column === pick.run)) pick.run = "";
+    picks.set(proc.slug, pick);
+    return pick;
+  }
+
+  // Whether a step is for the modes picked: a system left at "Any mode" fits every mode.
+  function fits(step, modes) {
+    return !step.applies || step.applies.conditions.every((c) => !modes[c.system] || c.modes.includes(modes[c.system]));
+  }
+
+  function pickerView(proc, runs, pick) {
+    const option = (value, label, selected) =>
+      `<option value="${esc(value)}"${selected ? " selected" : ""}>${esc(label)}</option>`;
+    const runChoice = `<label class="test-sheet-pick test-sheet-pick--run"><span>Run</span><select data-pick="run">` +
+      option("", "None", !pick.run) +
+      runs.map((r) => option(r.column, `${r.date}, ${r.layer}, column ${r.column}: ${r.result}`, r.column === pick.run)).join("") +
+      "</select></label>";
+    const modeChoices = proc.systems.map(({system}) => {
+      const modes = own(data.registry.modes, system) ? data.registry.modes[system] : [];
+      return `<label class="test-sheet-pick"><span>${esc(system)}</span><select data-pick="mode" data-system="${esc(system)}">` +
+        option("", "Any mode", !pick.modes[system]) +
+        modes.map((m) => option(m.mode, m.mode === m.layer ? m.mode : `${m.mode} (${m.layer})`, pick.modes[system] === m.mode)).join("") +
+        "</select></label>";
+    });
+    const parts = [runs.length ? runChoice : "", ...modeChoices].filter(Boolean);
+    return parts.length ? `<div class="test-sheet-picker">${parts.join("")}</div>` : "";
+  }
+
+  function runView(run) {
+    const notes = [run.notes.date, run.notes.log, ...Object.entries(run.mode_notes).filter(([, n]) => n).map(([system, n]) => `${system}: ${n}`)]
+      .filter(Boolean).map(inline).join("; ");
+    return `<p class="test-sheet-run"><strong>Result:</strong> ${result(run)} · <strong>Layer:</strong> ${run.layer} · ` +
+      `<strong>Log:</strong> ${logCell(run.log)}${notes ? ` · <strong>Notes:</strong> ${notes}` : ""}</p>`;
+  }
+
+  function stepsView(proc, run, pick) {
+    const shows = proc.steps.map((s, i) => (run ? run.steps[i].applies : fits(s, pick.modes)));
+    const hidden = shows.filter((shown) => !shown).length;
+    // Each step keeps its number, so a gap shows where a step for other modes was left out.
+    const items = proc.steps.map((s, i) => {
+      if (!shows[i] && !pick.all) return "";
+      const meta = [
+        s.applies ? `For ${appliesText(s.applies)}` : "",
+        s.actor || s.node ? who(s) : "",
+        s.interface ? interfaceName(s.interface) : "",
+        s.budget ? `Budget ${tpmLink(s.budget)}` : "",
+        s.measures ? `Measures ${tpmLink(s.measures)}` : "",
+      ].filter(Boolean);
+      return `<li value="${i + 1}"${shows[i] ? "" : ' class="test-sheet-step--other"'}>` +
+        (meta.length ? `<p class="test-sheet-step-meta">${meta.join(" · ")}</p>` : "") +
+        `<p><strong>Do:</strong> ${inline(s.do)}</p>` +
+        (s.pass_when ? `<p><strong>Pass when:</strong> ${inline(s.pass_when)}</p>` : "") +
+        (run ? `<p class="test-sheet-step-result">${run.steps[i].applies ? `<strong>This run:</strong> ${stepCell(s, run.steps[i])}`
+          : stepCell(s, run.steps[i])}</p>` : "") + "</li>";
+    }).join("");
+    const out = [`<ol class="test-sheet-steps">${items}</ol>`];
+    if (hidden) {
+      const what = hidden === 1 ? (run ? "1 step is not in this run" : "1 step is for other modes")
+        : (run ? `${hidden} steps are not in this run` : `${hidden} steps are for other modes`);
+      out.push(`<p class="test-sheet-hidden">${what}${pick.all ? " (shown faded)" : ""}. ` +
+        `<button type="button" class="test-sheet-button" data-pick="all">${pick.all ? "Hide them" : "Show them"}</button></p>`);
+    }
+    return out.join("");
+  }
+
   function procedureView(proc) {
     const out = [];
     if (proc.purpose) out.push(`<p>${inline(proc.purpose)}</p>`);
@@ -509,38 +611,66 @@
     if (proc.problems.length) {
       out.push(problemList(proc.problems, proc.problems.length === 1 ? "The tab needs a fix" : `The tab needs ${proc.problems.length} fixes`));
     }
+    const runs = runsOf(proc);
+    const pick = pickOf(proc);
+    const run = runs.find((r) => r.column === pick.run) || null;
     if (proc.steps.length) {
       // A walkthrough reads top to bottom: each step's Do and Pass when in full, with what it
-      // applies to, who acts, and what it names on a line above.
-      out.push('<ol class="test-sheet-steps">' + proc.steps.map((s) => {
-        const meta = [
-          s.applies ? `For ${esc(s.applies.system)}: ${s.applies.modes.map((m) => modeLink(s.applies.system, m)).join(", ")}` : "",
-          s.actor || s.node ? who(s) : "",
-          s.interface ? interfaceName(s.interface) : "",
-          s.budget ? `Budget ${tpmLink(s.budget)}` : "",
-          s.measures ? `Measures ${tpmLink(s.measures)}` : "",
-        ].filter(Boolean);
-        return "<li>" + (meta.length ? `<p class="test-sheet-step-meta">${meta.join(" · ")}</p>` : "") +
-          `<p><strong>Do:</strong> ${inline(s.do)}</p>` +
-          (s.pass_when ? `<p><strong>Pass when:</strong> ${inline(s.pass_when)}</p>` : "") + "</li>";
-      }).join("") + "</ol>");
+      // applies to, who acts, and what it names on a line above. The pickers above it show
+      // only the steps for some modes, or for one run, with that run's marks.
+      out.push(pickerView(proc, runs, pick));
+      if (run) out.push(runView(run));
+      out.push(stepsView(proc, run, pick));
     }
-    const runs = [...proc.runs].sort((a, b) => a.date.localeCompare(b.date) || LAYERS.indexOf(a.layer) - LAYERS.indexOf(b.layer));
     if (!runs.length) {
       out.push("<p><strong>Runs:</strong> none yet.</p>");
-      return out.join("\n");
+    } else {
+      out.push("<p><strong>Runs:</strong> pick a date to show that run's marks on the steps above.</p>",
+        table(["Run", "Modes", "Result", "Measured", "Notes"], runs.map((r) => {
+          // One line for each system's mode; the run's layer is under its date.
+          const modes = Object.entries(r.modes)
+            .map(([system, mode]) => `<span class="test-sheet-nowrap">${esc(system)}: ${modeLink(system, mode, false)}</span>`).join("<br>");
+          const values = proc.steps.map((s, i) => [s, r.steps[i]]).filter(([, e]) => e.value !== null)
+            .map(([s, e]) => `${tpmLink(s.measures)} ${measuredText(s, e)}`);
+          const notes = [r.notes.date, r.notes.log, ...Object.entries(r.mode_notes).filter(([, n]) => n).map(([system, n]) => `${system}: ${n}`)]
+            .filter(Boolean).map(inline);
+          const date = `<button type="button" class="test-sheet-button" data-pick="show" data-run="${esc(r.column)}"` +
+            ` aria-pressed="${r.column === pick.run}">${esc(r.date)}</button><br>${r.layer}`;
+          return [date, modes, result(r), values.join("<br>") || "None", [r.log ? logCell(r.log) : "No log", ...notes].join("; ")];
+        })));
     }
-    out.push("<p><strong>Runs:</strong></p>", table(["Date", "Layer", "Modes", "Result", "Measured", "Log", "Notes"], runs.map((r) => {
-      const modes = Object.entries(r.modes).map(([system, mode]) => `${esc(system)}: ${modeLink(system, mode)}`).join("<br>");
-      const values = proc.steps.map((s, i) => [s, r.steps[i]]).filter(([, e]) => e.value !== null)
-        .map(([s, e]) => `${tpmLink(s.measures)} ${measuredText(s, e)}`);
-      const notes = [r.notes.date, r.notes.log, ...Object.entries(r.mode_notes).filter(([, n]) => n).map(([system, n]) => `${system}: ${n}`)]
-        .filter(Boolean).map(inline).join("; ");
-      return [r.date, r.layer, modes, result(r), values.join("<br>") || "None", logCell(r.log), notes];
-    })));
-    const rows = proc.steps.map((s, i) => [`Step ${i + 1}`, ...runs.map((r) => stepCell(s, r.steps[i]))]);
-    out.push("<p>Each step, run by run:</p>", table(["Step", ...runs.map((r) => `${r.date}, ${r.layer}`)], rows));
-    return out.join("\n");
+    return `<div class="test-sheet-procedure" data-slug="${esc(proc.slug)}">${out.join("\n")}</div>`;
+  }
+
+  // A change to a procedure's pickers: remember it, and draw that procedure again.
+  function picked(event) {
+    const control = event.target.closest && event.target.closest("[data-pick]");
+    const holder = control && control.closest(".test-sheet-procedure");
+    if (!holder || !drawn || (event.type === "click") !== (control.tagName === "BUTTON")) return;
+    const proc = drawn.procedures.find((p) => p.slug === holder.dataset.slug);
+    if (!proc) return;
+    const pick = pickOf(proc);
+    const kind = control.dataset.pick;
+    if (kind === "run" || kind === "show") {
+      pick.run = kind === "run" ? control.value : control.dataset.run;
+      const run = proc.runs.find((r) => r.column === pick.run);
+      if (run) pick.modes = {...run.modes};
+    } else if (kind === "mode") {
+      const system = control.dataset.system;
+      if (control.value) pick.modes[system] = control.value;
+      else delete pick.modes[system];
+      const run = proc.runs.find((r) => r.column === pick.run);
+      if (run && run.modes[system] !== control.value) pick.run = "";
+    } else if (kind === "all") pick.all = !pick.all;
+    const focus = kind === "mode" ? `select[data-system="${CSS.escape(control.dataset.system)}"]`
+      : kind === "show" ? 'select[data-pick="run"]' : `[data-pick="${kind}"]`;
+    holder.outerHTML = procedureView(proc);
+    const redrawn = document.querySelector(`.test-sheet-procedure[data-slug="${CSS.escape(proc.slug)}"]`);
+    const target = redrawn && redrawn.querySelector(focus);
+    if (target) {
+      if (kind === "show") redrawn.querySelector(".test-sheet-picker").scrollIntoView({block: "start"});
+      target.focus({preventScroll: true});
+    }
   }
 
   function latest(runs) {
@@ -615,6 +745,7 @@
   }
 
   function render(sheet, state) {
+    drawn = sheet;
     const known = new Set([...document.querySelectorAll('.test-sheet[data-view="procedure"]')].map((el) => el.dataset.slug));
     const problems = sheet && sheet.problems.length ? problemList(sheet.problems, "The test sheet needs a fix") : "";
     for (const el of document.querySelectorAll(".test-sheet[data-view]")) {
@@ -640,6 +771,11 @@
     const holder = document.getElementById("test-sheet-data");
     if (!holder || holder.dataset.started) return;
     holder.dataset.started = "1";
+    if (!document.documentElement.dataset.testSheetPicks) {
+      document.documentElement.dataset.testSheetPicks = "1";
+      document.addEventListener("change", picked);
+      document.addEventListener("click", picked);
+    }
     data = JSON.parse(holder.textContent);
     links = data.links;
     // Drawing changes the height of what is above a linked heading, so scroll to it again after

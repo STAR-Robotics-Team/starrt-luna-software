@@ -24,14 +24,16 @@ name is its title here. Write its purpose above the table, then:
 
 - **One row for each hardware system the procedure uses,** under Date, with the
   system's name in column A, such as Radio link. Each run picks that system's mode.
-- **One Step row for each step, in the order it happens,** from setting up (the
+- **One row for each step, in the order it happens,** from setting up (the
   recording, the launch, each terminal to watch) to tearing down (stopping the
-  recording, noting the commit, linking the log). Write each step so that someone who has
-  never run it can follow it:
+  recording, noting the commit, linking the log). The sheet numbers the steps in
+  column A, and this page uses the same numbers. Write each step so that someone who
+  has never run it can follow it:
     - **Do:** exactly what to do, where, and with which tool or exact command.
     - **Pass when:** exactly what must be seen, where, and within what limit.
-    - **Applies when:** a system mode, such as Radio link: Bench, when the step is only
-      for runs with that system in that mode. Leave it blank for every run.
+    - **Applies when:** one or more chips, such as Radio link: Bench, when the step is
+      only for some modes. Chips for the same system mean any of those modes, and chips
+      for different systems mean all of them. Leave it blank for a step in every run.
     - **Actor, Node, and Interface:** who acts, and the node and interface the step checks.
     - **Budget:** the TPM whose budget the step spends.
     - **Measures:** the TPM the step measures. A run can then type the measured number
@@ -48,12 +50,17 @@ uses fails `scripts/design check` until the procedure is updated too.
 
 ## Recording a run
 
-Open the procedure's tab. Each run takes two columns, Result and Note. In the first
-empty pair, type the date, such as 2026-12-02, and pick each system's mode. Then follow
-the steps in order, skipping a step whose Applies when names another mode, and mark each
-one Pass or Fail as you go. For a step that measures a TPM, you can type the measured
-number instead: this page judges it against the TPM, and a number that misses the
-threshold fails the step. Link the log, and write a note beside any row.
+Open the procedure's tab and choose **Test procedures > Add a run**. Each run takes two
+columns, Result and Note: it dates the first empty pair, adding one when none is left.
+Pick each system's mode in the rows under Date, and the cells of the steps that are not
+in this run turn gray. Then follow the other steps in order, and mark each one Pass or
+Fail as you go. For a step that measures a TPM, you can type the measured number
+instead: this page judges it against the TPM, and a number that misses the threshold
+fails the step. Link the log, and write a note beside any row.
+
+Below, each procedure shows only the steps for the modes you pick above its steps, so
+you can follow it for a run before you start. Pick a run instead, or a date in its runs
+table, to see that run's marks beside its steps.
 
 A run's layer is the highest layer among its systems' modes, so a run on the drive base
 with every sensor on its stub counts as Robot.

@@ -9,7 +9,8 @@
 //   node scripts/test-sheet-readers.js --published
 //
 // Reads scripts/test-sheet-sample.xlsx by default: a sample sheet with runs and mistakes of
-// every kind each reader reports. --published downloads the test sheet once, as Google
+// every kind each reader reports, written by scripts/test-sheet-sample. A new reading rule
+// gets a case there. --published downloads the test sheet once, as Google
 // publishes it, and reads those same bytes with both readers, so Google's own way of
 // writing a workbook is covered too; when the sheet cannot be downloaded, it says so and
 // passes. Needs Node 20.12 or newer and Python 3.11 or newer. CI runs both on every pull

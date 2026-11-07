@@ -48,6 +48,10 @@
   word-break: normal;
 }
 
+.md-typeset .test-sheet-nowrap {
+  white-space: nowrap;
+}
+
 /* A name in the sheet that no design registry defines. */
 .md-typeset .test-sheet-unknown {
   text-decoration: underline wavy var(--test-sheet-fail);
@@ -65,4 +69,90 @@
 
 .md-typeset .test-sheet-steps > li > p {
   margin: 0.2em 0;
+}
+
+/* A step for other modes, shown when the reader asks to see those too. */
+.md-typeset .test-sheet-steps > li.test-sheet-step--other {
+  opacity: 0.55;
+}
+
+.md-typeset .test-sheet-steps > li > .test-sheet-step-result {
+  margin-top: 0.4em;
+}
+
+/* The pickers above a procedure's steps: a run on its own line, then a mode for each
+   hardware system in even columns, as many as fit. */
+.md-typeset .test-sheet-picker {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr));
+  gap: 0.6rem 1rem;
+  margin: 1em 0;
+  padding: 0.6rem 0.8rem;
+  border: 1px solid var(--md-default-fg-color--lightest);
+  border-radius: 0.2rem;
+  /* Clear of the site's header when a run's date scrolls back up to it. */
+  scroll-margin-top: 5rem;
+}
+
+.md-typeset .test-sheet-pick {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+  font-size: 0.7rem;
+  color: var(--md-default-fg-color--light);
+}
+
+/* The run's picker takes a line of its own, two columns wide, lined up with the columns
+   below it. */
+.md-typeset .test-sheet-pick--run {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: subgrid;
+}
+
+.md-typeset .test-sheet-pick--run > span {
+  grid-column: 1 / -1;
+}
+
+.md-typeset .test-sheet-pick--run > select {
+  grid-column: 1 / span 2;
+}
+
+.md-typeset .test-sheet-pick select {
+  width: 100%;
+  padding: 0.2rem 0.3rem;
+  border: 1px solid var(--md-default-fg-color--lighter);
+  border-radius: 0.2rem;
+  background-color: var(--md-default-bg-color);
+  color: var(--md-default-fg-color);
+  font: inherit;
+  font-size: 0.75rem;
+}
+
+.md-typeset .test-sheet-run,
+.md-typeset .test-sheet-hidden {
+  font-size: 0.75rem;
+}
+
+/* Buttons that read as links: "Show them", and each run's date in the runs table. */
+.md-typeset .test-sheet-button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--md-typeset-a-color);
+  font: inherit;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+  cursor: pointer;
+}
+
+.md-typeset .test-sheet-button:hover,
+.md-typeset .test-sheet-button:focus-visible {
+  color: var(--md-accent-fg-color);
+}
+
+.md-typeset .test-sheet-button[aria-pressed="true"] {
+  font-weight: 700;
+  text-decoration: none;
 }

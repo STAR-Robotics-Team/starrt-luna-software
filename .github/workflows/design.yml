@@ -2,7 +2,8 @@
 # request that touches the docs: the registries fit together, every table and page
 # generated from them is up to date, and the test sheet's procedures name only what the
 # registries define. It also checks that the website's reader of the test sheet reads it
-# exactly as scripts/design does (scripts/test-sheet-readers.js).
+# exactly as scripts/design does (scripts/test-sheet-readers.js), on a sample sheet that
+# must be what scripts/test-sheet-sample writes, and on the published sheet.
 name: Design
 
 on:
@@ -11,6 +12,7 @@ on:
       - docs/**
       - scripts/design
       - scripts/test-sheet-readers.js
+      - scripts/test-sheet-sample
       - scripts/test-sheet-sample.xlsx
       - .github/workflows/design.yml
   workflow_dispatch:
@@ -30,5 +32,7 @@ jobs:
         with:
           node-version: "24"
       - run: scripts/design check
+      - name: The sample sheet is what scripts/test-sheet-sample writes
+        run: scripts/test-sheet-sample && git diff --exit-code -- scripts/test-sheet-sample.xlsx
       - run: node scripts/test-sheet-readers.js
       - run: node scripts/test-sheet-readers.js --published
