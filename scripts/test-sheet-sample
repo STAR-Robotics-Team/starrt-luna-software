@@ -1,0 +1,247 @@
+#!/usr/bin/env python3
+"""Writes scripts/test-sheet-sample.xlsx: a small test sheet, laid out as the sheet's script
+lays out the real one (scripts/test-sheet.gs), with runs and mistakes of every kind the two
+sheet readers report.
+
+scripts/test-sheet-readers.js reads it with both readers, the build's (read_sheet in
+scripts/design) and the website's (docs/javascripts/test-sheet.js), and checks that they
+agree. When a reading rule changes, add a case for it here and run this again:
+
+    scripts/test-sheet-sample
+
+It names nodes, interfaces, TPMs, and test modes the design registries and Hardware test
+modes define, and judges measurements against TPM-6 (lower is better, goal 1000, threshold
+4000) and TPM-10 (no numbers yet), so a change to those can change what the readers
+report. It needs only Python 3.11 or newer: it writes the workbook's XML itself.
+"""
+import datetime
+import zipfile
+from pathlib import Path
+from xml.sax.saxutils import escape
+
+OUT = Path(__file__).resolve().parent / "test-sheet-sample.xlsx"
+COLUMNS = ["Row", "Do", "Pass when", "Applies when", "Actor", "Node", "Interface", "Budget", "Measures"]
+RUN = 9  # Zero-based column of the first run's Result: J.
+
+
+def header(runs):
+    return COLUMNS + ["Result", "Note"] * runs
+
+
+def serial(day):
+    """A date as a date cell holds it: days since 1899-12-30."""
+    return (day - datetime.date(1899, 12, 30)).days
+
+
+def put(rows, row, column, value):
+    rows[row] += [""] * (column + 1 - len(rows[row]))
+    rows[row][column] = value
+
+
+# ---------------------------------------------------------------------------------------
+# A procedure as the script leaves it: numbered steps, Applies when as chips, four runs
+# ---------------------------------------------------------------------------------------
+
+stick = [
+    ["Purpose", "Follows a TELEOP drive command from the gamepad to the drive motors, and measures the "
+                "operator link's bandwidth (TPM-6)."],
+    header(4),
+    ["Date"],
+    ["Gamepad"],
+    ["Radio link"],
+    ["Drivetrain"],
+    ["Cameras"],
+    [1, "Go through the bench testbed's safety checklist.", "Every item on it is done.", "Drivetrain: Bench",
+     "Tester"],
+    [2, "Put the drive base on blocks.", "No wheel touches the floor.", "Drivetrain: Drive base", "Tester"],
+    [3, "In terminal 1, start recording: `ros2 bag record -o stick /joy /cmd_vel`.",
+     "Terminal 1 prints `Listening for topics...`.", "", "Tester", "recorder"],
+    [4, "In terminal 2, capture the operator link: `sudo tcpdump -i lo -w stick.pcap`.",
+     "Terminal 2 prints `listening on lo`.", "Radio link: One computer", "Tester"],
+    [5, "In terminal 3, launch the robot software: `ros2 launch luna_bringup robot.launch.py`.",
+     "Within 60 s, `ros2 topic echo /robot/mode --once` prints DISABLED.", "", "Tester", "mode_manager",
+     "/robot/mode"],
+    [6, "Hold LB and push the left stick forward.", "`/teleop/cmd_vel` shows a forward speed above 0.",
+     "Gamepad: Bench, Gamepad: Drive base", "Operator", "teleop_node", "/teleop/cmd_vel", "TPM-7"],
+    [7, "Drive the robot across the floor.", "It moves forward and stops when the stick is let go.",
+     "Radio link: Drive base, Gamepad: Drive base", "Operator", "drivetrain", "/cmd_vel"],
+    [8, "Read the capture's bandwidth: `capinfos -i stick.pcap`.", "The average is under the TPM-6 threshold.",
+     "", "Tester", "", "", "", "TPM-6"],
+    [9, "Count the frames the cameras dropped.", "The count is recorded.", "Cameras: Bench", "Tester", "", "",
+     "", "TPM-10"],
+    [10, "[TBD: how the log is uploaded, testing layers open question 1 (1.3)]", ""],
+    ["Log"],
+]
+DATE, GAMEPAD, RADIO, DRIVETRAIN, CAMERAS = 2, 3, 4, 5, 6
+STEP = {n: 6 + n for n in range(1, 11)}  # Step number -> row index.
+LOG = 17
+
+# Run 1 (J, K): every system on a stand-in. Each step in the run passes; TPM-6 meets its goal.
+c = RUN
+put(stick, DATE, c, "2026-11-06")
+put(stick, GAMEPAD, c, "Stub (Sim)")
+put(stick, RADIO, c, "One computer")
+put(stick, DRIVETRAIN, c, "Stub (Sim)")
+put(stick, CAMERAS, c, "stub")
+for n in (3, 4, 5):
+    put(stick, STEP[n], c, "Pass")
+put(stick, STEP[4], c + 1, "recorded on the second try")
+put(stick, STEP[8], c, 812)
+put(stick, LOG, c, "https://example.com/logs/run-1")
+# Run 2 (L, M): the drive base, on a date cell. Marks on two steps not in this run (one of
+# them for two systems, of which only one differs), a number on a step that measures
+# nothing, a failed step with a note, and TPM-6 at its threshold, written with a comma.
+c = RUN + 2
+put(stick, DATE, c, serial(datetime.date(2026, 11, 7)))
+put(stick, GAMEPAD, c, "Drive base (Robot)")
+put(stick, RADIO, c, "Bench")
+put(stick, DRIVETRAIN, c, "drive base")
+put(stick, CAMERAS, c, "Bench")
+put(stick, STEP[1], c, "Pass")
+put(stick, STEP[2], c, "pass")
+put(stick, STEP[3], c, 5)
+put(stick, STEP[5], c, "Fail")
+put(stick, STEP[5], c + 1, "launch hung at the self-test")
+put(stick, STEP[6], c, "Pass")
+put(stick, STEP[7], c, "Pass")
+put(stick, STEP[8], c, "3,200")
+put(stick, STEP[9], c, 7)
+put(stick, DATE, c + 1, "the second try")
+put(stick, GAMEPAD, c + 1, "borrowed controller")
+# Run 3 (N, O): no date, a mode that does not exist, and systems with no mode.
+c = RUN + 4
+put(stick, GAMEPAD, c, "Wireless")
+put(stick, STEP[3], c, "Pass")
+# Run 4 (P, Q): the bench, on a US date. A mark that is not Pass or Fail, and TPM-6 missing
+# its threshold.
+c = RUN + 6
+put(stick, DATE, c, "11/8/2026")
+for row in (GAMEPAD, RADIO, DRIVETRAIN, CAMERAS):
+    put(stick, row, c, "Bench")
+put(stick, STEP[1], c, "Pas")
+put(stick, STEP[8], c, 4500)
+
+# ---------------------------------------------------------------------------------------
+# A procedure still in the old layout: Step in column A, Applies when in shorthand
+# ---------------------------------------------------------------------------------------
+
+link = [
+    ["Purpose", "Follows the loss of the operator's heartbeat to zero output at every drive motor."],
+    header(2),
+    ["Date", "", "", "", "", "", "", "", "", "2026-11-08"],
+    ["Radio link", "", "", "", "", "", "", "", "", "Bench (Bench)"],
+    ["Drivetrain", "", "", "", "", "", "", "", "", "Fake motor controllers (Sim)"],
+    ["Step", "Close the frontend's tab.", "Every motor's output is 0 within 600 ms.", "Radio link: One computer",
+     "Operator", "operator_frontend", "/operator/heartbeat", "", "TPM-8"],
+    ["Step", "Unplug the access point.", "Every motor's output is 0 within 600 ms.",
+     "Radio link: Bench, Drive base", "Tester", "", "", "", "TPM-8", 540],
+    ["step", "Plug it back in and enable again.", "The robot drives again.", "", "Operator", "mode_manager",
+     "/robot/request_mode", "", "", "Pass"],
+    ["Log"],
+]
+
+# ---------------------------------------------------------------------------------------
+# A tab of mistakes, each one a problem the readers report
+# ---------------------------------------------------------------------------------------
+
+mistakes = [
+    ["Purpose", ""],                                                        # No purpose.
+    header(2),
+    ["Layer"],                                                              # Not a kind, but empty: skipped.
+    ["Radio link"],
+    ["Radio link"],                                                         # A second Radio link row.
+    [1, "Drive", "", "Radio link: Wi-Fi"],                                  # No such mode; no Pass when.
+    [2, "Drive", "Wheels turn", "Lidar: Stub"],                             # LiDAR, as the sheet spells it, has no row.
+    [3, "", "Wheels turn", "Gamepad: Stub", "", "drivetrain_nod", "/no/such", "TPM-99", "TPM-98"],
+    [4, "Drive", "Wheels turn", "Radio link Bench"],                        # A chip with no colon.
+    [5, "[TBD: a step not written yet]"],                                   # Needs no Pass when.
+    ["Stepp", "A typo in column A"],
+    ["", "Not numbered yet", "Seen"],                                       # A step all the same.
+    [9, "Numbered wrong", "Seen", "Bench, Radio link: Bench"],              # A bare mode first; the first wrong number.
+    [9, "Numbered wrong again", "Seen", "Radio link:, Radio link: bench (Bench), Gamepad: Stub"],
+    ["Step", "Still says Step", "Seen", " , Radio link: One computer ,"],   # Empty chips are skipped.
+    [""],
+    ["Log"],
+]                                                                           # And no Date row.
+
+TABS = [
+    ("The stick moves the wheels", stick),
+    ("The operator link drops", link),
+    ("A mistakes tab", mistakes),
+    # Two tabs whose titles would have the same link on the website.
+    ("Same link", [["Purpose", "One of two tabs with the same link."], header(1), ["Date"], ["Log"]]),
+    ("Same link!", [["Purpose", "The other."], header(1), ["Date"], ["Log"]]),
+    # Not procedures: the template, and a tab with no header row.
+    ("Template", [["Purpose"], header(3), ["Date"], [""], [""], [""], ["Log"]]),
+    ("How to record a run", [["How to record a run"], ["1. Open the procedure's tab."]]),
+]
+
+
+# ---------------------------------------------------------------------------------------
+# Writing the workbook
+# ---------------------------------------------------------------------------------------
+
+def letters(column):
+    out = ""
+    column += 1
+    while column:
+        column, rest = divmod(column - 1, 26)
+        out = chr(65 + rest) + out
+    return out
+
+
+def cell(ref, value):
+    if isinstance(value, (int, float)):
+        return f'<c r="{ref}"><v>{value}</v></c>'
+    space = ' xml:space="preserve"' if value != value.strip() else ""
+    return f'<c r="{ref}" t="inlineStr"><is><t{space}>{escape(value)}</t></is></c>'
+
+
+def sheet_xml(rows):
+    body = []
+    for r, row in enumerate(rows, 1):
+        cells = "".join(cell(f"{letters(c)}{r}", v) for c, v in enumerate(row) if v != "")
+        if cells:
+            body.append(f'<row r="{r}">{cells}</row>')
+    return ('<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+            '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'
+            f'<sheetData>{"".join(body)}</sheetData></worksheet>')
+
+
+def write(path, tabs):
+    main = "http://schemas.openxmlformats.org/spreadsheetml/2006/main"
+    rel = "http://schemas.openxmlformats.org/officeDocument/2006/relationships"
+    package = "http://schemas.openxmlformats.org/package/2006/relationships"
+    sheets = "".join(f'<sheet name="{escape(name, {chr(34): "&quot;"})}" sheetId="{i}" r:id="rId{i}"/>'
+                     for i, (name, _) in enumerate(tabs, 1))
+    links = "".join(f'<Relationship Id="rId{i}" Type="{rel}/worksheet" Target="worksheets/sheet{i}.xml"/>'
+                    for i in range(1, len(tabs) + 1))
+    overrides = "".join(f'<Override PartName="/xl/worksheets/sheet{i}.xml" ContentType="application/'
+                        'vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>'
+                        for i in range(1, len(tabs) + 1))
+    parts = {
+        "[Content_Types].xml": '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+            '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">'
+            '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>'
+            '<Default Extension="xml" ContentType="application/xml"/>'
+            '<Override PartName="/xl/workbook.xml" ContentType="application/'
+            f'vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>{overrides}</Types>',
+        "_rels/.rels": f'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="{package}">'
+            f'<Relationship Id="rId1" Type="{rel}/officeDocument" Target="xl/workbook.xml"/></Relationships>',
+        "xl/workbook.xml": f'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="{main}" '
+            f'xmlns:r="{rel}"><sheets>{sheets}</sheets></workbook>',
+        "xl/_rels/workbook.xml.rels": '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+            f'<Relationships xmlns="{package}">{links}</Relationships>',
+    }
+    for i, (_, rows) in enumerate(tabs, 1):
+        parts[f"xl/worksheets/sheet{i}.xml"] = sheet_xml(rows)
+    # Stored, not compressed, and at a fixed time, so the same sample writes the same bytes
+    # with any zlib: CI checks that the committed file is what this writes.
+    with zipfile.ZipFile(path, "w", zipfile.ZIP_STORED) as book:
+        for name, text in parts.items():
+            book.writestr(zipfile.ZipInfo(name, date_time=(2026, 1, 1, 0, 0, 0)), text)
+
+
+if __name__ == "__main__":
+    write(OUT, TABS)
+    print(f"Wrote {OUT.relative_to(OUT.parent.parent)}: {len(TABS)} tabs.")
