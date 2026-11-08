@@ -128,11 +128,14 @@ flowchart LR
   ntask_sequencer -.->|"/robot/request_task"| nmode_manager
   npower_panel -->|"/power/battery"| nmode_manager
   npower_panel -->|"/power/battery"| noperator_frontend
-  nlocalization -->|"obstacle map topic (TBD)"| nplanner
-  nlocalization -->|"obstacle map topic (TBD)"| noperator_frontend
-  nplanner -->|"planned path topic (TBD)"| noperator_frontend
-  nplanner -->|"AUTO drive command topic (TBD)"| ncommand_selection
-  ntask_sequencer -->|"AUTO mechanism command topic (TBD)"| ncommand_selection
+  nlocalization -->|"/autonomy/odometry"| nplanner
+  nlocalization -->|"/autonomy/odometry"| ntask_sequencer
+  nlocalization -->|"/autonomy/obstacle_map"| nplanner
+  nlocalization -->|"/autonomy/obstacle_map"| noperator_frontend
+  nplanner -->|"/autonomy/plan"| noperator_frontend
+  nplanner -->|"/auto/cmd_vel (TBR)"| ncommand_selection
+  ntask_sequencer -.->|"/autonomy/navigate"| nplanner
+  ntask_sequencer -->|"AUTO mechanism command topics (TBD)"| ncommand_selection
   ndrivetrain -->|"/drivetrain/joint_states"| nlocalization
   ndrivetrain -->|"wheel odometry topic (TBD)"| nlocalization
   nmechanism -->|"/mechanism/status"| nmode_manager
@@ -178,8 +181,8 @@ ours that can fail publishes `/diagnostics`, so both are defined here.
 | [TBD: mechanism command topic, teleop open question 3] | topic | [TBD: in the mechanism doc (4.2)] | [TBD: in the mechanism doc (4.2)] | Command selection node | Mechanism node | [TBD: in the mechanism doc (4.2)] |
 | `/diagnostics` | topic | `diagnostic_msgs/msg/DiagnosticArray` | 1 Hz and on change | Drivetrain node, Mechanism node, Camera driver, Dedicated IMU driver, Localization and mapping, Path planning and following, Task sequencer | `mode_manager` | reliable, depth 10 |
 | `/robot/mode` | topic | `luna_interfaces/msg/RobotMode` | 10 Hz and on change | `mode_manager` | Drivetrain node, Mechanism node, Command selection node, Path planning and following, Task sequencer, Operator frontend, `teleop_node` | reliable, transient local, depth 1 |
-| [TBD: AUTO drive command topic, teleop open question 3] | topic | geometry_msgs/msg/TwistStamped [TBR: matches /cmd_vel] | [TBD: autonomy doc (7.2)] | Path planning and following | Command selection node | [TBD: autonomy doc (7.2)] |
-| [TBD: AUTO mechanism command topic, teleop open question 3] | topic | [TBD: mechanism doc (4.2)] | [TBD: autonomy doc (7.2)] | Task sequencer | Command selection node | [TBD: autonomy doc (7.2)] |
+| /auto/cmd_vel [TBR: teleop open question 3] | topic | geometry_msgs/msg/TwistStamped [TBR: matches /teleop/cmd_vel] | `command_rate`, 20 Hz | Path planning and following | Command selection node | best effort, volatile, depth 1 |
+| [TBD: AUTO mechanism command topics, teleop open questions 3 and 5] | topic | [TBD: mechanism doc (4.2)] | 20 Hz [TBR: matches teleop's command_rate] | Task sequencer | Command selection node | [TBD: mechanism doc (4.2)] |
 | `/teleop/cmd_vel` | topic | geometry_msgs/msg/TwistStamped [TBR: teleop draft, PR #14] | `command_rate`, 20 Hz [TBR: teleop draft, PR #14] | `teleop_node` | Command selection node | best effort, volatile, depth 1 [TBR: teleop draft, PR #14] |
 | [TBD: teleop's mechanism command topics, teleop open questions 3 and 5] | topic | [TBD: mechanism doc (4.2)] | `command_rate`, 20 Hz [TBR: teleop draft, PR #14, for the mechanism doc (4.2) to confirm] | `teleop_node` | Command selection node | [TBD: teleoperation doc (5.1)] |
 

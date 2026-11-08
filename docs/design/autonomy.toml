@@ -1,11 +1,17 @@
-# Registry for the autonomy design (autonomy.md). The nodes and interfaces are the contract
-# the other docs build against until the autonomy doc's sections 2 and 3 confirm or change
-# them (7.2). See "Registries" in README.md, then run scripts/design render.
+# Registry for the autonomy design (autonomy.md). See "Registries" in README.md, then run
+# scripts/design render.
+#
+# Names, rates, and QoS below are the autonomy doc's proposal for 7.2. Each one still
+# marked [TBR] waits on the open question or deliverable it names.
+
+# ----------------------------------------------------------------------------------------
+# SW.2.2 Localization and mapping
+# ----------------------------------------------------------------------------------------
 
 [[node]]
 id = "localization"
 name = "Localization and mapping"
-package = "[TBD: its nodes, autonomy doc (7.2)]"
+package = "`luna_autonomy` [TBR: autonomy open question 2]"
 runs_on = "Robot computer"
 element = "SW.2.2"
 does = "Finds the robot's position and heading from the random start, and builds the obstacle map, from the LiDAR, the IMUs, and the wheels"
@@ -13,55 +19,122 @@ subscribes = ["unilidar/cloud", "unilidar/imu", "imu/data_raw", "/drivetrain/joi
 publishes_shared = ["/diagnostics"]
 
 [[node.publishes]]
+id = "robot-pose"
+name = "/autonomy/odometry"
+type = "nav_msgs/msg/Odometry"
+rate = "50 Hz [TBR: autonomy open question 2]"
+qos = "best effort, volatile, depth 1"
+note = "The fused position, heading, and velocity in the map frame. The same estimate is published as the map to odom to base_link transforms."
+
+[[node.publishes]]
 id = "obstacle-map"
-name = "[TBD: obstacle map topic, autonomy doc (7.2)]"
-type = "nav_msgs/msg/OccupancyGrid [TBR: autonomy doc (7.2)]"
-rate = "[TBD: autonomy doc (7.2)]"
-qos = "[TBD: autonomy doc (7.2)]"
+name = "/autonomy/obstacle_map"
+type = "nav_msgs/msg/OccupancyGrid"
+rate = "`map_publish_rate`, 2 Hz [TBR: autonomy open question 2]"
+qos = "reliable, transient local, depth 1"
+note = "5 cm cells (TPM-4). Rocks and craters are both marked occupied. The operator frontend receives it at no more than 1 Hz, to stay inside its TPM-6 budget of 150 kbit/s in AUTO."
+
+# ----------------------------------------------------------------------------------------
+# SW.2.3 Path planning and following
+# ----------------------------------------------------------------------------------------
 
 [[node]]
 id = "planner"
 name = "Path planning and following"
-package = "[TBD: its nodes, autonomy doc (7.2)]"
+package = "`luna_autonomy`, with Nav2 [TBR: autonomy open question 2]"
 runs_on = "Robot computer"
 element = "SW.2.3"
-does = "Plans a path around the mapped obstacles to the target zone, and follows it in AUTO"
-subscribes = ["/robot/mode", "obstacle-map"]
+does = "Plans a path around the mapped obstacles to the goal the task sequencer sends, follows it in AUTO, and stops when the robot leaves AUTO or loses its position"
+subscribes = ["/robot/mode", "obstacle-map", "robot-pose"]
 publishes_shared = ["/diagnostics"]
 
 [[node.publishes]]
 id = "planned-path"
-name = "[TBD: planned path topic, autonomy doc (7.2)]"
-type = "nav_msgs/msg/Path [TBR: autonomy doc (7.2)]"
-rate = "[TBD: autonomy doc (7.2)]"
-qos = "[TBD: autonomy doc (7.2)]"
+name = "/autonomy/plan"
+type = "nav_msgs/msg/Path"
+rate = "On each replan, at most 1 Hz"
+qos = "reliable, volatile, depth 1"
 
 [[node.publishes]]
 id = "auto-drive-command"
-name = "[TBD: AUTO drive command topic, teleop open question 3]"
-type = "geometry_msgs/msg/TwistStamped [TBR: matches /cmd_vel]"
-rate = "[TBD: autonomy doc (7.2)]"
-qos = "[TBD: autonomy doc (7.2)]"
+name = "/auto/cmd_vel [TBR: teleop open question 3]"
+type = "geometry_msgs/msg/TwistStamped [TBR: matches /teleop/cmd_vel]"
+rate = "`command_rate`, 20 Hz"
+qos = "best effort, volatile, depth 1"
+note = "Matches /teleop/cmd_vel, so the command selection node treats both sources the same."
+
+[[node.serves_actions]]
+id = "navigate"
+name = "/autonomy/navigate"
+type = "nav2_msgs/action/NavigateToPose [TBR: autonomy open question 2]"
+rate = "On demand"
+qos = "default"
+note = "The task sequencer sends one goal per travel leg: a dig spot or a dump spot."
+
+# ----------------------------------------------------------------------------------------
+# SW.2.4 Task sequencer
+# ----------------------------------------------------------------------------------------
 
 [[node]]
 id = "task_sequencer"
 name = "Task sequencer"
-package = "[TBD: autonomy doc (7.2)]"
+package = "`luna_autonomy`"
 runs_on = "Robot computer"
 element = "SW.2.4"
 does = "Runs dig, travel, dump, travel in AUTO: changes the task mode and sends mechanism commands, but can never enable the robot"
-subscribes = ["/robot/mode", "/mechanism/status"]
-calls = ["/robot/request_task"]
+subscribes = ["/robot/mode", "/mechanism/status", "robot-pose"]
+calls = ["/robot/request_task", "navigate"]
 publishes_shared = ["/diagnostics"]
 
 [[node.publishes]]
 id = "auto-mechanism-command"
-name = "[TBD: AUTO mechanism command topic, teleop open question 3]"
+name = "[TBD: AUTO mechanism command topics, teleop open questions 3 and 5]"
 type = "[TBD: mechanism doc (4.2)]"
-rate = "[TBD: autonomy doc (7.2)]"
-qos = "[TBD: autonomy doc (7.2)]"
+rate = "20 Hz [TBR: matches teleop's command_rate]"
+qos = "[TBD: mechanism doc (4.2)]"
+
+[[node.publishes]]
+id = "autonomy-status"
+name = "/autonomy/status"
+type = "luna_interfaces/msg/AutonomyStatus [TBR: proposed in section 3]"
+rate = "1 Hz and on change"
+qos = "reliable, transient local, depth 1"
+note = "The cycle step, the cycle count, and why the sequencer stopped, for the operator display, so the operator can tell the Mission Control Judge when an autonomous attempt starts and ends."
+
+# ----------------------------------------------------------------------------------------
+# Open questions (section 9). Who answers each one, and by when, is in Turgor.
+# ----------------------------------------------------------------------------------------
 
 [[question]]
 number = 1
 status = "open"
 text = "I added an extra section for scoring, is that fine?"
+
+[[question]]
+number = 2
+status = "open"
+turgor = ["7.5"]
+text = "Which LiDAR-inertial odometry package runs on the Unitree L2, and does it, with Nav2, fit the Jetson inside the TPM-11 budget? Until it is chosen, every rate and package marked with this question is a proposal."
+
+[[question]]
+number = 3
+status = "open"
+turgor = ["7.5"]
+text = "How are craters, which sit below the ground, found in the point cloud: cells below the local ground height by more than crater_min_depth, or cells the LiDAR cannot see? Test both on a recording of a dug hole."
+
+[[question]]
+number = 4
+status = "open"
+turgor = ["7.5"]
+text = "Find the start position and heading from the LiDAR alone, or add markers on the arena frame beside the starting zone? Markers are allowed there, but count toward the robot's mass (guidebook §13.7, p. 43)."
+
+[[question]]
+number = 5
+status = "open"
+turgor = ["4.2"]
+text = "How does the task sequencer know the bin is full: a reading on /mechanism/status (motor current, a load cell, a level sensor) or a fixed dig time? For the mechanism doc."
+
+[[question]]
+number = 6
+status = "open"
+text = "May the robot drive to the berm target's published position (guidebook §11.2, pp. 34-35), or does that count as prior knowledge of the arena, which §16.3 forbids for travel? Ask in the FAQ. If it may not, the robot must find the construction zone from what it sees."
