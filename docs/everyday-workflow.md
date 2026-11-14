@@ -95,7 +95,7 @@ Node.js and makes each command about 3 seconds slower.
 | `scripts/dev up` | Starts the dev container, building it the first time. |
 | `scripts/dev shell` | Opens a terminal inside the container. Type `exit` to leave. |
 | `scripts/dev build [args]` | Runs `colcon build` with any extra arguments, such as `--packages-select luna_drivetrain`. |
-| `scripts/dev test [args]` | Runs `colcon test` and shows the results. Fails if any test fails. |
+| `scripts/dev test [args]` | Runs `colcon test` and shows the results of the packages it tested, one summary each. Fails if any test fails, or if no package was tested. |
 | `scripts/dev run <command>` | Runs any command in `/ws`, with ROS and the built workspace loaded. |
 | `scripts/dev stop` | Stops the dev container. |
 | `scripts/dev rebuild` | Recreates the container after changes to `.devcontainer/`. |

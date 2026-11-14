@@ -20,7 +20,7 @@ Commands:
   up            Start the dev container, building it the first time
   shell         Open a terminal inside the dev container
   build [ARGS]  Build the workspace with colcon build ARGS
-  test [ARGS]   Run colcon test ARGS, then show the results
+  test [ARGS]   Run colcon test ARGS, then show the results of the packages it tested
   run CMD       Run any command in the workspace, with ROS and the workspace loaded
   stop          Stop the dev container
   rebuild       Recreate the dev container, after changes to .devcontainer/
@@ -131,6 +131,29 @@ in_container() {
 load_ros='source "/opt/ros/$ROS_DISTRO/setup.bash"'
 # Loads ROS and, once it has been built, the workspace.
 load_workspace="$load_ros"'; if [ -f install/setup.bash ]; then source install/setup.bash; fi'
+# Shows the results of the packages the last `colcon test` ran, which colcon logs in
+# log/latest_test, one folder per package. `colcon test-result` on its own reads every
+# result under build/, so it would also count old results of packages this run skipped.
+# An ament_cmake package's results are read from its test_results folder only, because
+# CTest's Test.xml beside it lists the same tests again, and would count each one twice.
+# A package without that folder, such as a Python package, is read whole.
+# shellcheck disable=SC2016
+show_results='status=0
+tested=0
+for log in log/latest_test/*/; do
+  [ -d "$log" ] || continue
+  tested=$((tested + 1))
+  package=$(basename "$log")
+  results="build/$package/test_results"
+  [ -d "$results" ] || results="build/$package"
+  echo "$package:"
+  colcon test-result --test-result-base "$results" --verbose || status=1
+done
+if [ "$tested" -eq 0 ]; then
+  echo "No packages were tested. Check the package names you gave." >&2
+  status=1
+fi
+exit "$status"'
 
 case "$command" in
   up)
@@ -150,7 +173,7 @@ case "$command" in
     ;;
   test)
     ensure_running
-    in_container bash -c "$load_ros; colcon test \"\$@\" && colcon test-result --verbose" bash "$@"
+    in_container bash -c "$load_ros; colcon test \"\$@\" || exit; $show_results" bash "$@"
     ;;
   run)
     ensure_running
