@@ -42,7 +42,6 @@ by `scripts/design render`.
 
 | Question | Turgor |
 | --- | --- |
-| 1. I added an extra section for scoring, is that fine? | None |
 | 2. Which LiDAR-inertial odometry package runs on the Unitree L2, and does it, with Nav2, fit the Jetson inside the TPM-11 budget? Until it is chosen, every rate and package marked with this question is a proposal. | 7.5 |
 | 3. How are craters, which sit below the ground, found in the point cloud: cells below the local ground height by more than crater_min_depth, or cells the LiDAR cannot see? Test both on a recording of a dug hole. | 7.5 |
 | 4. Find the start position and heading from the LiDAR alone, or add markers on the arena frame beside the starting zone? Markers are allowed there, but count toward the robot's mass (guidebook §13.7, p. 43). | 7.5 |
@@ -127,13 +126,9 @@ that uses them; each is listed here once.
 | node planner | package | `luna_autonomy`, with Nav2 [TBR: autonomy open question 2] |
 | interface robot-pose | rate | 50 Hz [TBR: autonomy open question 2] |
 | interface obstacle-map | rate | `map_publish_rate`, 2 Hz [TBR: autonomy open question 2] |
-| interface auto-drive-command | name | /auto/cmd_vel [TBR: teleop open question 3] |
-| interface auto-drive-command | type | geometry_msgs/msg/TwistStamped [TBR: matches /teleop/cmd_vel] |
 | interface navigate | type | nav2_msgs/action/NavigateToPose [TBR: autonomy open question 2] |
-| interface auto-mechanism-command | name | [TBD: AUTO mechanism command topics, teleop open questions 3 and 5] |
-| interface auto-mechanism-command | type | [TBD: mechanism doc (4.2)] |
+| interface auto-mechanism-command | type | luna_interfaces/msg/ActuatorCommand [TBR: proposed in the mechanism doc (4.2)] |
 | interface auto-mechanism-command | rate | 20 Hz [TBR: matches teleop's command_rate] |
-| interface auto-mechanism-command | qos | [TBD: mechanism doc (4.2)] |
 | interface autonomy-status | type | luna_interfaces/msg/AutonomyStatus [TBR: proposed in section 3] |
 
 ### `drivetrain.toml`

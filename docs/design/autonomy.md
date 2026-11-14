@@ -2,28 +2,29 @@
 
 | Owner | Status | Last reviewed |
 | --- | --- | --- |
-| adamlabbate | Draft | 2026-11-08 |
+| ja-zoe | Draft | 2026-11-14 |
 
 This doc designs the software that runs the mission cycle hands-free: it finds where the
 robot is, maps the obstacles, plans and follows a path between the zones, and runs dig,
 travel, dump, travel in AUTO. It covers elements SW.2.2, SW.2.3, and SW.2.4 of the
 [system design](system.md). The sensors it reads are designed in the sensors doc (6.2), and
-everything it commands passes through `mode_manager` and the command selection node, as the
-[operating modes design](operating-modes.md) sets out.
+everything it commands passes through `mode_manager` and `command_selector`, as the
+[operating modes design](operating-modes.md) and the
+[system design](system.md#command-selection) set out.
 
 ## Scoring
 
-### 1. Excavation Autonomy — 200 Points (§16.1, Pg. 55)
+### 1. Excavation Autonomy: 200 Points (§16.1, Pg. 55)
 
 - The starting zone is included in the excavation zone.
 - Must indicate to MCJ that the excavation attempt is autonomous rather than manual.
 - Autonomous operation must begin before the robot engages in the regolith collection process.
 
-### 2. Dump Autonomy — 100 Points (§16.2, Pg. 56)
+### 2. Dump Autonomy: 100 Points (§16.2, Pg. 56)
 
 - Must indicate to MCJ that the dump attempt is autonomous rather than manual.
 
-### 3. Travel Autonomy — 500 Points (§16.3, Pg. 56)
+### 3. Travel Autonomy: 500 Points (§16.3, Pg. 56)
 
 - Touch sensors are not allowed.
 - The robot cannot use previous knowledge about the layout of the arena.
@@ -32,11 +33,11 @@ everything it commands passes through `mode_manager` and the command selection n
 - The robot cannot simply follow a wall at a fixed distance (e.g., maintaining a distance of 0.5 m).
 - Waypoints and "Point and Traverse" navigation methods are not allowed.
 
-### 4. 100% Autonomous Cycles — 1000 Points (§16.4, Pg. 57)
+### 4. 100% Autonomous Cycles: 1000 Points (§16.4, Pg. 57)
 
 - Awarded if all excavation, travel, and dump cycles were completed autonomously, even if some manual control was used during the run.
 
-### 5. Full Autonomy — 1400 Points (§16.5, Pg. 57)
+### 5. Full Autonomy: 1400 Points (§16.5, Pg. 57)
 
 - The robot may be moved manually within the starting zone at the beginning of the run.
 - Autonomous operation must begin while the robot is still in the starting zone and must be maintained throughout the entire run.
@@ -258,9 +259,9 @@ the code ([Registries](README.md#registries)).
 | `/autonomy/odometry` | topic | `nav_msgs/msg/Odometry` | 50 Hz [TBR: autonomy open question 2] | Localization and mapping | Path planning and following, Task sequencer | best effort, volatile, depth 1 |
 | `/autonomy/obstacle_map` | topic | `nav_msgs/msg/OccupancyGrid` | `map_publish_rate`, 2 Hz [TBR: autonomy open question 2] | Localization and mapping | Path planning and following, Operator frontend | reliable, transient local, depth 1 |
 | `/autonomy/plan` | topic | `nav_msgs/msg/Path` | On each replan, at most 1 Hz | Path planning and following | Operator frontend | reliable, volatile, depth 1 |
-| /auto/cmd_vel [TBR: teleop open question 3] | topic | geometry_msgs/msg/TwistStamped [TBR: matches /teleop/cmd_vel] | `command_rate`, 20 Hz | Path planning and following | `command_selector` | best effort, volatile, depth 1 |
+| `/auto/cmd_vel` | topic | `geometry_msgs/msg/TwistStamped` | `command_rate`, 20 Hz | Path planning and following | `command_selector` | best effort, volatile, depth 1 |
 | `/autonomy/navigate` | action | nav2_msgs/action/NavigateToPose [TBR: autonomy open question 2] | On demand | Path planning and following | Task sequencer | default |
-| [TBD: AUTO mechanism command topics, teleop open questions 3 and 5] | topic | [TBD: mechanism doc (4.2)] | 20 Hz [TBR: matches teleop's command_rate] | Task sequencer | `command_selector` | [TBD: mechanism doc (4.2)] |
+| `/auto/mechanism/<function>/command` | topic | luna_interfaces/msg/ActuatorCommand [TBR: proposed in the mechanism doc (4.2)] | 20 Hz [TBR: matches teleop's command_rate] | Task sequencer | `command_selector` | best effort, volatile, depth 1 |
 | `/autonomy/status` | topic | luna_interfaces/msg/AutonomyStatus [TBR: proposed in section 3] | 1 Hz and on change | Task sequencer | Operator frontend | reliable, transient local, depth 1 |
 | `/diagnostics` | topic | `diagnostic_msgs/msg/DiagnosticArray` | 1 Hz and on change | Drive mode gate, Mechanism mode gate, Camera driver, Dedicated IMU driver, Localization and mapping, Path planning and following, Task sequencer | `mode_manager` | reliable, depth 10 |
 | `/robot/mode` | topic | `luna_interfaces/msg/RobotMode` | 10 Hz and on change | `mode_manager` | Drive mode gate, Mechanism mode gate, `command_selector`, Path planning and following, Task sequencer, Operator frontend, `teleop_node` | reliable, transient local, depth 1 |
@@ -322,9 +323,11 @@ Every default here is a proposal [TBR: tested in 7.5 and 7.6].
 
 ## 5. Libraries and hardware interfaces
 
-Autonomy talks to no hardware directly. It reads the sensors through the topics the sensors
-doc (6.2) defines, and every command it sends goes through the command selection node to
-the drivetrain and mechanism nodes, which own the hardware.
+Autonomy talks to no hardware directly. It reads the sensors through the topics the
+[sensors design](sensors.md) defines, and every command it sends goes through
+`command_selector` to the [drivetrain](drivetrain.md) and the [mechanism](mechanism.md),
+which own the hardware. Each command carries the time it was computed, and the drivetrain
+and the mechanism drop any that arrives stale.
 
 - **LiDAR-inertial odometry:** [TBD: chosen in 7.5, autonomy open question 2]. It must
   accept the Unitree L2's point cloud and built-in IMU as Unitree's driver publishes them
@@ -343,7 +346,7 @@ cites a fact from it.
 flowchart LR
   lidar["Unitree L2 driver (6.2)"] -- "unilidar/cloud, unilidar/imu" --> loc["Localization and mapping"]
   imu["Dedicated IMU driver (6.2)"] -- "imu/data_raw" --> loc
-  dt["Drivetrain node (3.1)"] -- "wheel odometry" --> loc
+  dt["diff_drive_controller (3.1)"] -- "/drivetrain/odom" --> loc
   loc -- "/autonomy/odometry" --> plan["Path planning and following"]
   loc -- "/autonomy/obstacle_map" --> plan
   loc -- "/autonomy/obstacle_map" --> op["Operator frontend (5.1)"]
@@ -352,8 +355,8 @@ flowchart LR
   seq -- "/robot/request_task" --> mm["mode_manager"]
   mm -- "/robot/mode" --> plan
   mm -- "/robot/mode" --> seq
-  mech["Mechanism node (4.2)"] -- "/mechanism/status" --> seq
-  plan -- "/auto/cmd_vel" --> sel["Command selection node"]
+  mech["mechanism_controller (4.2)"] -- "/mechanism/status" --> seq
+  plan -- "/auto/cmd_vel" --> sel["command_selector"]
   seq -- "mechanism commands" --> sel
   seq -- "/autonomy/status" --> op
   sel -- "/cmd_vel" --> dt
@@ -407,7 +410,7 @@ Layers as in [Testing layers](testing-layers.md#the-layers). Every test runs at 
 
 | Question | Status | Turgor |
 | --- | --- | --- |
-| 1. I added an extra section for scoring, is that fine? | Open | None |
+| 1. Keep the Scoring section at the top of this doc: it shows what each autonomy requirement earns. | Decided 2026-11-14 | None |
 | 2. Which LiDAR-inertial odometry package runs on the Unitree L2, and does it, with Nav2, fit the Jetson inside the TPM-11 budget? Until it is chosen, every rate and package marked with this question is a proposal. | Open | 7.5 |
 | 3. How are craters, which sit below the ground, found in the point cloud: cells below the local ground height by more than crater_min_depth, or cells the LiDAR cannot see? Test both on a recording of a dug hole. | Open | 7.5 |
 | 4. Find the start position and heading from the LiDAR alone, or add markers on the arena frame beside the starting zone? Markers are allowed there, but count toward the robot's mass (guidebook §13.7, p. 43). | Open | 7.5 |
@@ -424,5 +427,6 @@ Layers as in [Testing layers](testing-layers.md#the-layers). Every test runs at 
   (3), start-zone markers (4), and how a full bin is detected (5).
 - Next: skeleton nodes that match section 3 and publish fake data, then localization on a
   recording of the L2 (7.5).
-- Depends on: teleop open question 3 (command topics), the mechanism doc (4.2), the sensors
-  doc (6.2), and the drivetrain's wheel odometry (system open question 9).
+- Depends on: the mechanism's command and status messages (4.2), the sensors (6.1 and
+  6.2), and the drivetrain's wheel odometry, which needs drive encoders (drivetrain open
+  question 2).

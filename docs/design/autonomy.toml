@@ -57,11 +57,11 @@ qos = "reliable, volatile, depth 1"
 
 [[node.publishes]]
 id = "auto-drive-command"
-name = "/auto/cmd_vel [TBR: teleop open question 3]"
-type = "geometry_msgs/msg/TwistStamped [TBR: matches /teleop/cmd_vel]"
+name = "/auto/cmd_vel"
+type = "geometry_msgs/msg/TwistStamped"
 rate = "`command_rate`, 20 Hz"
 qos = "best effort, volatile, depth 1"
-note = "Matches /teleop/cmd_vel, so the command selection node treats both sources the same."
+note = "Matches /teleop/cmd_vel, so command_selector treats both sources the same, and forwards it as /cmd_vel while the control source is AUTO."
 
 [[node.serves_actions]]
 id = "navigate"
@@ -88,10 +88,11 @@ publishes_shared = ["/diagnostics"]
 
 [[node.publishes]]
 id = "auto-mechanism-command"
-name = "[TBD: AUTO mechanism command topics, teleop open questions 3 and 5]"
-type = "[TBD: mechanism doc (4.2)]"
+name = "/auto/mechanism/<function>/command"
+type = "luna_interfaces/msg/ActuatorCommand [TBR: proposed in the mechanism doc (4.2)]"
 rate = "20 Hz [TBR: matches teleop's command_rate]"
-qos = "[TBD: mechanism doc (4.2)]"
+qos = "best effort, volatile, depth 1"
+note = "One topic for each mechanism function: depth, which may take position commands, excavator, conveyor, and hatch (mechanism design, section 3)."
 
 [[node.publishes]]
 id = "autonomy-status"
@@ -107,8 +108,9 @@ note = "The cycle step, the cycle count, and why the sequencer stopped, for the 
 
 [[question]]
 number = 1
-status = "open"
-text = "I added an extra section for scoring, is that fine?"
+status = "decided"
+decided = 2026-11-14
+text = "Keep the Scoring section at the top of this doc: it shows what each autonomy requirement earns."
 
 [[question]]
 number = 2

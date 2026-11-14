@@ -48,9 +48,9 @@ This page is generated from `docs/design/*.toml` by `scripts/design render`.
 | `/autonomy/odometry` | topic | `nav_msgs/msg/Odometry` | 50 Hz [TBR: autonomy open question 2] | Localization and mapping | Path planning and following, Task sequencer | best effort, volatile, depth 1 | [Autonomy Subsystem Design](autonomy.md) |
 | `/autonomy/obstacle_map` | topic | `nav_msgs/msg/OccupancyGrid` | `map_publish_rate`, 2 Hz [TBR: autonomy open question 2] | Localization and mapping | Path planning and following, Operator frontend | reliable, transient local, depth 1 | [Autonomy Subsystem Design](autonomy.md) |
 | `/autonomy/plan` | topic | `nav_msgs/msg/Path` | On each replan, at most 1 Hz | Path planning and following | Operator frontend | reliable, volatile, depth 1 | [Autonomy Subsystem Design](autonomy.md) |
-| /auto/cmd_vel [TBR: teleop open question 3] | topic | geometry_msgs/msg/TwistStamped [TBR: matches /teleop/cmd_vel] | `command_rate`, 20 Hz | Path planning and following | `command_selector` | best effort, volatile, depth 1 | [Autonomy Subsystem Design](autonomy.md) |
+| `/auto/cmd_vel` | topic | `geometry_msgs/msg/TwistStamped` | `command_rate`, 20 Hz | Path planning and following | `command_selector` | best effort, volatile, depth 1 | [Autonomy Subsystem Design](autonomy.md) |
 | `/autonomy/navigate` | action | nav2_msgs/action/NavigateToPose [TBR: autonomy open question 2] | On demand | Path planning and following | Task sequencer | default | [Autonomy Subsystem Design](autonomy.md) |
-| [TBD: AUTO mechanism command topics, teleop open questions 3 and 5] | topic | [TBD: mechanism doc (4.2)] | 20 Hz [TBR: matches teleop's command_rate] | Task sequencer | `command_selector` | [TBD: mechanism doc (4.2)] | [Autonomy Subsystem Design](autonomy.md) |
+| `/auto/mechanism/<function>/command` | topic | luna_interfaces/msg/ActuatorCommand [TBR: proposed in the mechanism doc (4.2)] | 20 Hz [TBR: matches teleop's command_rate] | Task sequencer | `command_selector` | best effort, volatile, depth 1 | [Autonomy Subsystem Design](autonomy.md) |
 | `/autonomy/status` | topic | luna_interfaces/msg/AutonomyStatus [TBR: proposed in section 3] | 1 Hz and on change | Task sequencer | Operator frontend | reliable, transient local, depth 1 | [Autonomy Subsystem Design](autonomy.md) |
 | `/drivetrain/odom` | topic | `nav_msgs/msg/Odometry` | `publish_rate`, 50 Hz | `diff_drive_controller` | Localization and mapping | the system default: reliable, volatile | [Drivetrain Subsystem Design](drivetrain.md) |
 | `/drivetrain/joint_states` | topic | `sensor_msgs/msg/JointState` | The controller manager's `update_rate`, 50 Hz | `joint_state_broadcaster` (drivetrain) | `robot_state_publisher` and `joint_state_publisher`, Localization and mapping | the system default: reliable, volatile | [Drivetrain Subsystem Design](drivetrain.md) |
@@ -72,8 +72,9 @@ This page is generated from `docs/design/*.toml` by `scripts/design render`.
 - `/diagnostics`: Every node of ours that can fail reports here; an ERROR puts the robot in FAULT (operating modes, section 7).
 - `/autonomy/odometry`: The fused position, heading, and velocity in the map frame. The same estimate is published as the map to odom to base_link transforms.
 - `/autonomy/obstacle_map`: 5 cm cells (TPM-4). Rocks and craters are both marked occupied. The operator frontend receives it at no more than 1 Hz, to stay inside its TPM-6 budget of 150 kbit/s in AUTO.
-- /auto/cmd_vel [TBR: teleop open question 3]: Matches /teleop/cmd_vel, so the command selection node treats both sources the same.
+- `/auto/cmd_vel`: Matches /teleop/cmd_vel, so command_selector treats both sources the same, and forwards it as /cmd_vel while the control source is AUTO.
 - `/autonomy/navigate`: The task sequencer sends one goal per travel leg: a dig spot or a dump spot.
+- `/auto/mechanism/<function>/command`: One topic for each mechanism function: depth, which may take position commands, excavator, conveyor, and hatch (mechanism design, section 3).
 - `/autonomy/status`: The cycle step, the cycle count, and why the sequencer stopped, for the operator display, so the operator can tell the Mission Control Judge when an autonomous attempt starts and ends.
 - `/drivetrain/odom`: Remapped from the controller's ~/odom. Its own odom to base_link transform is off (enable_odom_tf is false), because localization publishes that transform (autonomy design).
 - `/drivetrain/joint_states`: Remapped from joint_states, so the drivetrain's and the mechanism's broadcasters each have a topic of their own.
