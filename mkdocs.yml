@@ -67,6 +67,7 @@ nav:
       - Subsystems:
           - System: design/system.md
           - Operating modes: design/operating-modes.md
+          - Teleoperation: design/teleoperation.md
           - Autonomy: design/autonomy.md
       - Testing:
           - Testing layers: design/testing-layers.md
