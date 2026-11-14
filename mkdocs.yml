@@ -28,6 +28,7 @@ extra_css:
   - stylesheets/navigation.css
   - stylesheets/page-info.css
   - stylesheets/test-sheet.css
+  - stylesheets/tables.css
 
 extra_javascript:
   - javascripts/last-updated.js

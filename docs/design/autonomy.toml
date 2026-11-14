@@ -21,6 +21,7 @@ publishes_shared = ["/diagnostics"]
 [[node.publishes]]
 id = "robot-pose"
 name = "/autonomy/odometry"
+carries = "The robot's fused position, heading, and velocity in the map"
 type = "nav_msgs/msg/Odometry"
 rate = "50 Hz [TBR: autonomy open question 2]"
 qos = "best effort, volatile, depth 1"
@@ -29,6 +30,7 @@ note = "The fused position, heading, and velocity in the map frame. The same est
 [[node.publishes]]
 id = "obstacle-map"
 name = "/autonomy/obstacle_map"
+carries = "The 5 cm grid of mapped rocks and craters"
 type = "nav_msgs/msg/OccupancyGrid"
 rate = "`map_publish_rate`, 2 Hz [TBR: autonomy open question 2]"
 qos = "reliable, transient local, depth 1"
@@ -51,6 +53,7 @@ publishes_shared = ["/diagnostics"]
 [[node.publishes]]
 id = "planned-path"
 name = "/autonomy/plan"
+carries = "The path the planner is following"
 type = "nav_msgs/msg/Path"
 rate = "On each replan, at most 1 Hz"
 qos = "reliable, volatile, depth 1"
@@ -58,6 +61,7 @@ qos = "reliable, volatile, depth 1"
 [[node.publishes]]
 id = "auto-drive-command"
 name = "/auto/cmd_vel"
+carries = "Autonomy's drive command, for command_selector"
 type = "geometry_msgs/msg/TwistStamped"
 rate = "`command_rate`, 20 Hz"
 qos = "best effort, volatile, depth 1"
@@ -66,6 +70,7 @@ note = "Matches /teleop/cmd_vel, so command_selector treats both sources the sam
 [[node.serves_actions]]
 id = "navigate"
 name = "/autonomy/navigate"
+carries = "A travel goal: drive to a dig spot or a dump spot"
 type = "nav2_msgs/action/NavigateToPose [TBR: autonomy open question 2]"
 rate = "On demand"
 qos = "default"
@@ -89,6 +94,7 @@ publishes_shared = ["/diagnostics"]
 [[node.publishes]]
 id = "auto-mechanism-command"
 name = "/auto/mechanism/<function>/command"
+carries = "Autonomy's command for one mechanism function, for command_selector"
 type = "luna_interfaces/msg/ActuatorCommand [TBR: proposed in the mechanism doc (4.2)]"
 rate = "20 Hz [TBR: matches teleop's command_rate]"
 qos = "best effort, volatile, depth 1"
@@ -97,6 +103,7 @@ note = "One topic for each mechanism function: depth, which may take position co
 [[node.publishes]]
 id = "autonomy-status"
 name = "/autonomy/status"
+carries = "The cycle step, the cycle count, and why the sequencer stopped"
 type = "luna_interfaces/msg/AutonomyStatus [TBR: proposed in section 3]"
 rate = "1 Hz and on change"
 qos = "reliable, transient local, depth 1"

@@ -83,15 +83,15 @@ as the code ([Registries](README.md#registries)).
 
 <!-- design: interfaces (generated from sensors.toml by scripts/design render: edit that file, not this table) -->
 
-| Name | Kind | Type | Rate | Publisher or server | Subscriber or client | QoS |
-| --- | --- | --- | --- | --- | --- | --- |
-| `unilidar/cloud` | topic | `sensor_msgs/msg/PointCloud2` | About 12 Hz [TBR: 18 scans a cloud, measured on the bench (6.6)] | Unitree L2 driver | Localization and mapping | reliable, volatile, depth 10, as the driver publishes it |
-| `unilidar/imu` | topic | `sensor_msgs/msg/Imu` | 500 Hz [TBR: the L2's reporting rate, measured on the bench (6.6)] | Unitree L2 driver | Localization and mapping | reliable, volatile, depth 10, as the driver publishes it |
-| `imu/data_raw` | topic | `sensor_msgs/msg/Imu` | 100 Hz [TBR: the stub's rate (6.9), until 6.1 picks the part] | Dedicated IMU driver | Localization and mapping | reliable, volatile, depth 10 [TBR: until the driver from 6.1 is known] |
-| [TBD: the driving camera's topic, once 6.1 picks the camera] | topic | sensor_msgs/msg/CompressedImage [TBR] | [TBD: the camera's rate; the operator view takes 5 Hz] | Camera driver | Operator frontend | [TBD: the driver's QoS] |
-| `/diagnostics` | topic | `diagnostic_msgs/msg/DiagnosticArray` | 1 Hz and on change | Drive mode gate, Mechanism mode gate, Camera driver, Dedicated IMU driver, Localization and mapping, Path planning and following, Task sequencer | `mode_manager` | reliable, depth 10 |
-| `/drivetrain/joint_states` | topic | `sensor_msgs/msg/JointState` | The controller manager's `update_rate`, 50 Hz | `joint_state_broadcaster` (drivetrain) | `robot_state_publisher` and `joint_state_publisher`, Localization and mapping | the system default: reliable, volatile |
-| `/mechanism/joint_states` | topic | `sensor_msgs/msg/JointState` | The controller manager's `update_rate`, 50 Hz | `joint_state_broadcaster` (mechanism) | `robot_state_publisher` and `joint_state_publisher` | the system default: reliable, volatile |
+| Name | What it carries | Kind | Type | Rate | Publisher or server | Subscriber or client | QoS |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| `unilidar/cloud` | The L2's 3D point cloud | topic | `sensor_msgs/msg/PointCloud2` | About 12 Hz [TBR: 18 scans a cloud, measured on the bench (6.6)] | Unitree L2 driver | Localization and mapping | reliable, volatile, depth 10, as the driver publishes it |
+| `unilidar/imu` | The L2's built-in gyroscope and accelerometer | topic | `sensor_msgs/msg/Imu` | 500 Hz [TBR: the L2's reporting rate, measured on the bench (6.6)] | Unitree L2 driver | Localization and mapping | reliable, volatile, depth 10, as the driver publishes it |
+| `imu/data_raw` | The dedicated IMU's gyroscope and accelerometer | topic | `sensor_msgs/msg/Imu` | 100 Hz [TBR: the stub's rate (6.9), until 6.1 picks the part] | Dedicated IMU driver | Localization and mapping | reliable, volatile, depth 10 [TBR: until the driver from 6.1 is known] |
+| [TBD: the driving camera's topic, once 6.1 picks the camera] | The driving camera's compressed image | topic | sensor_msgs/msg/CompressedImage [TBR] | [TBD: the camera's rate; the operator view takes 5 Hz] | Camera driver | Operator frontend | [TBD: the driver's QoS] |
+| `/diagnostics` | Each node's health, OK, WARN, or ERROR, with a reason | topic | `diagnostic_msgs/msg/DiagnosticArray` | 1 Hz and on change | Drive mode gate, Mechanism mode gate, Camera driver, Dedicated IMU driver, Localization and mapping, Path planning and following, Task sequencer | `mode_manager` | reliable, depth 10 |
+| `/drivetrain/joint_states` | Each wheel's position and speed | topic | `sensor_msgs/msg/JointState` | The controller manager's `update_rate`, 50 Hz | `joint_state_broadcaster` (drivetrain) | `robot_state_publisher` and `joint_state_publisher`, Localization and mapping | the system default: reliable, volatile |
+| `/mechanism/joint_states` | Each mechanism joint's position, where it is measured | topic | `sensor_msgs/msg/JointState` | The controller manager's `update_rate`, 50 Hz | `joint_state_broadcaster` (mechanism) | `robot_state_publisher` and `joint_state_publisher` | the system default: reliable, volatile |
 
 <!-- /design -->
 
@@ -188,6 +188,7 @@ config:
     wrappingWidth: 220
 ---
 flowchart LR
+  power["Main battery, through an isolated converter, behind the E-stop"]
   l2["Unitree L2 with its IMU"]
   imu["Dedicated IMU (6.1)"]
   cam["Driving camera (6.1)"]
@@ -196,29 +197,49 @@ flowchart LR
     l2d["Unitree L2 driver"]
     imud["Dedicated IMU driver"]
     camd["Camera driver"]
+    djsb["Drivetrain's joint_state_broadcaster"]
+    mjsb["Mechanism's joint_state_broadcaster"]
     rsp["robot_state_publisher and joint_state_publisher"]
     loc["Localization and mapping"]
     rb["rosbridge"]
   end
+  op["Operator frontend, on the laptop"]
+  power -->|"power"| l2
   l2 -->|"Ethernet, UDP"| l2d
   imu -->|"USB or serial (6.1)"| imud
   cam -->|"USB"| camd
   l2d -->|"unilidar/cloud, unilidar/imu"| loc
   imud -->|"imu/data_raw"| loc
-  camd -->|"compressed images"| rb
+  djsb -->|"/drivetrain/joint_states"| rsp
+  mjsb -->|"/mechanism/joint_states"| rsp
   rsp -->|"each link's transform"| loc
+  camd -->|"compressed images"| rb
+  rb -->|"compressed images, over the WebSocket"| op
   classDef ros fill:#8b939c1f,stroke:#8b939c
   classDef ours fill:#4c669026,stroke:#4c6690
   classDef hw fill:#4a725926,stroke:#4a7259
-  class l2d,imud,camd,rsp,rb ros
-  class loc ours
-  class l2,imu,cam hw
+  class l2d,imud,camd,djsb,mjsb,rsp,rb ros
+  class loc,op ours
+  class power,l2,imu,cam hw
   style pc fill:#8b939c14,stroke:#8b939c80
 ```
 
-Gray is stock or vendor code, blue is ours, and green is hardware. Each sensor's stand-ins
-replace its driver and the sensor, as
-[Hardware test modes](hardware-test-modes.md#lidar-stub-sim) draws for each mode.
+```mermaid
+flowchart LR
+  key["`**Key**`"] ~~~ k1["Ours"] ~~~ k2["Stock or vendor code"] ~~~ k3["Hardware"]
+  classDef label fill:none,stroke:none
+  classDef ours fill:#4c669026,stroke:#4c6690
+  classDef ros fill:#8b939c1f,stroke:#8b939c
+  classDef hw fill:#4a725926,stroke:#4a7259
+  class key label
+  class k1 ours
+  class k2 ros
+  class k3 hw
+```
+
+The IMU and camera take their power from the robot computer, over the same cable as their
+data [TBR: for the parts 6.1 picks]. Each sensor's stand-ins replace its driver and the
+sensor, as [Hardware test modes](hardware-test-modes.md#lidar-stub-sim) draws for each mode.
 
 ## 7. Behavior on failure
 

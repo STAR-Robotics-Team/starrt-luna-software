@@ -14,7 +14,7 @@ the doc, and cite the page.
   primary source wins.
 - **To cite a source or add one,** see [Cite sources](writing-docs.md#cite-sources).
 
-48 sources, 43 of them primary, cited 301 times. PDF page
+49 sources, 44 of them primary, cited 303 times. PDF page
 numbers are the ones a PDF viewer shows, so each link opens the PDF at the cited page. This
 page is generated from `docs/sources.toml` by `scripts/sources render`.
 
@@ -455,6 +455,17 @@ ros-controls, *ros2_controllers, jazzy branch: forward_controllers_base.cpp*. [O
 - **Used for:** Why the mechanism has a controller of its own: the stock forward command controllers write their last command on every cycle, with no timestamp and no timeout.
 - **Cited at:**
     - [Mechanism Subsystem Design](design/mechanism.md): [whole source](https://github.com/ros-controls/ros2_controllers/blob/jazzy/forward_command_controller/src/forward_controllers_base.cpp)
+
+### `ros2-jazzy-discovery`
+
+Open Robotics, *ROS 2 Jazzy: Improved Dynamic Discovery*. [Open the web page](https://docs.ros.org/en/jazzy/Tutorials/Advanced/Improved-Dynamic-Discovery.html).
+
+- **Primary source.**
+- **Checked:** 2026-11-14
+- **Used for:** What each ROS_AUTOMATIC_DISCOVERY_RANGE value reaches, and ROS_STATIC_PEERS.
+- **Cited at:**
+    - [Platform Design](design/platform.md): [whole source](https://docs.ros.org/en/jazzy/Tutorials/Advanced/Improved-Dynamic-Discovery.html)
+    - [ROS 2 networking](ros-networking.md): [whole source](https://docs.ros.org/en/jazzy/Tutorials/Advanced/Improved-Dynamic-Discovery.html)
 
 ### `twist-mux-topic-handle`
 

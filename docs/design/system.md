@@ -183,16 +183,16 @@ are defined here.
 
 <!-- design: interfaces (generated from system.toml by scripts/design render: edit that file, not this table) -->
 
-| Name | Kind | Type | Rate | Publisher or server | Subscriber or client | QoS |
-| --- | --- | --- | --- | --- | --- | --- |
-| `/cmd_vel` | topic | `geometry_msgs/msg/TwistStamped` | The active source's rate: `command_rate`, 20 Hz | `command_selector` | `diff_drive_controller` | reliable, volatile, depth 1 |
-| `/mechanism/<function>/command` | topic | luna_interfaces/msg/ActuatorCommand [TBR: proposed in the mechanism doc (4.2)] | The active source's rate: `command_rate`, 20 Hz | `command_selector` | `mechanism_controller` | reliable, volatile, depth 1 |
-| `/diagnostics` | topic | `diagnostic_msgs/msg/DiagnosticArray` | 1 Hz and on change | Drive mode gate, Mechanism mode gate, Camera driver, Dedicated IMU driver, Localization and mapping, Path planning and following, Task sequencer | `mode_manager` | reliable, depth 10 |
-| `/robot/mode` | topic | `luna_interfaces/msg/RobotMode` | 10 Hz and on change | `mode_manager` | Drive mode gate, Mechanism mode gate, `command_selector`, Path planning and following, Task sequencer, Operator frontend, `teleop_node` | reliable, transient local, depth 1 |
-| `/auto/cmd_vel` | topic | `geometry_msgs/msg/TwistStamped` | `command_rate`, 20 Hz | Path planning and following | `command_selector` | best effort, volatile, depth 1 |
-| `/auto/mechanism/<function>/command` | topic | luna_interfaces/msg/ActuatorCommand [TBR: proposed in the mechanism doc (4.2)] | 20 Hz [TBR: matches teleop's command_rate] | Task sequencer | `command_selector` | best effort, volatile, depth 1 |
-| `/teleop/cmd_vel` | topic | `geometry_msgs/msg/TwistStamped` | `command_rate`, 20 Hz [TBR] | `teleop_node` | `command_selector` | best effort, volatile, depth 1 |
-| `/teleop/mechanism/<function>/command` | topic | luna_interfaces/msg/ActuatorCommand [TBR: proposed in the mechanism doc (4.2)] | `command_rate`, 20 Hz [TBR] | `teleop_node` | `command_selector` | best effort, volatile, depth 1 |
+| Name | What it carries | Kind | Type | Rate | Publisher or server | Subscriber or client | QoS |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| `/cmd_vel` | The active control source's drive command: forward speed and turn rate | topic | `geometry_msgs/msg/TwistStamped` | The active source's rate: `command_rate`, 20 Hz | `command_selector` | `diff_drive_controller` | reliable, volatile, depth 1 |
+| `/mechanism/<function>/command` | The active control source's command for one mechanism function | topic | luna_interfaces/msg/ActuatorCommand [TBR: proposed in the mechanism doc (4.2)] | The active source's rate: `command_rate`, 20 Hz | `command_selector` | `mechanism_controller` | reliable, volatile, depth 1 |
+| `/diagnostics` | Each node's health, OK, WARN, or ERROR, with a reason | topic | `diagnostic_msgs/msg/DiagnosticArray` | 1 Hz and on change | Drive mode gate, Mechanism mode gate, Camera driver, Dedicated IMU driver, Localization and mapping, Path planning and following, Task sequencer | `mode_manager` | reliable, depth 10 |
+| `/robot/mode` | The robot state, the control source, the task mode, and why | topic | `luna_interfaces/msg/RobotMode` | 10 Hz and on change | `mode_manager` | Drive mode gate, Mechanism mode gate, `command_selector`, Path planning and following, Task sequencer, Operator frontend, `teleop_node` | reliable, transient local, depth 1 |
+| `/auto/cmd_vel` | Autonomy's drive command, for command_selector | topic | `geometry_msgs/msg/TwistStamped` | `command_rate`, 20 Hz | Path planning and following | `command_selector` | best effort, volatile, depth 1 |
+| `/auto/mechanism/<function>/command` | Autonomy's command for one mechanism function, for command_selector | topic | luna_interfaces/msg/ActuatorCommand [TBR: proposed in the mechanism doc (4.2)] | 20 Hz [TBR: matches teleop's command_rate] | Task sequencer | `command_selector` | best effort, volatile, depth 1 |
+| `/teleop/cmd_vel` | Teleop's drive command, for command_selector | topic | `geometry_msgs/msg/TwistStamped` | `command_rate`, 20 Hz [TBR] | `teleop_node` | `command_selector` | best effort, volatile, depth 1 |
+| `/teleop/mechanism/<function>/command` | Teleop's command for one mechanism function, for command_selector | topic | luna_interfaces/msg/ActuatorCommand [TBR: proposed in the mechanism doc (4.2)] | `command_rate`, 20 Hz [TBR] | `teleop_node` | `command_selector` | best effort, volatile, depth 1 |
 
 <!-- /design -->
 
@@ -343,7 +343,8 @@ operator frontend in a browser, any OS (5.1)`"]
 on the corner shelf (5.7)`"]
     subgraph robot["Robot"]
       direction TB
-      radio["`**Robot radio** (5.7)`"] --- jetson["`**Jetson Orin Nano**
+      radio["`**Robot radio**
+the Jetson's own Wi-Fi for now (5.7)`"] --- jetson["`**Jetson Orin Nano**
 every robot node, including teleop_node and rosbridge (5.1)`"]
       jetson ---|USB| can
       subgraph can["CAN bus, 1 Mbit/s"]
@@ -354,18 +355,21 @@ can0`"]
 drive (3.2) and mechanism (4.3), each driving its motor or actuator`"]
         pdp["`**Power distribution panel**
 battery voltage and currents`"]
-        canable ~~~ ctrl ~~~ pdp
+        canable ---|CAN| ctrl
+        ctrl ---|CAN| pdp
+        pdp -->|power, each channel's current measured| ctrl
       end
-      jetson --- sensors
       subgraph sensors["Sensors (6.1)"]
         direction TB
         lidar["`**Unitree L2 LiDAR**
-with its built-in IMU; Ethernet on the bench (6.6)`"]
+with its built-in IMU`"]
         imu["`**Dedicated IMU**
 near the center of mass`"]
         cams["`**Cameras**`"]
-        lidar ~~~ imu ~~~ cams
       end
+      jetson ---|Ethernet| lidar
+      jetson ---|USB or serial, 6.1| imu
+      jetson ---|USB| cams
     end
   end
   sw ---|NASA's cable| ap
@@ -383,9 +387,21 @@ near the center of mass`"]
   style sensors fill:#8b939c14,stroke:#8b939c80
 ```
 
-Blue boxes run our code, gray is NASA's, and green is the team's hardware. A number names
-the deliverable that picks that part. Lines are physical connections; the dotted one is
-radio.
+```mermaid
+flowchart LR
+  key["`**Key**`"] ~~~ k1["Runs our code"] ~~~ k2["NASA's equipment"] ~~~ k3["Team hardware"]
+  classDef label fill:none,stroke:none
+  classDef ours fill:#4c669026,stroke:#4c6690
+  classDef ros fill:#8b939c1f,stroke:#8b939c
+  classDef hw fill:#4a725926,stroke:#4a7259
+  class key label
+  class k1 ours
+  class k2 ros
+  class k3 hw
+```
+
+A number names the deliverable that picks that part. Lines are physical connections; the
+dotted one is radio.
 
 ### How the operator station reaches the robot
 

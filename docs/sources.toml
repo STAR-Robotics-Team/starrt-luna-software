@@ -599,6 +599,18 @@ checked = 2026-11-14
 notes = "JetPack 6's sample root file systems are Ubuntu 22.04 (jammy), which ROS 2 Jazzy does not support on arm64."
 
 [[source]]
+id = "ros2-jazzy-discovery"
+primary = true
+group = "Software references"
+title = "ROS 2 Jazzy: Improved Dynamic Discovery"
+publisher = "Open Robotics"
+url = "https://docs.ros.org/en/jazzy/Tutorials/Advanced/Improved-Dynamic-Discovery.html"
+format = "web"
+expect = "ROS_AUTOMATIC_DISCOVERY_RANGE"
+checked = 2026-11-14
+notes = "What each ROS_AUTOMATIC_DISCOVERY_RANGE value reaches, and ROS_STATIC_PEERS."
+
+[[source]]
 id = "esa-margin-philosophy"
 primary = true
 group = "Engineering practice"

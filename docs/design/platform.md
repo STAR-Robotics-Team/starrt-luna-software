@@ -80,7 +80,10 @@ every topic it records.
 | `port` | `rosbridge_websocket` | 9090 [TBR: rosbridge's default, for 5.7 to confirm] | The WebSocket port the frontend connects to |
 | Topics recorded | The recorder | Every topic except raw images [TBR: 2.10] | Compressed images are recorded; raw ones would fill the storage |
 | Storage folder, split size | The recorder | [TBD: open question 3] | Where each run's recording goes, and how large one file may grow |
-| `ROS_AUTOMATIC_DISCOVERY_RANGE` | Every process on the robot computer | [TBR: `LOCALHOST`, open question 4] | Which computers ROS 2 discovery reaches |
+| `ROS_AUTOMATIC_DISCOVERY_RANGE` | Every process on the robot computer | [TBR: `LOCALHOST`, open question 4] | Which computers ROS 2 discovery reaches: `LOCALHOST` is this computer only; `SUBNET` is every node multicast reaches, on every network the computer is on |
+| The robot's Wi-Fi address and subnet | The robot computer's network settings | [TBD: 5.7] | The network the access point gives the robot, which rosbridge and any `SUBNET` discovery use |
+| The network interface DDS uses | The DDS middleware's own configuration file, on the robot computer | The Wi-Fi interface [TBR: how to set it for the middleware the robot uses, checked in 5.6] | Keeps discovery off the LiDAR's Ethernet, where no ROS nodes are |
+| `ROS_STATIC_PEERS` | Every process, when working across computers | [TBD: the bench laptop's address, 5.6] | Addresses discovery also tries, separated by semicolons |
 | `ROS_DOMAIN_ID` | Every process; each launch test its own in CI | [TBD: the team's ID for bench work across computers, 5.6] | Keeps separate groups of nodes apart ([ROS 2 networking](../ros-networking.md)) |
 | Launch arguments | `luna_bringup` | [TBD: named in deliverable 1.4] | One for the whole robot and one per system, picking stub, fake motor controllers, Gazebo, a recording, or the real hardware |
 | `use_sim_time` | Every node, in Gazebo | true in Gazebo, false otherwise | Follow Gazebo's clock (2.8) |
@@ -161,6 +164,16 @@ WebSocket connection for commands and status and a second one for the camera in 
 Because the laptop runs no ROS 2 of its own, the robot's DDS discovery never has to cross
 the Wi-Fi (open question 4).
 
+**Discovery.** ROS 2 nodes find each other through DDS discovery, which
+`ROS_AUTOMATIC_DISCOVERY_RANGE` limits. `SUBNET`, the default, reaches every node multicast
+can reach, and `ROS_STATIC_PEERS` adds addresses to try
+([Improved Dynamic Discovery](../sources.md#ros2-jazzy-discovery)). `SUBNET` takes no
+subnet of its own: it reaches every network the computer is on. The robot computer is on
+two, its Ethernet to the LiDAR and its Wi-Fi to the access point, so when a laptop on the
+bench works with the robot over `SUBNET`, the DDS middleware is limited to the Wi-Fi
+interface, and the laptop's address can be listed in `ROS_STATIC_PEERS` (section 4). At
+competition, discovery may stay on the robot computer instead (open question 4).
+
 **Time.** The robot computer is the only computer on the robot, so its clock is the robot's
 time. The operator frontend measures its offset from it through rosapi's `get_time`
 (teleoperation open question 6), so no clock needs setting at competition.
@@ -179,8 +192,9 @@ flowchart TB
     editor["Any editor"]
     devc["Dev container: build, test, Gazebo"]
   end
-  gh["GitHub: pull request"]
+  pr["GitHub: the pull request's branch"]
   ci["CI: build and every test, in the dev container's image (2.5)"]
+  main["GitHub: main"]
   subgraph robot["Robot computer"]
     direction TB
     sd["systemd service (2.10)"]
@@ -189,26 +203,45 @@ flowchart TB
     nodes["Every subsystem's nodes"]
     rb["rosbridge and rosapi"]
     rec["Recorder"]
-    sd --> rc --> bring
+    sd -->|"starts at power-on"| rc
+    rc --> bring
     bring --> nodes
     bring --> rb
     bring --> rec
+    rb <-->|"the frontend's topics and calls"| nodes
+    nodes -->|"every topic but raw images"| rec
   end
   op["Operator laptop: browser frontend"]
-  editor --> devc
-  devc -->|"git push"| gh
-  gh --> ci
-  gh -->|"pull and build, or a prebuilt image (2.10)"| rc
-  rb <-->|"WebSocket through the access point"| op
+  editor -->|"edits the files the container sees"| devc
+  devc -->|"git push"| pr
+  pr -->|"each push"| ci
+  ci -->|"pass or fail, on the pull request"| pr
+  ci -->|"once it passes: pull the branch and build, or a prebuilt image (2.10)"| rc
+  pr -->|"merge, once reviewed and CI passes"| main
+  main -->|"pull and build, or a prebuilt image (2.10)"| rc
+  rb <-->|"WebSocket, through the access point"| op
   classDef ours fill:#4c669026,stroke:#4c6690
   classDef ros fill:#8b939c1f,stroke:#8b939c
-  class devc,ci,rc,bring,nodes ours
-  class rb,rec,sd,gh,editor,op ros
+  class devc,ci,rc,bring,nodes,op ours
+  class rb,rec,sd,pr,main,editor ros
   style dev fill:#8b939c14,stroke:#8b939c80
   style robot fill:#8b939c14,stroke:#8b939c80
 ```
 
-Blue is ours and gray is stock or outside software.
+```mermaid
+flowchart LR
+  key["`**Key**`"] ~~~ k1["Ours"] ~~~ k2["Stock or outside software"]
+  classDef label fill:none,stroke:none
+  classDef ours fill:#4c669026,stroke:#4c6690
+  classDef ros fill:#8b939c1f,stroke:#8b939c
+  class key label
+  class k1 ours
+  class k2 ros
+```
+
+A pull request's branch can run on the robot before it merges, so anything physical is
+tested on the robot first, but only once CI passes on it. A merge to `main` waits for CI
+and a review [TBR: branch protection enforces it once 2.5 sets it].
 
 ## 7. Behavior on failure
 

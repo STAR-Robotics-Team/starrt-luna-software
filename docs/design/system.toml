@@ -164,6 +164,7 @@ subscribes = ["/robot/mode", "/teleop/cmd_vel", "auto-drive-command", "teleop-me
 
 [[node.publishes]]
 name = "/cmd_vel"
+carries = "The active control source's drive command: forward speed and turn rate"
 type = "geometry_msgs/msg/TwistStamped"
 rate = "The active source's rate: `command_rate`, 20 Hz"
 qos = "reliable, volatile, depth 1"
@@ -172,6 +173,7 @@ note = "Reliable, because the diff drive controller subscribes with the system d
 [[node.publishes]]
 id = "mechanism-command"
 name = "/mechanism/<function>/command"
+carries = "The active control source's command for one mechanism function"
 type = "luna_interfaces/msg/ActuatorCommand [TBR: proposed in the mechanism doc (4.2)]"
 rate = "The active source's rate: `command_rate`, 20 Hz"
 qos = "reliable, volatile, depth 1"
@@ -179,6 +181,7 @@ note = "One topic for each function that moves on its own: depth, excavator, con
 
 [[shared]]
 name = "/diagnostics"
+carries = "Each node's health, OK, WARN, or ERROR, with a reason"
 type = "diagnostic_msgs/msg/DiagnosticArray"
 rate = "1 Hz and on change"
 qos = "reliable, depth 10"

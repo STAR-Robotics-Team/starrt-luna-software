@@ -109,13 +109,13 @@ as the code ([Registries](README.md#registries)).
 
 <!-- design: interfaces (generated from drivetrain.toml by scripts/design render: edit that file, not this table) -->
 
-| Name | Kind | Type | Rate | Publisher or server | Subscriber or client | QoS |
-| --- | --- | --- | --- | --- | --- | --- |
-| `/drivetrain/odom` | topic | `nav_msgs/msg/Odometry` | `publish_rate`, 50 Hz | `diff_drive_controller` | Localization and mapping | the system default: reliable, volatile |
-| `/drivetrain/joint_states` | topic | `sensor_msgs/msg/JointState` | The controller manager's `update_rate`, 50 Hz | `joint_state_broadcaster` (drivetrain) | `robot_state_publisher` and `joint_state_publisher`, Localization and mapping | the system default: reliable, volatile |
-| `/cmd_vel` | topic | `geometry_msgs/msg/TwistStamped` | The active source's rate: `command_rate`, 20 Hz | `command_selector` | `diff_drive_controller` | reliable, volatile, depth 1 |
-| `/diagnostics` | topic | `diagnostic_msgs/msg/DiagnosticArray` | 1 Hz and on change | Drive mode gate, Mechanism mode gate, Camera driver, Dedicated IMU driver, Localization and mapping, Path planning and following, Task sequencer | `mode_manager` | reliable, depth 10 |
-| `/robot/mode` | topic | `luna_interfaces/msg/RobotMode` | 10 Hz and on change | `mode_manager` | Drive mode gate, Mechanism mode gate, `command_selector`, Path planning and following, Task sequencer, Operator frontend, `teleop_node` | reliable, transient local, depth 1 |
+| Name | What it carries | Kind | Type | Rate | Publisher or server | Subscriber or client | QoS |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| `/drivetrain/odom` | The robot's motion, worked out from its wheels | topic | `nav_msgs/msg/Odometry` | `publish_rate`, 50 Hz | `diff_drive_controller` | Localization and mapping | the system default: reliable, volatile |
+| `/drivetrain/joint_states` | Each wheel's position and speed | topic | `sensor_msgs/msg/JointState` | The controller manager's `update_rate`, 50 Hz | `joint_state_broadcaster` (drivetrain) | `robot_state_publisher` and `joint_state_publisher`, Localization and mapping | the system default: reliable, volatile |
+| `/cmd_vel` | The active control source's drive command: forward speed and turn rate | topic | `geometry_msgs/msg/TwistStamped` | The active source's rate: `command_rate`, 20 Hz | `command_selector` | `diff_drive_controller` | reliable, volatile, depth 1 |
+| `/diagnostics` | Each node's health, OK, WARN, or ERROR, with a reason | topic | `diagnostic_msgs/msg/DiagnosticArray` | 1 Hz and on change | Drive mode gate, Mechanism mode gate, Camera driver, Dedicated IMU driver, Localization and mapping, Path planning and following, Task sequencer | `mode_manager` | reliable, depth 10 |
+| `/robot/mode` | The robot state, the control source, the task mode, and why | topic | `luna_interfaces/msg/RobotMode` | 10 Hz and on change | `mode_manager` | Drive mode gate, Mechanism mode gate, `command_selector`, Path planning and following, Task sequencer, Operator frontend, `teleop_node` | reliable, transient local, depth 1 |
 
 <!-- /design -->
 
@@ -271,58 +271,85 @@ stand-in can leave them out.
 ---
 config:
   flowchart:
-    wrappingWidth: 220
+    wrappingWidth: 200
 ---
 flowchart TB
-  sel["command_selector"]
+  teleop["teleop_node"]
+  planner["Path planning and following"]
   mm["mode_manager"]
-  loc["Localization"]
-  rm["Robot model (6.3)"]
+  sel["command_selector"]
   subgraph cm["Drivetrain controller manager (ros2_control_node)"]
     direction TB
-    gate["Drive mode gate (1.17)"]
     ddc["diff_drive_controller"]
+    gate["Drive mode gate (1.17)"]
     jsb["joint_state_broadcaster"]
     line["Hardware line: 4 wheel joints, enable, task, faults"]
     plugin["Drive hardware plugin, luna_drivetrain (3.5)"]
-    gate --> line
-    ddc <--> line
-    jsb --- line
+    ddc <-->|"speeds down, speeds and positions up"| line
+    gate <-->|"enable and task down, faults up"| line
+    line -->|"speeds and positions"| jsb
     line <--> plugin
   end
-  adapter["CANable USB adapter, can0"]
+  loc["Localization"]
+  rm["Robot model (6.3)"]
   subgraph can["CAN bus, 1 Mbit/s"]
+    direction TB
+    adapter["CANable USB adapter, can0"]
     talons["Talon SRX, one per side (3.2)"]
     victors["Victor SPX followers (3.2)"]
-    pdp["PDP: each channel's current"]
+    pdp["PDP"]
+    adapter <-->|"output and limits down, status up"| talons
+    talons -->|"output, which each follower copies"| victors
+    adapter ~~~ pdp
+    pdp -->|"power"| talons
+    pdp -->|"power"| victors
+    victors -->|"status"| adapter
+    pdp -->|"each channel's current, battery voltage"| adapter
   end
-  motors["4 CIM drive motors"]
+  drive["4 CIM motors, gearboxes, and wheels, with encoders if the gearboxes have them (6.1)"]
+  teleop -->|"/teleop/cmd_vel"| sel
+  planner -->|"/auto/cmd_vel"| sel
+  mm -->|"/robot/mode"| sel
+  mm <-->|"/robot/mode down, /diagnostics up"| gate
   sel -->|"/cmd_vel"| ddc
-  mm -.->|"/robot/mode"| gate
-  gate -->|"/diagnostics"| mm
   ddc -->|"/drivetrain/odom"| loc
   jsb -->|"/drivetrain/joint_states"| rm
-  plugin <--> adapter
-  adapter <--> talons
-  adapter <--> victors
-  pdp --> adapter
-  talons --> motors
-  victors --> motors
+  plugin <-->|"commands down, status up"| adapter
+  talons <-->|"power down, encoder counts up (6.1)"| drive
+  victors -->|"power"| drive
   classDef ours fill:#4c669026,stroke:#4c6690
   classDef ros fill:#8b939c1f,stroke:#8b939c
   classDef hw fill:#4a725926,stroke:#4a7259
   classDef hwline fill:#b9707c26,stroke:#b9707c,stroke-dasharray:4 3
-  class sel,mm,gate,plugin ours
-  class ddc,jsb,loc,rm ros
-  class adapter,talons,victors,pdp,motors hw
+  class teleop,planner,mm,sel,gate,plugin,loc ours
+  class ddc,jsb,rm ros
+  class adapter,talons,victors,pdp,drive hw
   class line hwline
   style cm fill:#8b939c14,stroke:#8b939c80
   style can fill:#8b939c14,stroke:#8b939c80
 ```
 
-Blue is ours and gray is stock ROS code; green is hardware. Below the hardware line, the
-stub, the fake motor controllers, and Gazebo each replace the plugin and what is under it,
-as [Hardware test modes](hardware-test-modes.md#drivetrain-stub-sim) draws for each mode.
+```mermaid
+flowchart LR
+  key["`**Key**`"] ~~~ k1["Ours"] ~~~ k2["Stock ROS code"] ~~~ k3["Hardware"] ~~~ k4["Hardware line"]
+  classDef label fill:none,stroke:none
+  classDef ours fill:#4c669026,stroke:#4c6690
+  classDef ros fill:#8b939c1f,stroke:#8b939c
+  classDef hw fill:#4a725926,stroke:#4a7259
+  classDef hwline fill:#b9707c26,stroke:#b9707c,stroke-dasharray:4 3
+  class key label
+  class k1 ours
+  class k2 ros
+  class k3 hw
+  class k4 hwline
+```
+
+The CAN bus carries every data line below the adapter, so a Victor SPX copies its Talon
+SRX's output from the Talon's own frames. The PDP powers each motor controller from its own
+channel and measures that channel's current, which is how the plugin sees a Victor's
+current (section 5). Below the hardware line, the stub, the fake motor controllers, and
+Gazebo each replace the plugin and what is under it, as
+[Hardware test modes](hardware-test-modes.md#drivetrain-stub-sim) draws for each mode.
 
 ## 7. Behavior on failure
 

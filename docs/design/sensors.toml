@@ -15,6 +15,7 @@ does = "Reads the L2 over Ethernet and publishes its point cloud and its built-i
 
 [[node.publishes]]
 name = "unilidar/cloud"
+carries = "The L2's 3D point cloud"
 type = "sensor_msgs/msg/PointCloud2"
 rate = "About 12 Hz [TBR: 18 scans a cloud, measured on the bench (6.6)]"
 qos = "reliable, volatile, depth 10, as the driver publishes it"
@@ -22,6 +23,7 @@ note = "In frame unilidar_lidar, as Unitree's launch file names it (system desig
 
 [[node.publishes]]
 name = "unilidar/imu"
+carries = "The L2's built-in gyroscope and accelerometer"
 type = "sensor_msgs/msg/Imu"
 rate = "500 Hz [TBR: the L2's reporting rate, measured on the bench (6.6)]"
 qos = "reliable, volatile, depth 10, as the driver publishes it"
@@ -38,6 +40,7 @@ publishes_shared = ["/diagnostics"]
 
 [[node.publishes]]
 name = "imu/data_raw"
+carries = "The dedicated IMU's gyroscope and accelerometer"
 type = "sensor_msgs/msg/Imu"
 rate = "100 Hz [TBR: the stub's rate (6.9), until 6.1 picks the part]"
 qos = "reliable, volatile, depth 10 [TBR: until the driver from 6.1 is known]"
@@ -55,6 +58,7 @@ publishes_shared = ["/diagnostics"]
 [[node.publishes]]
 id = "camera-image"
 name = "[TBD: the driving camera's topic, once 6.1 picks the camera]"
+carries = "The driving camera's compressed image"
 type = "sensor_msgs/msg/CompressedImage [TBR]"
 rate = "[TBD: the camera's rate; the operator view takes 5 Hz]"
 qos = "[TBD: the driver's QoS]"

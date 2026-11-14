@@ -403,6 +403,9 @@ Every `[TBD]` and `[TBR]` in the docs' own text, by page and section.
 | [4. Parameters](platform.md#4-parameters) | [TBR: 2.10] |
 | [4. Parameters](platform.md#4-parameters) | [TBD: open question 3] |
 | [4. Parameters](platform.md#4-parameters) | [TBR: `LOCALHOST`, open question 4] |
+| [4. Parameters](platform.md#4-parameters) | [TBD: 5.7] |
+| [4. Parameters](platform.md#4-parameters) | [TBR: how to set it for the middleware the robot uses, checked in 5.6] |
+| [4. Parameters](platform.md#4-parameters) | [TBD: the bench laptop's address, 5.6] |
 | [4. Parameters](platform.md#4-parameters) | [TBD: the team's ID for bench work across computers, 5.6] |
 | [4. Parameters](platform.md#4-parameters) | [TBD: named in deliverable 1.4] |
 | [5. Libraries and hardware interfaces](platform.md#5-libraries-and-hardware-interfaces) | [TBD: 2.2] |
@@ -410,6 +413,7 @@ Every `[TBD]` and `[TBR]` in the docs' own text, by page and section.
 | [5. Libraries and hardware interfaces](platform.md#5-libraries-and-hardware-interfaces) | [TBR: open question 1; 2.9 records our Jetson's JetPack version] |
 | [5. Libraries and hardware interfaces](platform.md#5-libraries-and-hardware-interfaces) | [TBR: `luna_bringup`'s robot launch, at boot, and restarts it if it stops . The robot reaches] |
 | [5. Libraries and hardware interfaces](platform.md#5-libraries-and-hardware-interfaces) | [TBR: open question 3] |
+| [6. Block diagram](platform.md#6-block-diagram) | [TBR: branch protection enforces it once 2.5 sets it] |
 | [7. Behavior on failure](platform.md#7-behavior-on-failure) | [TBR: systemd starts it again ; the robot comes back in BOOT and must be enabled again] |
 | [7. Behavior on failure](platform.md#7-behavior-on-failure) | [TBD: 2.10] |
 | [7. Behavior on failure](platform.md#7-behavior-on-failure) | [TBR: teleoperation open question 6] |
@@ -433,6 +437,7 @@ Every `[TBD]` and `[TBR]` in the docs' own text, by page and section.
 | [5. Libraries and hardware interfaces](sensors.md#5-libraries-and-hardware-interfaces) | [TBD: 1 to 3 candidates in 6.1's IMU row, each with its noise, interface, Jazzy driver, mass, and price] |
 | [5. Libraries and hardware interfaces](sensors.md#5-libraries-and-hardware-interfaces) | [TBD: 6.1's driving cameras row, and whether the planned Intel RealSense D456 depth camera adds what the L2 misses] |
 | [5. Libraries and hardware interfaces](sensors.md#5-libraries-and-hardware-interfaces) | [TBD: deliverable 1.4] |
+| [6. Block diagram](sensors.md#6-block-diagram) | [TBR: for the parts 6.1 picks] |
 | [7. Behavior on failure](sensors.md#7-behavior-on-failure) | [TBD: autonomy's timeout] |
 | [7. Behavior on failure](sensors.md#7-behavior-on-failure) | [TBD: autonomy's timeout] |
 | [7. Behavior on failure](sensors.md#7-behavior-on-failure) | [TBR: a threshold from the bench recording, 6.6] |

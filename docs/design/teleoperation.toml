@@ -16,6 +16,7 @@ subscribes = ["/robot/mode", "/power/battery", "/mechanism/status", "camera-imag
 
 [[node.publishes]]
 name = "/joy"
+carries = "The gamepad's sticks and buttons, from the operator laptop"
 type = "sensor_msgs/msg/Joy"
 rate = "`autorepeat_rate`, 20 Hz, and on change [TBR]"
 qos = "[TBD: as rosbridge publishes it, 5.4]"
@@ -23,6 +24,7 @@ note = "Stamped by the frontend in the robot's time (open question 6), so teleop
 
 [[node.publishes]]
 name = "/operator/heartbeat"
+carries = "The operator station's sign of life, which keeps the robot enabled"
 type = "std_msgs/msg/Header"
 rate = "`heartbeat_rate`, 10 Hz, including in AUTO and with the hold button released"
 qos = "best effort, depth 1"
@@ -40,6 +42,7 @@ calls = ["/robot/request_mode"]
 
 [[node.publishes]]
 name = "/teleop/cmd_vel"
+carries = "Teleop's drive command, for command_selector"
 type = "geometry_msgs/msg/TwistStamped"
 rate = "`command_rate`, 20 Hz [TBR]"
 qos = "best effort, volatile, depth 1"
@@ -48,6 +51,7 @@ note = "command_selector forwards it as /cmd_vel while the control source is TEL
 [[node.publishes]]
 id = "teleop-mechanism-command"
 name = "/teleop/mechanism/<function>/command"
+carries = "Teleop's command for one mechanism function, for command_selector"
 type = "luna_interfaces/msg/ActuatorCommand [TBR: proposed in the mechanism doc (4.2)]"
 rate = "`command_rate`, 20 Hz [TBR]"
 qos = "best effort, volatile, depth 1"

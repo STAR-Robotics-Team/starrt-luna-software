@@ -79,20 +79,20 @@ TCP; the QoS in the table is on the robot's side.
 
 <!-- design: interfaces (generated from teleoperation.toml by scripts/design render: edit that file, not this table) -->
 
-| Name | Kind | Type | Rate | Publisher or server | Subscriber or client | QoS |
-| --- | --- | --- | --- | --- | --- | --- |
-| `/joy` | topic | `sensor_msgs/msg/Joy` | `autorepeat_rate`, 20 Hz, and on change [TBR] | Operator frontend | `teleop_node` | [TBD: as rosbridge publishes it, 5.4] |
-| `/operator/heartbeat` | topic | `std_msgs/msg/Header` | `heartbeat_rate`, 10 Hz, including in AUTO and with the hold button released | Operator frontend | `mode_manager` | best effort, depth 1 |
-| `/teleop/cmd_vel` | topic | `geometry_msgs/msg/TwistStamped` | `command_rate`, 20 Hz [TBR] | `teleop_node` | `command_selector` | best effort, volatile, depth 1 |
-| `/teleop/mechanism/<function>/command` | topic | luna_interfaces/msg/ActuatorCommand [TBR: proposed in the mechanism doc (4.2)] | `command_rate`, 20 Hz [TBR] | `teleop_node` | `command_selector` | best effort, volatile, depth 1 |
-| `/robot/mode` | topic | `luna_interfaces/msg/RobotMode` | 10 Hz and on change | `mode_manager` | Drive mode gate, Mechanism mode gate, `command_selector`, Path planning and following, Task sequencer, Operator frontend, `teleop_node` | reliable, transient local, depth 1 |
-| `/robot/request_mode` | service | `luna_interfaces/srv/RequestMode` | On demand | `mode_manager` | Operator frontend, `teleop_node` | default |
-| `/power/battery` | topic | `sensor_msgs/msg/BatteryState` | 10 Hz | Power panel reading node | `mode_manager`, Operator frontend | best effort, depth 1 |
-| `/autonomy/obstacle_map` | topic | `nav_msgs/msg/OccupancyGrid` | `map_publish_rate`, 2 Hz [TBR: autonomy open question 2] | Localization and mapping | Path planning and following, Operator frontend | reliable, transient local, depth 1 |
-| `/autonomy/plan` | topic | `nav_msgs/msg/Path` | On each replan, at most 1 Hz | Path planning and following | Operator frontend | reliable, volatile, depth 1 |
-| `/autonomy/status` | topic | luna_interfaces/msg/AutonomyStatus [TBR: proposed in section 3] | 1 Hz and on change | Task sequencer | Operator frontend | reliable, transient local, depth 1 |
-| `/mechanism/status` | topic | luna_interfaces/msg/MechanismStatus [TBR: proposed in section 3] | 10 Hz and on change [TBR] | `mechanism_controller` | `mode_manager`, Task sequencer, Operator frontend | reliable, transient local, depth 1 |
-| [TBD: the driving camera's topic, once 6.1 picks the camera] | topic | sensor_msgs/msg/CompressedImage [TBR] | [TBD: the camera's rate; the operator view takes 5 Hz] | Camera driver | Operator frontend | [TBD: the driver's QoS] |
+| Name | What it carries | Kind | Type | Rate | Publisher or server | Subscriber or client | QoS |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| `/joy` | The gamepad's sticks and buttons, from the operator laptop | topic | `sensor_msgs/msg/Joy` | `autorepeat_rate`, 20 Hz, and on change [TBR] | Operator frontend | `teleop_node` | [TBD: as rosbridge publishes it, 5.4] |
+| `/operator/heartbeat` | The operator station's sign of life, which keeps the robot enabled | topic | `std_msgs/msg/Header` | `heartbeat_rate`, 10 Hz, including in AUTO and with the hold button released | Operator frontend | `mode_manager` | best effort, depth 1 |
+| `/teleop/cmd_vel` | Teleop's drive command, for command_selector | topic | `geometry_msgs/msg/TwistStamped` | `command_rate`, 20 Hz [TBR] | `teleop_node` | `command_selector` | best effort, volatile, depth 1 |
+| `/teleop/mechanism/<function>/command` | Teleop's command for one mechanism function, for command_selector | topic | luna_interfaces/msg/ActuatorCommand [TBR: proposed in the mechanism doc (4.2)] | `command_rate`, 20 Hz [TBR] | `teleop_node` | `command_selector` | best effort, volatile, depth 1 |
+| `/robot/mode` | The robot state, the control source, the task mode, and why | topic | `luna_interfaces/msg/RobotMode` | 10 Hz and on change | `mode_manager` | Drive mode gate, Mechanism mode gate, `command_selector`, Path planning and following, Task sequencer, Operator frontend, `teleop_node` | reliable, transient local, depth 1 |
+| `/robot/request_mode` | The operator's request to enable, disable, or clear a fault, with the source and task mode | service | `luna_interfaces/srv/RequestMode` | On demand | `mode_manager` | Operator frontend, `teleop_node` | default |
+| `/power/battery` | The battery voltage, each PDP channel's current, and the energy used | topic | `sensor_msgs/msg/BatteryState` | 10 Hz | Power panel reading node | `mode_manager`, Operator frontend | best effort, depth 1 |
+| `/autonomy/obstacle_map` | The 5 cm grid of mapped rocks and craters | topic | `nav_msgs/msg/OccupancyGrid` | `map_publish_rate`, 2 Hz [TBR: autonomy open question 2] | Localization and mapping | Path planning and following, Operator frontend | reliable, transient local, depth 1 |
+| `/autonomy/plan` | The path the planner is following | topic | `nav_msgs/msg/Path` | On each replan, at most 1 Hz | Path planning and following | Operator frontend | reliable, volatile, depth 1 |
+| `/autonomy/status` | The cycle step, the cycle count, and why the sequencer stopped | topic | luna_interfaces/msg/AutonomyStatus [TBR: proposed in section 3] | 1 Hz and on change | Task sequencer | Operator frontend | reliable, transient local, depth 1 |
+| `/mechanism/status` | Whether the excavator is stowed and the hatch closed, the depth, and each function's output, current, and faults | topic | luna_interfaces/msg/MechanismStatus [TBR: proposed in section 3] | 10 Hz and on change [TBR] | `mechanism_controller` | `mode_manager`, Task sequencer, Operator frontend | reliable, transient local, depth 1 |
+| [TBD: the driving camera's topic, once 6.1 picks the camera] | The driving camera's compressed image | topic | sensor_msgs/msg/CompressedImage [TBR] | [TBD: the camera's rate; the operator view takes 5 Hz] | Camera driver | Operator frontend | [TBD: the driver's QoS] |
 
 <!-- /design -->
 
@@ -221,9 +221,7 @@ Other subsystems own the CAN bus, motor wiring, current limits, and the physical
 
 ## 6. Block diagram
 
-**Placement and network.** Blue is software and computers, green is team hardware, and
-gray is NASA's equipment, in the team's palette. Decision 5.7 supplies the network
-settings.
+**Placement and network.** Decision 5.7 supplies the network settings.
 
 ```mermaid
 flowchart TB
@@ -256,6 +254,19 @@ flowchart TB
   style mcc fill:#8b939c14,stroke:#8b939c80
   style arena fill:#8b939c14,stroke:#8b939c80
   style rover fill:#8b939c14,stroke:#8b939c80
+```
+
+```mermaid
+flowchart LR
+  key["`**Key**`"] ~~~ k1["Software and computers"] ~~~ k2["NASA's equipment"] ~~~ k3["Team hardware"]
+  classDef label fill:none,stroke:none
+  classDef ours fill:#4c669026,stroke:#4c6690
+  classDef ros fill:#8b939c1f,stroke:#8b939c
+  classDef hw fill:#4a725926,stroke:#4a7259
+  class key label
+  class k1 ours
+  class k2 ros
+  class k3 hw
 ```
 
 ## 7. Behavior on failure

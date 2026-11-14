@@ -17,6 +17,7 @@ subscribes = ["mechanism-command"]
 
 [[node.publishes]]
 name = "/mechanism/status"
+carries = "Whether the excavator is stowed and the hatch closed, the depth, and each function's output, current, and faults"
 type = "luna_interfaces/msg/MechanismStatus [TBR: proposed in section 3]"
 rate = "10 Hz and on change [TBR]"
 qos = "reliable, transient local, depth 1"
@@ -32,6 +33,7 @@ does = "Publishes each mechanism joint's position, where it is measured, for the
 
 [[node.publishes]]
 name = "/mechanism/joint_states"
+carries = "Each mechanism joint's position, where it is measured"
 type = "sensor_msgs/msg/JointState"
 rate = "The controller manager's `update_rate`, 50 Hz"
 qos = "the system default: reliable, volatile"

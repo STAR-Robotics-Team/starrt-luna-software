@@ -1,0 +1,6 @@
+/* Keep a table's first column, the name of a node, topic, or parameter, on one line, so
+   a name like /mechanism/<function>/command never breaks in the middle of a word. A table
+   too wide for the page scrolls sideways instead. */
+.md-typeset table:not([class]) td:first-child code {
+  white-space: nowrap;
+}

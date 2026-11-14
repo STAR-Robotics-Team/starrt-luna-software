@@ -113,13 +113,13 @@ as the code ([Registries](README.md#registries)).
 
 <!-- design: interfaces (generated from mechanism.toml by scripts/design render: edit that file, not this table) -->
 
-| Name | Kind | Type | Rate | Publisher or server | Subscriber or client | QoS |
-| --- | --- | --- | --- | --- | --- | --- |
-| `/mechanism/status` | topic | luna_interfaces/msg/MechanismStatus [TBR: proposed in section 3] | 10 Hz and on change [TBR] | `mechanism_controller` | `mode_manager`, Task sequencer, Operator frontend | reliable, transient local, depth 1 |
-| `/mechanism/joint_states` | topic | `sensor_msgs/msg/JointState` | The controller manager's `update_rate`, 50 Hz | `joint_state_broadcaster` (mechanism) | `robot_state_publisher` and `joint_state_publisher` | the system default: reliable, volatile |
-| `/mechanism/<function>/command` | topic | luna_interfaces/msg/ActuatorCommand [TBR: proposed in the mechanism doc (4.2)] | The active source's rate: `command_rate`, 20 Hz | `command_selector` | `mechanism_controller` | reliable, volatile, depth 1 |
-| `/diagnostics` | topic | `diagnostic_msgs/msg/DiagnosticArray` | 1 Hz and on change | Drive mode gate, Mechanism mode gate, Camera driver, Dedicated IMU driver, Localization and mapping, Path planning and following, Task sequencer | `mode_manager` | reliable, depth 10 |
-| `/robot/mode` | topic | `luna_interfaces/msg/RobotMode` | 10 Hz and on change | `mode_manager` | Drive mode gate, Mechanism mode gate, `command_selector`, Path planning and following, Task sequencer, Operator frontend, `teleop_node` | reliable, transient local, depth 1 |
+| Name | What it carries | Kind | Type | Rate | Publisher or server | Subscriber or client | QoS |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| `/mechanism/status` | Whether the excavator is stowed and the hatch closed, the depth, and each function's output, current, and faults | topic | luna_interfaces/msg/MechanismStatus [TBR: proposed in section 3] | 10 Hz and on change [TBR] | `mechanism_controller` | `mode_manager`, Task sequencer, Operator frontend | reliable, transient local, depth 1 |
+| `/mechanism/joint_states` | Each mechanism joint's position, where it is measured | topic | `sensor_msgs/msg/JointState` | The controller manager's `update_rate`, 50 Hz | `joint_state_broadcaster` (mechanism) | `robot_state_publisher` and `joint_state_publisher` | the system default: reliable, volatile |
+| `/mechanism/<function>/command` | The active control source's command for one mechanism function | topic | luna_interfaces/msg/ActuatorCommand [TBR: proposed in the mechanism doc (4.2)] | The active source's rate: `command_rate`, 20 Hz | `command_selector` | `mechanism_controller` | reliable, volatile, depth 1 |
+| `/diagnostics` | Each node's health, OK, WARN, or ERROR, with a reason | topic | `diagnostic_msgs/msg/DiagnosticArray` | 1 Hz and on change | Drive mode gate, Mechanism mode gate, Camera driver, Dedicated IMU driver, Localization and mapping, Path planning and following, Task sequencer | `mode_manager` | reliable, depth 10 |
+| `/robot/mode` | The robot state, the control source, the task mode, and why | topic | `luna_interfaces/msg/RobotMode` | 10 Hz and on change | `mode_manager` | Drive mode gate, Mechanism mode gate, `command_selector`, Path planning and following, Task sequencer, Operator frontend, `teleop_node` | reliable, transient local, depth 1 |
 
 <!-- /design -->
 
@@ -263,56 +263,87 @@ stub, a test sets the signals through the mock hardware's GPIO interfaces
 ---
 config:
   flowchart:
-    wrappingWidth: 220
+    wrappingWidth: 200
 ---
 flowchart TB
-  sel["command_selector"]
-  mm["mode_manager"]
+  teleop["teleop_node"]
   seq["Task sequencer"]
+  mm["mode_manager"]
+  sel["command_selector"]
   subgraph cm["Mechanism controller manager (ros2_control_node)"]
     direction TB
-    gate["Mechanism mode gate (1.17)"]
     mc["mechanism_controller (4.4)"]
+    gate["Mechanism mode gate (1.17)"]
     jsb["joint_state_broadcaster"]
     line["Hardware line: 5 joints, the signals, enable, task, faults"]
     plugin["Mechanism hardware plugin, luna_mechanism (4.5)"]
-    gate --> line
-    mc <--> line
-    jsb --- line
+    mc <-->|"outputs down; positions, currents, signals up"| line
+    gate <-->|"enable and task down, faults up"| line
+    line -->|"positions"| jsb
     line <--> plugin
   end
-  adapter["CANable USB adapter, can0"]
-  ctrls["Mechanism motor controllers (4.3)"]
-  depth["2 depth actuators, with potentiometers"]
+  rm["Robot model (6.3)"]
+  readers["Its readers: mode_manager's entry guards, the task sequencer, and the operator frontend"]
+  subgraph can["CAN bus, 1 Mbit/s"]
+    direction TB
+    adapter["CANable USB adapter, can0"]
+    ctrls["Mechanism motor controllers (4.3)"]
+    pdp["PDP"]
+    adapter <-->|"output and limits down; status, positions, signals up"| ctrls
+    adapter ~~~ pdp
+    pdp -->|"power"| ctrls
+    pdp -->|"each channel's current, battery voltage"| adapter
+  end
+  depth["2 depth actuators, each with a potentiometer and limit switches inside"]
   chain["Excavator chain motor"]
   conv["Conveyor motor"]
   hatch["Hatch motor"]
-  sensors["Stowed and hatch closed sensors"]
-  sel -->|"one command topic per function"| mc
-  mm <-.->|"/robot/mode down, /diagnostics up"| gate
-  mc -->|"/mechanism/status"| mm
-  mc -->|"/mechanism/status"| seq
-  plugin <--> adapter
-  adapter <--> ctrls
-  ctrls --> depth
-  ctrls --> chain
-  ctrls --> conv
-  ctrls --> hatch
-  sensors --> ctrls
+  sensors["Stowed and hatch closed sensors (4.1)"]
+  teleop -->|"one topic per function"| sel
+  seq -->|"one topic per function"| sel
+  mm -->|"/robot/mode"| sel
+  mm <-->|"/robot/mode down, /diagnostics up"| gate
+  sel -->|"one topic per function"| mc
+  mc -->|"/mechanism/status"| readers
+  jsb -->|"/mechanism/joint_states"| rm
+  plugin <-->|"commands down, status up"| adapter
+  ctrls <-->|"power down, potentiometer position up"| depth
+  ctrls -->|"power"| chain
+  ctrls -->|"power"| conv
+  ctrls -->|"power"| hatch
+  ctrls ~~~ sensors
+  sensors -->|"stowed, hatch closed"| ctrls
   classDef ours fill:#4c669026,stroke:#4c6690
   classDef ros fill:#8b939c1f,stroke:#8b939c
   classDef hw fill:#4a725926,stroke:#4a7259
   classDef hwline fill:#b9707c26,stroke:#b9707c,stroke-dasharray:4 3
-  class sel,mm,seq,gate,mc,plugin ours
-  class jsb ros
-  class adapter,ctrls,depth,chain,conv,hatch,sensors hw
+  class teleop,seq,mm,sel,gate,mc,plugin,readers ours
+  class jsb,rm ros
+  class adapter,pdp,ctrls,depth,chain,conv,hatch,sensors hw
   class line hwline
   style cm fill:#8b939c14,stroke:#8b939c80
+  style can fill:#8b939c14,stroke:#8b939c80
 ```
 
-Blue is ours and gray is stock ROS code; green is hardware. The sensors are drawn wired to
-the motor controllers, one of the places 4.3 may choose. Below the hardware line, the stub
-and the fake motor controllers each replace the plugin and what is under it, as
+```mermaid
+flowchart LR
+  key["`**Key**`"] ~~~ k1["Ours"] ~~~ k2["Stock ROS code"] ~~~ k3["Hardware"] ~~~ k4["Hardware line"]
+  classDef label fill:none,stroke:none
+  classDef ours fill:#4c669026,stroke:#4c6690
+  classDef ros fill:#8b939c1f,stroke:#8b939c
+  classDef hw fill:#4a725926,stroke:#4a7259
+  classDef hwline fill:#b9707c26,stroke:#b9707c,stroke-dasharray:4 3
+  class key label
+  class k1 ours
+  class k2 ros
+  class k3 hw
+  class k4 hwline
+```
+
+The potentiometers and sensors are drawn wired to the motor controllers' inputs, one of the
+places 4.3 may choose. Each depth actuator's limit switches cut its motor inside the
+actuator, with no wire to software (section 5). Below the hardware line, the stub and the
+fake motor controllers each replace the plugin and what is under it, as
 [Hardware test modes](hardware-test-modes.md#mechanism-stub-sim) draws.
 
 ## 7. Behavior on failure

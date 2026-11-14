@@ -13,14 +13,25 @@ line; this page draws each system in each mode.
 - **Each box's first line says whose code it is,** with the deliverable that builds it,
   such as "Ours · C++ · 3.5". The colors say the same:
 
-    | Color | What it is |
-    | --- | --- |
-    | Blue | Our code |
-    | Gray | ROS or vendor code |
-    | Sand | A stand-in for hardware |
-    | Green | Hardware |
-    | Rose, dashed | The hardware line |
-    | Gray, dashed | No hardware in this mode |
+    ```mermaid
+    flowchart LR
+      key["`**Key**`"] ~~~ k1["Our code"] ~~~ k2["ROS or vendor code"] ~~~ k3["A stand-in for hardware"]
+      key2[" "] ~~~ k4["Hardware"] ~~~ k5["The hardware line"] ~~~ k6["No hardware in this mode"]
+      classDef label fill:none,stroke:none
+      classDef ours fill:#4c669026,stroke:#4c6690
+      classDef ros fill:#8b939c1f,stroke:#8b939c
+      classDef stand fill:#b0844526,stroke:#b08445
+      classDef hw fill:#4a725926,stroke:#4a7259
+      classDef hwline fill:#b9707c26,stroke:#b9707c,stroke-dasharray:4 3
+      classDef ghost fill:none,stroke:#8b939c,stroke-dasharray:4 4,color:#8b939c
+      class key,key2 label
+      class k1 ours
+      class k2 ros
+      class k3 stand
+      class k4 hw
+      class k5 hwline
+      class k6 ghost
+    ```
 
 - **A titled box around several boxes is one running program,** such as
   `ros2_control_node`.

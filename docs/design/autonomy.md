@@ -254,24 +254,24 @@ the code ([Registries](README.md#registries)).
 
 <!-- design: interfaces (generated from autonomy.toml by scripts/design render: edit that file, not this table) -->
 
-| Name | Kind | Type | Rate | Publisher or server | Subscriber or client | QoS |
-| --- | --- | --- | --- | --- | --- | --- |
-| `/autonomy/odometry` | topic | `nav_msgs/msg/Odometry` | 50 Hz [TBR: autonomy open question 2] | Localization and mapping | Path planning and following, Task sequencer | best effort, volatile, depth 1 |
-| `/autonomy/obstacle_map` | topic | `nav_msgs/msg/OccupancyGrid` | `map_publish_rate`, 2 Hz [TBR: autonomy open question 2] | Localization and mapping | Path planning and following, Operator frontend | reliable, transient local, depth 1 |
-| `/autonomy/plan` | topic | `nav_msgs/msg/Path` | On each replan, at most 1 Hz | Path planning and following | Operator frontend | reliable, volatile, depth 1 |
-| `/auto/cmd_vel` | topic | `geometry_msgs/msg/TwistStamped` | `command_rate`, 20 Hz | Path planning and following | `command_selector` | best effort, volatile, depth 1 |
-| `/autonomy/navigate` | action | nav2_msgs/action/NavigateToPose [TBR: autonomy open question 2] | On demand | Path planning and following | Task sequencer | default |
-| `/auto/mechanism/<function>/command` | topic | luna_interfaces/msg/ActuatorCommand [TBR: proposed in the mechanism doc (4.2)] | 20 Hz [TBR: matches teleop's command_rate] | Task sequencer | `command_selector` | best effort, volatile, depth 1 |
-| `/autonomy/status` | topic | luna_interfaces/msg/AutonomyStatus [TBR: proposed in section 3] | 1 Hz and on change | Task sequencer | Operator frontend | reliable, transient local, depth 1 |
-| `/diagnostics` | topic | `diagnostic_msgs/msg/DiagnosticArray` | 1 Hz and on change | Drive mode gate, Mechanism mode gate, Camera driver, Dedicated IMU driver, Localization and mapping, Path planning and following, Task sequencer | `mode_manager` | reliable, depth 10 |
-| `/robot/mode` | topic | `luna_interfaces/msg/RobotMode` | 10 Hz and on change | `mode_manager` | Drive mode gate, Mechanism mode gate, `command_selector`, Path planning and following, Task sequencer, Operator frontend, `teleop_node` | reliable, transient local, depth 1 |
-| `/robot/request_task` | service | `luna_interfaces/srv/RequestTask` | On demand | `mode_manager` | Task sequencer | default |
-| `/drivetrain/odom` | topic | `nav_msgs/msg/Odometry` | `publish_rate`, 50 Hz | `diff_drive_controller` | Localization and mapping | the system default: reliable, volatile |
-| `/drivetrain/joint_states` | topic | `sensor_msgs/msg/JointState` | The controller manager's `update_rate`, 50 Hz | `joint_state_broadcaster` (drivetrain) | `robot_state_publisher` and `joint_state_publisher`, Localization and mapping | the system default: reliable, volatile |
-| `/mechanism/status` | topic | luna_interfaces/msg/MechanismStatus [TBR: proposed in section 3] | 10 Hz and on change [TBR] | `mechanism_controller` | `mode_manager`, Task sequencer, Operator frontend | reliable, transient local, depth 1 |
-| `unilidar/cloud` | topic | `sensor_msgs/msg/PointCloud2` | About 12 Hz [TBR: 18 scans a cloud, measured on the bench (6.6)] | Unitree L2 driver | Localization and mapping | reliable, volatile, depth 10, as the driver publishes it |
-| `unilidar/imu` | topic | `sensor_msgs/msg/Imu` | 500 Hz [TBR: the L2's reporting rate, measured on the bench (6.6)] | Unitree L2 driver | Localization and mapping | reliable, volatile, depth 10, as the driver publishes it |
-| `imu/data_raw` | topic | `sensor_msgs/msg/Imu` | 100 Hz [TBR: the stub's rate (6.9), until 6.1 picks the part] | Dedicated IMU driver | Localization and mapping | reliable, volatile, depth 10 [TBR: until the driver from 6.1 is known] |
+| Name | What it carries | Kind | Type | Rate | Publisher or server | Subscriber or client | QoS |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| `/autonomy/odometry` | The robot's fused position, heading, and velocity in the map | topic | `nav_msgs/msg/Odometry` | 50 Hz [TBR: autonomy open question 2] | Localization and mapping | Path planning and following, Task sequencer | best effort, volatile, depth 1 |
+| `/autonomy/obstacle_map` | The 5 cm grid of mapped rocks and craters | topic | `nav_msgs/msg/OccupancyGrid` | `map_publish_rate`, 2 Hz [TBR: autonomy open question 2] | Localization and mapping | Path planning and following, Operator frontend | reliable, transient local, depth 1 |
+| `/autonomy/plan` | The path the planner is following | topic | `nav_msgs/msg/Path` | On each replan, at most 1 Hz | Path planning and following | Operator frontend | reliable, volatile, depth 1 |
+| `/auto/cmd_vel` | Autonomy's drive command, for command_selector | topic | `geometry_msgs/msg/TwistStamped` | `command_rate`, 20 Hz | Path planning and following | `command_selector` | best effort, volatile, depth 1 |
+| `/autonomy/navigate` | A travel goal: drive to a dig spot or a dump spot | action | nav2_msgs/action/NavigateToPose [TBR: autonomy open question 2] | On demand | Path planning and following | Task sequencer | default |
+| `/auto/mechanism/<function>/command` | Autonomy's command for one mechanism function, for command_selector | topic | luna_interfaces/msg/ActuatorCommand [TBR: proposed in the mechanism doc (4.2)] | 20 Hz [TBR: matches teleop's command_rate] | Task sequencer | `command_selector` | best effort, volatile, depth 1 |
+| `/autonomy/status` | The cycle step, the cycle count, and why the sequencer stopped | topic | luna_interfaces/msg/AutonomyStatus [TBR: proposed in section 3] | 1 Hz and on change | Task sequencer | Operator frontend | reliable, transient local, depth 1 |
+| `/diagnostics` | Each node's health, OK, WARN, or ERROR, with a reason | topic | `diagnostic_msgs/msg/DiagnosticArray` | 1 Hz and on change | Drive mode gate, Mechanism mode gate, Camera driver, Dedicated IMU driver, Localization and mapping, Path planning and following, Task sequencer | `mode_manager` | reliable, depth 10 |
+| `/robot/mode` | The robot state, the control source, the task mode, and why | topic | `luna_interfaces/msg/RobotMode` | 10 Hz and on change | `mode_manager` | Drive mode gate, Mechanism mode gate, `command_selector`, Path planning and following, Task sequencer, Operator frontend, `teleop_node` | reliable, transient local, depth 1 |
+| `/robot/request_task` | The task sequencer's request to change the task mode in AUTO | service | `luna_interfaces/srv/RequestTask` | On demand | `mode_manager` | Task sequencer | default |
+| `/drivetrain/odom` | The robot's motion, worked out from its wheels | topic | `nav_msgs/msg/Odometry` | `publish_rate`, 50 Hz | `diff_drive_controller` | Localization and mapping | the system default: reliable, volatile |
+| `/drivetrain/joint_states` | Each wheel's position and speed | topic | `sensor_msgs/msg/JointState` | The controller manager's `update_rate`, 50 Hz | `joint_state_broadcaster` (drivetrain) | `robot_state_publisher` and `joint_state_publisher`, Localization and mapping | the system default: reliable, volatile |
+| `/mechanism/status` | Whether the excavator is stowed and the hatch closed, the depth, and each function's output, current, and faults | topic | luna_interfaces/msg/MechanismStatus [TBR: proposed in section 3] | 10 Hz and on change [TBR] | `mechanism_controller` | `mode_manager`, Task sequencer, Operator frontend | reliable, transient local, depth 1 |
+| `unilidar/cloud` | The L2's 3D point cloud | topic | `sensor_msgs/msg/PointCloud2` | About 12 Hz [TBR: 18 scans a cloud, measured on the bench (6.6)] | Unitree L2 driver | Localization and mapping | reliable, volatile, depth 10, as the driver publishes it |
+| `unilidar/imu` | The L2's built-in gyroscope and accelerometer | topic | `sensor_msgs/msg/Imu` | 500 Hz [TBR: the L2's reporting rate, measured on the bench (6.6)] | Unitree L2 driver | Localization and mapping | reliable, volatile, depth 10, as the driver publishes it |
+| `imu/data_raw` | The dedicated IMU's gyroscope and accelerometer | topic | `sensor_msgs/msg/Imu` | 100 Hz [TBR: the stub's rate (6.9), until 6.1 picks the part] | Dedicated IMU driver | Localization and mapping | reliable, volatile, depth 10 [TBR: until the driver from 6.1 is known] |
 
 <!-- /design -->
 

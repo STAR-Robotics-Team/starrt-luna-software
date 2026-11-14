@@ -18,6 +18,7 @@ subscribes = ["/cmd_vel"]
 [[node.publishes]]
 id = "wheel-odometry"
 name = "/drivetrain/odom"
+carries = "The robot's motion, worked out from its wheels"
 type = "nav_msgs/msg/Odometry"
 rate = "`publish_rate`, 50 Hz"
 qos = "the system default: reliable, volatile"
@@ -33,6 +34,7 @@ does = "Publishes each wheel joint's position and velocity from the drive hardwa
 
 [[node.publishes]]
 name = "/drivetrain/joint_states"
+carries = "Each wheel's position and speed"
 type = "sensor_msgs/msg/JointState"
 rate = "The controller manager's `update_rate`, 50 Hz"
 qos = "the system default: reliable, volatile"

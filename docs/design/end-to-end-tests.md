@@ -58,6 +58,17 @@ Fail as you go. For a step that measures a TPM, you can type the measured number
 instead: this page judges it against the TPM, and a number that misses the threshold
 fails the step. Link the log, and write a note beside any row.
 
+```mermaid
+flowchart LR
+  key["`**Key: the sheet's colors**`"] ~~~ s1[" "] ~~~ l1["A run's date, modes, and log"] ~~~ s2[" "] ~~~ l2["A step that is not in this run"]
+  classDef label fill:none,stroke:none
+  classDef run fill:#e8eaf6,stroke:#9fa8da
+  classDef other fill:#e0e0e0,stroke:#9e9e9e
+  class key,l1,l2 label
+  class s1 run
+  class s2 other
+```
+
 Below, each procedure shows only the steps for the modes you pick above its steps, so
 you can follow it for a run before you start. Pick a run instead, or a date in its runs
 table, to see that run's marks beside its steps.
