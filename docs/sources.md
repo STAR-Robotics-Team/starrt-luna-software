@@ -14,7 +14,7 @@ the doc, and cite the page.
   primary source wins.
 - **To cite a source or add one,** see [Cite sources](writing-docs.md#cite-sources).
 
-46 sources, 41 of them primary, cited 288 times. PDF page
+47 sources, 42 of them primary, cited 297 times. PDF page
 numbers are the ones a PDF viewer shows, so each link opens the PDF at the cited page. This
 page is generated from `docs/sources.toml` by `scripts/sources render`.
 
@@ -189,6 +189,7 @@ Unitree, *Unitree 4D LiDAR L2 User Manual* (As downloaded 2026-10-07). [Open the
 - **Used for:** Supply voltage and power, including the self-heating peak.
 - **Cited at:**
     - [Hardware Test Modes](design/hardware-test-modes.md): [p. 17](https://oss-global-cdn.unitree.com/static/Unitree%204D%20LiDAR%20L2%20User%20Manual.pdf#page=17)
+    - [Sensors and Robot Model Design](design/sensors.md): [p. 8](https://oss-global-cdn.unitree.com/static/Unitree%204D%20LiDAR%20L2%20User%20Manual.pdf#page=8), [p. 9](https://oss-global-cdn.unitree.com/static/Unitree%204D%20LiDAR%20L2%20User%20Manual.pdf#page=9), [p. 12](https://oss-global-cdn.unitree.com/static/Unitree%204D%20LiDAR%20L2%20User%20Manual.pdf#page=12), [p. 17](https://oss-global-cdn.unitree.com/static/Unitree%204D%20LiDAR%20L2%20User%20Manual.pdf#page=17)
     - [System Design](design/system.md): [p. 12](https://oss-global-cdn.unitree.com/static/Unitree%204D%20LiDAR%20L2%20User%20Manual.pdf#page=12), [p. 17](https://oss-global-cdn.unitree.com/static/Unitree%204D%20LiDAR%20L2%20User%20Manual.pdf#page=17)
 
 ## Vendor and product pages
@@ -462,7 +463,18 @@ Unitree, *unilidar_sdk2: unitree_lidar_ros2 launch file (launch.py)* (main branc
 - **Used for:** The default topic and frame names of the L2's ROS 2 driver.
 - **Cited at:**
     - [Autonomy Subsystem Design](design/autonomy.md): [whole source](https://github.com/unitreerobotics/unilidar_sdk2/blob/main/unitree_lidar_ros2/src/unitree_lidar_ros2/launch/launch.py)
+    - [Sensors and Robot Model Design](design/sensors.md): [whole source](https://github.com/unitreerobotics/unilidar_sdk2/blob/main/unitree_lidar_ros2/src/unitree_lidar_ros2/launch/launch.py)
     - [System Design](design/system.md): [whole source](https://github.com/unitreerobotics/unilidar_sdk2/blob/main/unitree_lidar_ros2/src/unitree_lidar_ros2/launch/launch.py)
+
+### `unitree-lidar-ros2-node`
+
+Unitree Robotics, *unilidar_sdk2: unitree_lidar_ros2 node (unitree_lidar_ros2.h)*. [Open the web page](https://github.com/unitreerobotics/unilidar_sdk2/blob/main/unitree_lidar_ros2/src/unitree_lidar_ros2/include/unitree_lidar_ros2.h).
+
+- **Primary source.**
+- **Checked:** 2026-11-14
+- **Used for:** What the L2's ROS 2 driver does with its parameters: initialize_type 2 is Ethernet (UDP), and the QoS it publishes with.
+- **Cited at:**
+    - [Sensors and Robot Model Design](design/sensors.md): [whole source](https://github.com/unitreerobotics/unilidar_sdk2/blob/main/unitree_lidar_ros2/src/unitree_lidar_ros2/include/unitree_lidar_ros2.h)
 
 ### `wpilib-ctre-pdp-driver`
 

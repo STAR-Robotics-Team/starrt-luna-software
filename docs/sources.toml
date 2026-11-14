@@ -574,6 +574,19 @@ checked = 2026-11-14
 notes = "Why the mechanism has a controller of its own: the stock forward command controllers write their last command on every cycle, with no timestamp and no timeout."
 
 [[source]]
+id = "unitree-lidar-ros2-node"
+primary = true
+group = "Software references"
+title = "unilidar_sdk2: unitree_lidar_ros2 node (unitree_lidar_ros2.h)"
+publisher = "Unitree Robotics"
+url = "https://github.com/unitreerobotics/unilidar_sdk2/blob/main/unitree_lidar_ros2/src/unitree_lidar_ros2/include/unitree_lidar_ros2.h"
+fetch_url = "https://raw.githubusercontent.com/unitreerobotics/unilidar_sdk2/main/unitree_lidar_ros2/src/unitree_lidar_ros2/include/unitree_lidar_ros2.h"
+format = "web"
+expect = "initializeUDP"
+checked = 2026-11-14
+notes = "What the L2's ROS 2 driver does with its parameters: initialize_type 2 is Ethernet (UDP), and the QoS it publishes with."
+
+[[source]]
 id = "esa-margin-philosophy"
 primary = true
 group = "Engineering practice"

@@ -266,11 +266,11 @@ the code ([Registries](README.md#registries)).
 | `/robot/mode` | topic | `luna_interfaces/msg/RobotMode` | 10 Hz and on change | `mode_manager` | Drive mode gate, Mechanism mode gate, `command_selector`, Path planning and following, Task sequencer, Operator frontend, `teleop_node` | reliable, transient local, depth 1 |
 | `/robot/request_task` | service | `luna_interfaces/srv/RequestTask` | On demand | `mode_manager` | Task sequencer | default |
 | `/drivetrain/odom` | topic | `nav_msgs/msg/Odometry` | `publish_rate`, 50 Hz | `diff_drive_controller` | Localization and mapping | the system default: reliable, volatile |
-| `/drivetrain/joint_states` | topic | `sensor_msgs/msg/JointState` | The controller manager's `update_rate`, 50 Hz | `joint_state_broadcaster` (drivetrain) | Localization and mapping | the system default: reliable, volatile |
+| `/drivetrain/joint_states` | topic | `sensor_msgs/msg/JointState` | The controller manager's `update_rate`, 50 Hz | `joint_state_broadcaster` (drivetrain) | `robot_state_publisher` and `joint_state_publisher`, Localization and mapping | the system default: reliable, volatile |
 | `/mechanism/status` | topic | luna_interfaces/msg/MechanismStatus [TBR: proposed in section 3] | 10 Hz and on change [TBR] | `mechanism_controller` | `mode_manager`, Task sequencer, Operator frontend | reliable, transient local, depth 1 |
-| `unilidar/cloud` | topic | `sensor_msgs/msg/PointCloud2` | [TBD: sensors doc (6.2)] | Unitree L2 driver | Localization and mapping | [TBD: sensors doc (6.2)] |
-| `unilidar/imu` | topic | `sensor_msgs/msg/Imu` | [TBD: sensors doc (6.2)] | Unitree L2 driver | Localization and mapping | [TBD: sensors doc (6.2)] |
-| `imu/data_raw` | topic | `sensor_msgs/msg/Imu` | [TBD: sensors doc (6.2)] | Dedicated IMU driver | Localization and mapping | [TBD: sensors doc (6.2)] |
+| `unilidar/cloud` | topic | `sensor_msgs/msg/PointCloud2` | About 12 Hz [TBR: 18 scans a cloud, measured on the bench (6.6)] | Unitree L2 driver | Localization and mapping | reliable, volatile, depth 10, as the driver publishes it |
+| `unilidar/imu` | topic | `sensor_msgs/msg/Imu` | 500 Hz [TBR: the L2's reporting rate, measured on the bench (6.6)] | Unitree L2 driver | Localization and mapping | reliable, volatile, depth 10, as the driver publishes it |
+| `imu/data_raw` | topic | `sensor_msgs/msg/Imu` | 100 Hz [TBR: the stub's rate (6.9), until 6.1 picks the part] | Dedicated IMU driver | Localization and mapping | reliable, volatile, depth 10 [TBR: until the driver from 6.1 is known] |
 
 <!-- /design -->
 

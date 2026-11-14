@@ -69,7 +69,7 @@ design doc. The Turgor column gives the deliverable that writes that doc.
 | SW.1.4 | Power telemetry | Reports battery voltage, each channel's current, and energy used, decoded from the PDP's CAN frames | PDP (CAN ID 0, firmware 1.40 or later) | [Operating Modes Design](operating-modes.md) | 1.19 |
 | SW.1.5 | Command selection | Passes on drive and mechanism commands from the control source /robot/mode names, TELEOP or AUTO, and drops the other source's | None outside Software | [System Design](system.md) | None |
 | SW.2 | Perception and autonomy software | Sees the arena and runs the mission cycle hands-free | Sensors | [Autonomy Subsystem Design](autonomy.md) | 7.2 |
-| SW.2.1 | Sensor interface and robot model | Publishes each sensor's data in its own frame, plus the robot's geometry | LiDAR, IMUs, cameras; Mechanical's CAD | `sensors.md`, not written yet (6.2) | 6.2 |
+| SW.2.1 | Sensor interface and robot model | Publishes each sensor's data in its own frame, plus the robot's geometry | LiDAR, IMUs, cameras; Mechanical's CAD | [Sensors and Robot Model Design](sensors.md) | 6.2 |
 | SW.2.2 | Localization and mapping | Finds position and heading from a random start and builds the obstacle map, using only onboard sensors | Start-zone markers, if used | [Autonomy Subsystem Design](autonomy.md) | 7.2 |
 | SW.2.3 | Path planning and following | Plans a path around obstacles to the target zone and follows it | None outside Software | [Autonomy Subsystem Design](autonomy.md) | 7.2 |
 | SW.2.4 | Task sequencer | Runs dig, travel, dump, travel in AUTO, through the mode manager | None outside Software | [Autonomy Subsystem Design](autonomy.md) | 7.2 |
@@ -108,6 +108,7 @@ flowchart LR
     ncamera_driver["Camera driver"]
     nimu_driver["Dedicated IMU driver"]
     nlidar_driver["Unitree L2 driver"]
+    nrobot_model["robot_state_publisher and joint_state_publisher"]
     nlocalization["Localization and mapping"]
     nplanner["Path planning and following"]
     ntask_sequencer["Task sequencer"]
@@ -143,13 +144,15 @@ flowchart LR
   ntask_sequencer -->|"/autonomy/status"| noperator_frontend
   ndrivetrain -->|"/drivetrain/odom"| nlocalization
   ndrive_joint_states -->|"/drivetrain/joint_states"| nlocalization
+  ndrive_joint_states -->|"/drivetrain/joint_states"| nrobot_model
   nmechanism -->|"/mechanism/status"| nmode_manager
   nmechanism -->|"/mechanism/status"| ntask_sequencer
   nmechanism -->|"/mechanism/status"| noperator_frontend
+  nmechanism_joint_states -->|"/mechanism/joint_states"| nrobot_model
   nlidar_driver -->|"unilidar/cloud"| nlocalization
   nlidar_driver -->|"unilidar/imu"| nlocalization
   nimu_driver -->|"imu/data_raw"| nlocalization
-  ncamera_driver -->|"camera image topics (TBD)"| noperator_frontend
+  ncamera_driver -->|"the driving camera's topic (TBD)"| noperator_frontend
   noperator_frontend -->|"/joy"| nteleop_node
   noperator_frontend -->|"/operator/heartbeat"| nmode_manager
   nteleop_node -->|"/teleop/cmd_vel"| ncommand_selection

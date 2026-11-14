@@ -68,6 +68,15 @@ by `scripts/design render`.
 | 3. What tells software the hatch is fully open, and how far does it travel? With a sensor at each end, the hatch can take an open or close command and stop by itself; without one, it runs only while its button is held. | 4.1 |
 | 4. Which way is positive for each function, once Mechanical mounts them? Proposed in section 3: positive raises the excavator, runs the chain and the conveyor the way they run while digging, and opens the hatch. | 4.1 |
 
+### [Sensors and Robot Model Design](sensors.md#9-open-questions)
+
+| Question | Turgor |
+| --- | --- |
+| 1. How is the L2 mounted, so it sees the ground ahead? Its field of view is a hemisphere above it, 90° tall, or 96° in negative angle mode (L2 manual, p. 17), so mounted level it sees little of the ground where the rocks and craters are. Tilted forward, or upside down? For Mechanical, with the mount's height. | 6.1 |
+| 2. If the Jetson's own Wi-Fi proves too weak for the robot's radio (5.6), a wired radio needs a second Ethernet port beside the L2's: a USB Ethernet adapter, or a small switch the two share? | 5.6 |
+| 3. Which parts of the robot itself does the L2 see, such as the excavator or the bin, and how are they cut out of the cloud: a box around the robot in base_link, or the driver's range_min? | 6.5 |
+| 4. The L2 driver stamps each cloud with the computer's time when it arrives (use_system_timestamp is true). Is that within TPM-5's 10 ms timestamp mismatch of the IMUs' stamps? Measure on the bench, and if not, use the L2's own time. | 6.6 |
+
 ### [Teleoperation Subsystem Design](teleoperation.md#9-open-questions)
 
 | Question | Turgor |
@@ -195,16 +204,14 @@ that uses them; each is listed here once.
 | --- | --- | --- |
 | node imu_driver | package | [TBD: the IMU, sensor suite evaluation (6.1)] |
 | node camera_driver | package | [TBD: the cameras, sensor suite evaluation (6.1)] |
-| interface unilidar/cloud | rate | [TBD: sensors doc (6.2)] |
-| interface unilidar/cloud | qos | [TBD: sensors doc (6.2)] |
-| interface unilidar/imu | rate | [TBD: sensors doc (6.2)] |
-| interface unilidar/imu | qos | [TBD: sensors doc (6.2)] |
-| interface imu/data_raw | rate | [TBD: sensors doc (6.2)] |
-| interface imu/data_raw | qos | [TBD: sensors doc (6.2)] |
-| interface camera-image | name | [TBD: camera image topics, sensors doc (6.2)] |
-| interface camera-image | type | sensor_msgs/msg/CompressedImage [TBR: sensors doc (6.2)] |
-| interface camera-image | rate | [TBD: sensors doc (6.2)] |
-| interface camera-image | qos | [TBD: sensors doc (6.2)] |
+| interface unilidar/cloud | rate | About 12 Hz [TBR: 18 scans a cloud, measured on the bench (6.6)] |
+| interface unilidar/imu | rate | 500 Hz [TBR: the L2's reporting rate, measured on the bench (6.6)] |
+| interface imu/data_raw | rate | 100 Hz [TBR: the stub's rate (6.9), until 6.1 picks the part] |
+| interface imu/data_raw | qos | reliable, volatile, depth 10 [TBR: until the driver from 6.1 is known] |
+| interface camera-image | name | [TBD: the driving camera's topic, once 6.1 picks the camera] |
+| interface camera-image | type | sensor_msgs/msg/CompressedImage [TBR] |
+| interface camera-image | rate | [TBD: the camera's rate; the operator view takes 5 Hz] |
+| interface camera-image | qos | [TBD: the driver's QoS] |
 
 ### `teleoperation.toml`
 
@@ -381,6 +388,29 @@ Every `[TBD]` and `[TBR]` in the docs' own text, by page and section.
 | [5. Libraries and hardware interfaces](mechanism.md#5-libraries-and-hardware-interfaces) | [TBR: a Talon SRX's limit switch input is one place to wire them, for 4.3] |
 | [7. Behavior on failure](mechanism.md#7-behavior-on-failure) | [TBR: It stops, with a WARN on `/diagnostics`; it moves again once its command returns to zero] |
 | [8. Test plan](mechanism.md#8-test-plan) | [TBR: One depth actuator on the bench (4.6): run its full stroke from a ROS command, and its reported position matches a tape measure at both ends and the middle, within 5 mm . Hold it against a stop: it stops within `stall_time` and warns on `/diagnostics`.] |
+
+### [Sensors and Robot Model Design](sensors.md)
+
+| Section | Marked |
+| --- | --- |
+| [Sensors and Robot Model Design](sensors.md#sensors-and-robot-model-design) | [TBD: the sensor suite evaluation (6.1), the system design's open question 2] |
+| [1. Purpose and requirements](sensors.md#1-purpose-and-requirements) | [TBR: TPM-5's sensor position row] |
+| [1. Purpose and requirements](sensors.md#1-purpose-and-requirements) | [TBR: TPM-5's timestamp row] |
+| [1. Purpose and requirements](sensors.md#1-purpose-and-requirements) | [TBR: TPM-6's camera row] |
+| [1. Purpose and requirements](sensors.md#1-purpose-and-requirements) | [TBD: TPM-12's sensor row, measured in 2.10] |
+| [2. Nodes](sensors.md#2-nodes) | [TBR: merging with `joint_state_publisher`'s `source_list`, checked in 6.3] |
+| [3. Interfaces](sensors.md#3-interfaces) | [TBR: if one scan is one sweep, measured in 6.6] |
+| [3. Interfaces](sensors.md#3-interfaces) | [TBR: once 6.1 picks the camera and its driver] |
+| [4. Parameters](sensors.md#4-parameters) | [TBR: open question 3] |
+| [4. Parameters](sensors.md#4-parameters) | [TBR: 6.1] |
+| [4. Parameters](sensors.md#4-parameters) | [TBD: 6.1 and 6.7] |
+| [5. Libraries and hardware interfaces](sensors.md#5-libraries-and-hardware-interfaces) | [TBR: system open question 8; the Jetson developer kit's carrier board has one Ethernet port, for 2.9 to confirm on ours] |
+| [5. Libraries and hardware interfaces](sensors.md#5-libraries-and-hardware-interfaces) | [TBD: 1 to 3 candidates in 6.1's IMU row, each with its noise, interface, Jazzy driver, mass, and price] |
+| [5. Libraries and hardware interfaces](sensors.md#5-libraries-and-hardware-interfaces) | [TBD: 6.1's driving cameras row, and whether the planned Intel RealSense D456 depth camera adds what the L2 misses] |
+| [5. Libraries and hardware interfaces](sensors.md#5-libraries-and-hardware-interfaces) | [TBD: deliverable 1.4] |
+| [7. Behavior on failure](sensors.md#7-behavior-on-failure) | [TBD: autonomy's timeout] |
+| [7. Behavior on failure](sensors.md#7-behavior-on-failure) | [TBD: autonomy's timeout] |
+| [7. Behavior on failure](sensors.md#7-behavior-on-failure) | [TBR: a threshold from the bench recording, 6.6] |
 
 ### [Teleoperation Subsystem Design](teleoperation.md)
 
