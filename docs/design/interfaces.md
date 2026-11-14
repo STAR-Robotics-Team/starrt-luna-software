@@ -31,7 +31,7 @@ This page is generated from `docs/design/*.toml` by `scripts/design render`.
 | Dedicated IMU driver | SW.2.1 Sensor interface and robot model | Robot computer | `sensors.md`, not written yet (6.2) | Publishes the dedicated IMU's gyroscope and accelerometer in one message, with no magnetometer (system design R5) |
 | Camera driver | SW.2.1 Sensor interface and robot model | Robot computer | `sensors.md`, not written yet (6.2) | Publishes the driving camera's compressed images for the operator view |
 | Operator frontend | SW.3.1 Operator frontend | Operator laptop, in a browser, through rosbridge | [Teleoperation Subsystem Design](teleoperation.md) | Reads the gamepad through the browser's Gamepad API, sends /joy, the heartbeat, and mode requests through rosbridge, and shows each control source's default view, which the operator can change, with live link bandwidth. It is not a ROS node: rosbridge publishes and calls for it. |
-| `teleop_node` | SW.3.2 Teleop mapping | Robot computer | [Teleoperation Subsystem Design](teleoperation.md) | Turns fresh /joy input into drive and mechanism commands, zeroes them when the hold button is released, drops stale input, and requests DISABLED when the controller's input is lost |
+| `teleop_node` | SW.3.2 Teleop mapping | Robot computer | [Teleoperation Subsystem Design](teleoperation.md) | Turns fresh /joy input into drive and mechanism commands, each stamped with its /joy message's stamp, zeroes them when the hold button is released, drops stale input, and requests DISABLED when the controller's input is lost |
 
 ## Topics, services, and actions
 
@@ -50,7 +50,7 @@ This page is generated from `docs/design/*.toml` by `scripts/design render`.
 | /auto/cmd_vel [TBR: teleop open question 3] | topic | geometry_msgs/msg/TwistStamped [TBR: matches /teleop/cmd_vel] | `command_rate`, 20 Hz | Path planning and following | `command_selector` | best effort, volatile, depth 1 | [Autonomy Subsystem Design](autonomy.md) |
 | `/autonomy/navigate` | action | nav2_msgs/action/NavigateToPose [TBR: autonomy open question 2] | On demand | Path planning and following | Task sequencer | default | [Autonomy Subsystem Design](autonomy.md) |
 | [TBD: AUTO mechanism command topics, teleop open questions 3 and 5] | topic | [TBD: mechanism doc (4.2)] | 20 Hz [TBR: matches teleop's command_rate] | Task sequencer | `command_selector` | [TBD: mechanism doc (4.2)] | [Autonomy Subsystem Design](autonomy.md) |
-| `/autonomy/status` | topic | luna_interfaces/msg/AutonomyStatus [TBR: proposed in section 3] | 1 Hz and on change | Task sequencer | None yet | reliable, transient local, depth 1 | [Autonomy Subsystem Design](autonomy.md) |
+| `/autonomy/status` | topic | luna_interfaces/msg/AutonomyStatus [TBR: proposed in section 3] | 1 Hz and on change | Task sequencer | Operator frontend | reliable, transient local, depth 1 | [Autonomy Subsystem Design](autonomy.md) |
 | `/drivetrain/odom` | topic | `nav_msgs/msg/Odometry` | `publish_rate`, 50 Hz | `diff_drive_controller` | Localization and mapping | the system default: reliable, volatile | [Drivetrain Subsystem Design](drivetrain.md) |
 | `/drivetrain/joint_states` | topic | `sensor_msgs/msg/JointState` | The controller manager's `update_rate`, 50 Hz | `joint_state_broadcaster` (drivetrain) | Localization and mapping | the system default: reliable, volatile | [Drivetrain Subsystem Design](drivetrain.md) |
 | `/mechanism/status` | topic | luna_interfaces/msg/MechanismStatus [TBR: proposed in section 3] | 10 Hz and on change [TBR] | `mechanism_controller` | `mode_manager`, Task sequencer, Operator frontend | reliable, transient local, depth 1 | [Mechanism Subsystem Design](mechanism.md) |
@@ -59,10 +59,10 @@ This page is generated from `docs/design/*.toml` by `scripts/design render`.
 | `unilidar/imu` | topic | `sensor_msgs/msg/Imu` | [TBD: sensors doc (6.2)] | Unitree L2 driver | Localization and mapping | [TBD: sensors doc (6.2)] | `sensors.md`, not written yet (6.2) |
 | `imu/data_raw` | topic | `sensor_msgs/msg/Imu` | [TBD: sensors doc (6.2)] | Dedicated IMU driver | Localization and mapping | [TBD: sensors doc (6.2)] | `sensors.md`, not written yet (6.2) |
 | [TBD: camera image topics, sensors doc (6.2)] | topic | sensor_msgs/msg/CompressedImage [TBR: sensors doc (6.2)] | [TBD: sensors doc (6.2)] | Camera driver | Operator frontend | [TBD: sensors doc (6.2)] | `sensors.md`, not written yet (6.2) |
-| `/joy` | topic | `sensor_msgs/msg/Joy` | `autorepeat_rate`, 20 Hz, and on change [TBR: teleop draft, PR #14] | Operator frontend | `teleop_node` | [TBD: as rosbridge publishes it, teleoperation doc (5.1)] | [Teleoperation Subsystem Design](teleoperation.md) |
+| `/joy` | topic | `sensor_msgs/msg/Joy` | `autorepeat_rate`, 20 Hz, and on change [TBR] | Operator frontend | `teleop_node` | [TBD: as rosbridge publishes it, 5.4] | [Teleoperation Subsystem Design](teleoperation.md) |
 | `/operator/heartbeat` | topic | `std_msgs/msg/Header` | `heartbeat_rate`, 10 Hz, including in AUTO and with the hold button released | Operator frontend | `mode_manager` | best effort, depth 1 | [Teleoperation Subsystem Design](teleoperation.md) |
-| `/teleop/cmd_vel` | topic | geometry_msgs/msg/TwistStamped [TBR: teleop draft, PR #14] | `command_rate`, 20 Hz [TBR: teleop draft, PR #14] | `teleop_node` | `command_selector` | best effort, volatile, depth 1 [TBR: teleop draft, PR #14] | [Teleoperation Subsystem Design](teleoperation.md) |
-| [TBD: teleop's mechanism command topics, teleop open questions 3 and 5] | topic | [TBD: mechanism doc (4.2)] | `command_rate`, 20 Hz [TBR: teleop draft, PR #14, for the mechanism doc (4.2) to confirm] | `teleop_node` | `command_selector` | [TBD: teleoperation doc (5.1)] | [Teleoperation Subsystem Design](teleoperation.md) |
+| `/teleop/cmd_vel` | topic | `geometry_msgs/msg/TwistStamped` | `command_rate`, 20 Hz [TBR] | `teleop_node` | `command_selector` | best effort, volatile, depth 1 | [Teleoperation Subsystem Design](teleoperation.md) |
+| `/teleop/mechanism/<function>/command` | topic | luna_interfaces/msg/ActuatorCommand [TBR: proposed in the mechanism doc (4.2)] | `command_rate`, 20 Hz [TBR] | `teleop_node` | `command_selector` | best effort, volatile, depth 1 | [Teleoperation Subsystem Design](teleoperation.md) |
 
 ### Notes
 
@@ -81,5 +81,7 @@ This page is generated from `docs/design/*.toml` by `scripts/design render`.
 - `unilidar/cloud`: In frame unilidar_lidar, as Unitree's launch file names it (system design, Hardware lines).
 - `unilidar/imu`: In frame unilidar_imu, fixed to the LiDAR (system design, The two IMUs).
 - `imu/data_raw`: The main IMU, near the center of mass, following REP 145's names (system design, The two IMUs).
-- `/teleop/cmd_vel`: The name comes from the teleop draft (PR #14) [TBR: teleop open question 3, which decides how TELEOP and AUTO commands reach the drivetrain].
-- [TBD: teleop's mechanism command topics, teleop open questions 3 and 5]: Teleop open question 5 proposes one command topic per function that moves on its own: drive, coordinated depth raise and lower, excavator, conveyor, and hatch.
+- `/joy`: Stamped by the frontend in the robot's time (open question 6), so teleop_node can pass the stamp on to its commands.
+- `/operator/heartbeat`: mode_manager judges a heartbeat's age by when it arrived, so the heartbeat needs no clock agreement between the laptop and the robot.
+- `/teleop/cmd_vel`: command_selector forwards it as /cmd_vel while the control source is TELEOP (system design, Command selection).
+- `/teleop/mechanism/<function>/command`: One topic for each mechanism function: depth, excavator, conveyor, and hatch, each an output command (mechanism design, section 3).

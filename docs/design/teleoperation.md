@@ -1,125 +1,229 @@
 # Teleoperation Subsystem Design
 
-| Owner | Pair | Status | Last reviewed |
-| --- | --- | --- | --- |
-| Nick | [TBD: software lead to assign] | Draft | 2026-10-23 |
+| Owner | Status | Last reviewed |
+| --- | --- | --- |
+| ja-zoe | Draft | 2026-11-14 |
 
-Design for the team’s Windows, macOS, or Linux operator station and ROS 2 Jazzy robot environment. Hardware validation is pending. TBR means a proposal needs review; TBD means a detail remains undecided.
+This doc designs the operator station and the code that turns the gamepad into robot
+commands: SW.3 in the [system design](system.md). The operator frontend runs in a browser
+on any member's Windows, macOS, or Linux laptop and reaches the robot through rosbridge;
+`teleop_node` runs on the robot computer. Robot permissions and stopping behavior follow
+the [operating modes design](operating-modes.md). Hardware validation is pending.
 
 ## 1. Purpose and requirements
 
-Teleoperation maps gamepad inputs to robot commands and provides operator controls. Robot permissions and stopping behavior follow [Operating Modes Design](operating-modes.md).
+Teleoperation maps gamepad inputs to robot commands and gives the operator the controls
+and views the run needs.
 
-- R1. Run the operator frontend on any member’s laptop (Windows, macOS, or Linux), reading every required gamepad input through the browser Gamepad API.
-- R2. Require ENABLED, TELEOP, hold-to-enable, and task permission for manual motion.
-- R3. Provide enable, disable, clear-fault, control-source, and task controls; never automatically enable.
-- R4. Stop on input or link loss; reject stale commands after a TCP/Wi-Fi stall. Reconnection must not automatically resume motion.
-- R5. Display acknowledged state, live link bandwidth, and TELEOP/AUTO default views that the operator can change at runtime.
-- R6. Record the mapping, configuration, and test results so another supported Windows, macOS, or Linux station can repeat the setup.
+- R1. Run the operator frontend on any member's laptop (Windows, macOS, or Linux), reading
+  every required gamepad input through the browser's Gamepad API.
+- R2. Require ENABLED, TELEOP, the hold button, and the task mode's permission for manual
+  motion.
+- R3. Provide enable, disable, clear-fault, control-source, and task controls; never
+  enable automatically.
+- R4. Stop on input or link loss, and reject stale commands after a TCP or Wi-Fi stall.
+  Reconnecting must not resume motion by itself.
+- R5. Display the acknowledged state, live link bandwidth, and the TELEOP and AUTO default
+  views, which the operator can change at runtime.
+- R6. Record the mapping, configuration, and test results, so another Windows, macOS, or
+  Linux station can repeat the setup.
 
-Tasks are TRAVEL, EXCAVATE, DUMP, and SERVICE. EXCAVATE permits creep driving; DUMP requires the conveyor for unloading with the hatch. SERVICE requires TELEOP and `allow_service=true`. Entry guards and limits follow operating modes. Selecting a task does not itself issue a manual demand.
+Tasks are TRAVEL, EXCAVATE, DUMP, and SERVICE. EXCAVATE permits creep driving; DUMP uses
+the conveyor to unload with the hatch. SERVICE requires TELEOP and `allow_service` true.
+Entry guards and limits follow the operating modes design. Selecting a task does not by
+itself command any motion.
+
+### Budgets
+
+This doc's share of each technical performance measure, from the
+[performance budgets](performance-budgets.md).
+
+<!-- design: budgets (generated from teleoperation.toml by scripts/design render: edit that file, not this table) -->
+
+| TPM | Element | Part | Budget |
+| --- | --- | --- | --- |
+| [TPM-1](performance-budgets.md#tpm-1-autonomous-cycles-completed-per-run) | SW.3.1 | Full autonomy (§16.5): at least 2 cycles, starting in the starting zone (All of the above, plus SW.1.1 (stays enabled), SW.1.5 (passes AUTO commands), SW.3.1 (heartbeat), and SW.4 (link and logging)) | 1,400 × berm factor |
+| [TPM-3](performance-budgets.md#tpm-3-time-from-run-start-to-the-first-cycle-starting) | SW.3.1 | Operator enables in AUTO (after telling the judge) (SW.3.1 sends; SW.1.1 accepts) | ≤5 s |
+| [TPM-6](performance-budgets.md#tpm-6-average-link-bandwidth-over-a-run) | SW.3.1 | /joy, the heartbeat, and mode requests (laptop to robot) | 50 kbit/s in TELEOP (default view), 50 kbit/s in AUTO (default view) |
+| [TPM-6](performance-budgets.md#tpm-6-average-link-bandwidth-over-a-run) | SW.3.2 | Nothing: it runs on the robot | 0 kbit/s in TELEOP (default view), 0 kbit/s in AUTO (default view) |
+| [TPM-8](performance-budgets.md#tpm-8-stop-time-after-link-loss) | SW.3.1 | Send a heartbeat every 100 ms, which sets how soon a loss can be seen | 100 (the period), not counted |
+| [TPM-11](performance-budgets.md#tpm-11-robot-computer-processor-load-averaged-over-a-run) | SW.3.2 | Teleop mapping | [TBD: autonomy doc v1 (7.8)]; expected to be small |
+
+<!-- /design -->
 
 ## 2. Nodes
 
-| Node/component | Package | Runs on | What it does |
-| --- | --- | --- | --- |
-| Operator frontend | Custom frontend with `roslibjs` | Operator laptop browser | Reads the Gamepad API; sends `/joy`, heartbeat, and mode requests through rosbridge; provides controls and views. Not a ROS node. |
-| `rosbridge_websocket` | `rosbridge_server` | Jetson | Connects the frontend’s WebSocket traffic to ROS topics and services. |
-| `teleop_node` | `luna_teleop` | Jetson | [TBR: proposed names.] Maps fresh `/joy` inputs to manual commands. |
+The operator frontend is not a ROS node: `rosbridge_websocket` on the robot computer
+publishes and calls for it over one WebSocket connection, and the
+[platform design](platform.md) designs rosbridge. `teleop_node` turns `/joy` into commands
+on the robot computer. `command_selector` passes teleop's commands on only while the control
+source is TELEOP ([system design, Command selection](system.md#command-selection)), and the
+drivetrain and the mechanism enforce their limits and timeouts.
 
-Actuator nodes enforce limits, source selection, and timeouts.
+<!-- design: nodes (generated from teleoperation.toml by scripts/design render: edit that file, not this table) -->
+
+| Node | Package | Runs on | Element | What it does |
+| --- | --- | --- | --- | --- |
+| Operator frontend | Custom frontend with `roslibjs` | Operator laptop, in a browser, through rosbridge | SW.3.1 Operator frontend | Reads the gamepad through the browser's Gamepad API, sends /joy, the heartbeat, and mode requests through rosbridge, and shows each control source's default view, which the operator can change, with live link bandwidth. It is not a ROS node: rosbridge publishes and calls for it. |
+| `teleop_node` | `luna_teleop` | Robot computer | SW.3.2 Teleop mapping | Turns fresh /joy input into drive and mechanism commands, each stamped with its /joy message's stamp, zeroes them when the hold button is released, drops stale input, and requests DISABLED when the controller's input is lost |
+
+<!-- /design -->
 
 ## 3. Interfaces
 
 This table is the contract between this subsystem and the rest of the robot. The code must
-match it exactly, and a pull request that changes an interface updates this table in the
-same pull request.
+match it exactly. It is generated from this doc's registry, so a pull request that changes
+an interface edits the registry and runs `scripts/design render`, in the same pull request
+as the code ([Registries](README.md#registries)). The WebSocket link to the laptop uses
+TCP; the QoS in the table is on the robot's side.
 
-Mode interfaces follow the operating-modes design. Drive and mechanism interfaces require agreement with the controls owners. “Teleop” below refers to `teleop_node`; frontend topic and service traffic passes through rosbridge. Rate parameters are listed in section 4. QoS describes the ROS side; the WebSocket link uses TCP.
+<!-- design: interfaces (generated from teleoperation.toml by scripts/design render: edit that file, not this table) -->
 
 | Name | Kind | Type | Rate | Publisher or server | Subscriber or client | QoS |
 | --- | --- | --- | --- | --- | --- | --- |
-| `/joy` | topic | `sensor_msgs/msg/Joy` | [TBR: `autorepeat_rate`, 20 Hz + changes] | Frontend | Teleop | [TBD: verify bridge QoS] |
-| `/robot/mode` | topic | `luna_interfaces/msg/RobotMode` | `mode_rate`, 10 Hz + changes | `mode_manager` | Teleop and frontend | Reliable, transient local, depth 1 |
-| `/robot/request_mode` | service | `luna_interfaces/srv/RequestMode` | On demand | `mode_manager` | Frontend; Teleop for failure-triggered disable | Default |
-| `/operator/heartbeat` | topic | `std_msgs/msg/Header` | `heartbeat_rate`, 10 Hz | Frontend | `mode_manager` | Best effort, depth 1 |
-| `/power/battery` | topic | `sensor_msgs/msg/BatteryState` | `battery_rate`, 10 Hz | Node owning CTRE access | Frontend | Best effort, depth 1 |
-| [TBR: `/teleop/cmd_vel`] | topic | [TBR: `geometry_msgs/msg/TwistStamped`] | [TBR: `command_rate`, 20 Hz] | Teleop | Robot command selection | [TBR: best effort, volatile, depth 1] |
-| Mechanism commands | topic | [TBD: mechanism contract] | [TBR: `command_rate`, 20 Hz; controls owners confirm] | Teleop | Mechanism command selection | [TBD] |
-| Camera/map/path streams | topic | [TBD: sensor/autonomy contracts] | Per-stream rates in the view table | Sensor/autonomy nodes | Frontend | [TBD] |
+| `/joy` | topic | `sensor_msgs/msg/Joy` | `autorepeat_rate`, 20 Hz, and on change [TBR] | Operator frontend | `teleop_node` | [TBD: as rosbridge publishes it, 5.4] |
+| `/operator/heartbeat` | topic | `std_msgs/msg/Header` | `heartbeat_rate`, 10 Hz, including in AUTO and with the hold button released | Operator frontend | `mode_manager` | best effort, depth 1 |
+| `/teleop/cmd_vel` | topic | `geometry_msgs/msg/TwistStamped` | `command_rate`, 20 Hz [TBR] | `teleop_node` | `command_selector` | best effort, volatile, depth 1 |
+| `/teleop/mechanism/<function>/command` | topic | luna_interfaces/msg/ActuatorCommand [TBR: proposed in the mechanism doc (4.2)] | `command_rate`, 20 Hz [TBR] | `teleop_node` | `command_selector` | best effort, volatile, depth 1 |
+| `/robot/mode` | topic | `luna_interfaces/msg/RobotMode` | 10 Hz and on change | `mode_manager` | Drive mode gate, Mechanism mode gate, `command_selector`, Path planning and following, Task sequencer, Operator frontend, `teleop_node` | reliable, transient local, depth 1 |
+| `/robot/request_mode` | service | `luna_interfaces/srv/RequestMode` | On demand | `mode_manager` | Operator frontend, `teleop_node` | default |
+| `/power/battery` | topic | `sensor_msgs/msg/BatteryState` | 10 Hz | Power panel reading node | `mode_manager`, Operator frontend | best effort, depth 1 |
+| `/autonomy/obstacle_map` | topic | `nav_msgs/msg/OccupancyGrid` | `map_publish_rate`, 2 Hz [TBR: autonomy open question 2] | Localization and mapping | Path planning and following, Operator frontend | reliable, transient local, depth 1 |
+| `/autonomy/plan` | topic | `nav_msgs/msg/Path` | On each replan, at most 1 Hz | Path planning and following | Operator frontend | reliable, volatile, depth 1 |
+| `/autonomy/status` | topic | luna_interfaces/msg/AutonomyStatus [TBR: proposed in section 3] | 1 Hz and on change | Task sequencer | Operator frontend | reliable, transient local, depth 1 |
+| `/mechanism/status` | topic | luna_interfaces/msg/MechanismStatus [TBR: proposed in section 3] | 10 Hz and on change [TBR] | `mechanism_controller` | `mode_manager`, Task sequencer, Operator frontend | reliable, transient local, depth 1 |
+| [TBD: camera image topics, sensors doc (6.2)] | topic | sensor_msgs/msg/CompressedImage [TBR: sensors doc (6.2)] | [TBD: sensors doc (6.2)] | Camera driver | Operator frontend | [TBD: sensors doc (6.2)] |
 
-`RequestMode` carries `state`, `source`, and `task`. From FAULT, request DISABLED to clear once the cause is gone, then separately request ENABLED. Display rejection reasons and confirm accepted changes through `/robot/mode`. Invalidate pending enable, clear-fault, and source/task-change requests on link loss; delayed requests must not execute after recovery without a fresh operator action. Confirm request-freshness enforcement with the mode-manager owner. **Actions:** None.
+<!-- /design -->
+
+**Mode requests.** `RequestMode` carries `state`, `source`, and `task`
+([operating modes, section 3](operating-modes.md#3-interfaces)). From FAULT, request
+DISABLED to clear once the cause is gone, then separately request ENABLED. Display
+rejection reasons, and confirm accepted changes through `/robot/mode`. Pending enable,
+clear-fault, and source or task requests are dropped on link loss: a delayed request must
+never run after the link recovers without a fresh operator action. **Actions:** none.
+
+**Commands carry the gamepad's time.** `teleop_node` stamps each drive and mechanism
+command with the stamp of the `/joy` message it came from, and nothing downstream stamps it
+again ([system design, Conventions](system.md#4-parameters)). TCP can deliver old inputs
+in a burst after a Wi-Fi stall; the drivetrain and the mechanism drop any command older than
+their timeouts, so a burst cannot move the robot. That works only if `/joy`'s stamp is in the
+robot's time (open question 6).
+
+**Mechanism commands** are `luna_interfaces/msg/ActuatorCommand` output commands, one topic
+per function ([mechanism design, section 3](mechanism.md#3-interfaces)).
 
 ## 4. Parameters
 
-| Parameter | Node/component | Type | Default | Units | Meaning |
+| Parameter | Node | Type | Default | Units | Meaning |
 | --- | --- | --- | --- | --- | --- |
-| `device_name` | Frontend | string | [TBD: enumerate] | None | Selected controller. |
-| `deadzone` | Frontend | double | [TBR: 0.05] | Fraction | Ignore small stick drift. |
-| `autorepeat_rate` | Frontend | double | [TBR: 20] | Hz | Poll and refresh unchanged input. |
-| `heartbeat_rate` | Frontend | double | 10 | Hz | Send operator heartbeat, including AUTO and with LB released. |
-| `command_rate` | Teleop | double | [TBR: 20] | Hz | Publish drive and active mechanism commands. |
-| `mode_rate` | `mode_manager` | double | 10 | Hz | Periodic `/robot/mode` publication, plus changes. |
-| `battery_rate` | Battery publisher | double | 10 | Hz | `/power/battery` publication. |
-| `camera_rate` / `map_rate` / `path_rate` | Frontend subscriptions | double | [TBR: 5 / 1 / 2] | Hz | Forwarded rates when each stream is enabled. |
-| `bandwidth_rate` | Frontend | double | [TBR: 1] | Hz | Update the displayed live link statistics. |
-| `hold_button` | Teleop | integer | [TBD: measured index] | None | Manual-motion permission. |
-| `input_timeout` | Teleop | double | [TBR: 0.15] | s | Reject stale input. |
-| `state_timeout` | Teleop and frontend | double | [TBR: 0.3] | s | Inhibit manual demands when robot state updates stop. |
-| speed/mechanism limits | Teleop | Configuration | [TBD: owners approve] | Per actuator | Match robot-side limits. |
+| `device_name` | Operator frontend | string | [TBD: enumerated on each laptop] | None | Selected controller |
+| `deadzone` | Operator frontend | double | 0.05 [TBR] | fraction | Ignore small stick drift |
+| `autorepeat_rate` | Operator frontend | double | 20 [TBR] | Hz | Poll and resend unchanged input |
+| `heartbeat_rate` | Operator frontend | double | 10 | Hz | Send the operator heartbeat, including in AUTO and with the hold button released |
+| `camera_rate`, `map_rate`, `path_rate` | Operator frontend | double | 5, 1, 1 [TBR] | Hz | Rate each stream is forwarded at while it is on |
+| `bandwidth_rate` | Operator frontend | double | 1 [TBR] | Hz | Update the displayed link statistics |
+| `state_timeout` | Operator frontend and `teleop_node` | double | 0.3 [TBR] | s | Inhibit manual commands when robot state updates stop |
+| `command_rate` | `teleop_node` | double | 20 [TBR] | Hz | Publish drive and active mechanism commands |
+| `hold_button` | `teleop_node` | integer | [TBD: measured index, 5.2] | None | Button that permits manual motion |
+| `input_timeout` | `teleop_node` | double | 0.15 [TBR] | s | Reject stale input |
+| `max_speed`, `max_turn` | `teleop_node` | double | [TBD: the drivetrain's limits, 3.7] | m/s, rad/s | Full stick deflection |
 
-The operating-modes design owns `link_timeout=0.5 s` and actuator `mode_timeout=0.3 s`. Robot command timeouts require agreement with the controls owners.
+`link_timeout` (0.5 s) and `mode_timeout` (0.3 s) belong to the
+[operating modes design](operating-modes.md#4-parameters), and the actuators' command
+timeouts to the [drivetrain](drivetrain.md#4-parameters) and
+[mechanism](mechanism.md#4-parameters) designs.
 
-Frontend rates are configuration values; robot publication rates are parameters owned by their publishers. Validate at startup and on rate changes: reject nonpositive/nonfinite rates and require `1 / heartbeat_rate < link_timeout`, `1 / autorepeat_rate < input_timeout`, `1 / command_rate <` each affected actuator’s command timeout, and `1 / mode_rate <` both `state_timeout` and actuator `mode_timeout`. Reject incompatible changes with a reason. Throttle optional subscriptions on the Jetson before transmission; keep latest samples rather than a backlog.
+Frontend rates are configuration values; the robot's publication rates are parameters of
+the nodes that publish them. Validate at startup and on every rate change: reject rates that
+are not positive and finite, and require `1 / heartbeat_rate < link_timeout`,
+`1 / autorepeat_rate < input_timeout`, `1 / command_rate` below each actuator's command
+timeout, and `1 / mode_rate` below both `state_timeout` and `mode_timeout`. Refuse an
+incompatible change with a reason. Throttle optional subscriptions on the robot computer
+before they cross the link, keeping the latest sample rather than a backlog.
 
 ## 5. Libraries and hardware interfaces
 
-Use a custom frontend with `roslibjs` and the Gamepad API, rosbridge on the Jetson, the proposed `luna_teleop` package, `luna_interfaces`, and the team ROS 2 Jazzy environment ([Development environment](../development-environment.md)).
+The frontend is our own, built on `roslibjs` and the browser's Gamepad API, with rosbridge
+on the robot computer, `teleop_node` in `luna_teleop`, and the team's ROS 2 Jazzy
+environment ([Development environment](../development-environment.md)).
 
-**Operator station:** Initial testing uses the software lead’s Ubuntu 24.04.5 LTS laptop. Support Windows, macOS, and Linux through the same frontend and repository-controlled mappings, without laptop ROS or container USB passthrough. Avoid fixed usernames and laptop-specific paths. [TBR: serve the frontend from the Jetson over HTTPS with secure rosbridge WebSockets, or package it as a desktop app; question 4 decides.] Keep frontend assets available offline for Mission Control.
+**Operator station.** Initial testing uses the software lead's Ubuntu 24.04 laptop. The
+same frontend and repository-controlled mappings support Windows, macOS, and Linux, with no
+ROS or container USB passthrough on the laptop. Avoid fixed usernames and laptop-specific
+paths. [TBR: Serve the frontend from the robot computer over HTTPS with secure rosbridge
+WebSockets, or package it as a desktop app; open question 4 decides.] Keep the frontend's
+files available offline for Mission Control.
 
-**Gamepad:** Xbox Model 1914, connected to the operator laptop by a USB data cable with USB-C at the controller. A cable is available. The physical control mapping below was accepted in review; measured axis and button indices remain pending bench testing.
+**Gamepad.** An Xbox Model 1914, connected to the operator laptop by a USB data cable with
+USB-C at the controller. The physical mapping below was accepted in review; the measured
+axis and button numbers wait on bench testing (5.2).
 
 | Control | Action |
 | --- | --- |
-| LB held | Permit manual actuator demands. |
-| Left stick vertical / horizontal | Drive forward or reverse / steer. |
-| Right stick vertical | Coordinated depth raise/lower. |
-| RT / LT | Excavator chain forward/reverse. |
-| D-pad up/down | Conveyor forward/reverse. |
-| A / X | Hatch open/close. |
-| Laptop controls | Enable, disable, clear fault, select control source and task. |
+| LB held | Permit manual actuator commands |
+| Left stick vertical, horizontal | Drive forward or reverse; steer |
+| Right stick vertical | Raise or lower the excavator (depth) |
+| RT, LT | Excavator chain forward, reverse |
+| D-pad up, down | Conveyor forward, reverse |
+| A, X | Hatch open, close |
+| Laptop controls | Enable, disable, clear fault, select the control source and task |
 
-Releasing LB zeros all manual demands. Opposing commands for the same actuator produce zero. Task permissions apply; AUTO ignores gamepad input. After input loss, require explicit enable and a fresh LB release and press before manual motion resumes.
+Releasing LB zeroes every manual command. Opposite commands for one actuator give zero.
+Task permissions apply, and AUTO ignores the gamepad. After input loss, moving again takes
+an explicit enable and a fresh release and press of LB.
 
-**Hardware testing:** Verify controller detection through the Gamepad API and `/joy` on the Jetson through rosbridge on Windows, macOS, and Linux. Record device identity, browser button and axis indices, signs, and disconnect behavior. Confirm that repeated input messages cannot conceal a disconnected controller.
+**Hardware testing.** Check that the browser's Gamepad API finds the controller and that
+`/joy` reaches the robot computer through rosbridge, on Windows, macOS, and Linux. Record the
+device's identity, the browser's button and axis numbers, their signs, and what happens on
+a disconnect. Confirm that repeated input messages cannot hide a disconnected controller.
 
-**Network:** The team access point is the **GL.iNet GL-MT3000 (Beryl AX)**. Follow [System Design](system.md): operator laptop → NASA switch and cable → GL-MT3000 in the arena → Wi-Fi → robot radio and Jetson. Decision 5.7 still supplies the radio choice, network mode, addresses, and rosbridge connection settings. Validate the whole path using [ROS 2 networking](../ros-networking.md).
+**Network.** The team's access point is the GL.iNet GL-MT3000 (Beryl AX). The path is the
+operator laptop, NASA's switch and cable, the GL-MT3000 in the arena, Wi-Fi, and the robot's
+radio and computer ([system design](system.md#how-the-operator-station-reaches-the-robot)).
+The robot's radio is [TBR: the Jetson's own Wi-Fi for now, while its Ethernet port serves
+the LiDAR; system open question 8]. Decision 5.7 supplies the network mode, addresses, and
+rosbridge connection settings. Validate the whole path with
+[ROS 2 networking](../ros-networking.md).
 
-**View:** The custom frontend’s TELEOP default view displays camera and telemetry. The AUTO default view displays the obstacle map and planned path for judging, with camera streaming off by default. The operator may change either view at runtime, including turning the camera on in AUTO. Views do not change robot permissions. Other states show low-rate status and faults. Follow the operating-modes bandwidth rules.
+**Views.** The TELEOP default view shows the camera and telemetry. The AUTO default view
+shows the obstacle map and planned path for judging, with the camera off. The operator may
+change either view at runtime, such as turning the camera on in AUTO; views never change
+robot permissions. Other states show low-rate status and faults, following the operating
+modes design's bandwidth rules. The controls show the acknowledged state, source, task,
+battery, connection status, and refusal or fault reasons, and provide enable, disable,
+clear-fault, source, and task controls, plus view and stream selection and live link
+bandwidth.
 
-The operator controls show acknowledged state, source, task, battery, connection status, and refusal/fault reasons. They provide enable, disable, clear-fault, source, and task controls, plus view/stream selection and live link bandwidth.
-
-[TBR: Stream rates and bandwidth estimates below are starting values for testing. Estimates use `message bytes × Hz × 8 / 1000` kbit/s; they exclude transport overhead and retransmissions. Sensor/autonomy owners confirm their source topics.]
+[TBR: The stream rates and bandwidth estimates below are starting values for testing.
+Estimates use bytes per message × Hz × 8 / 1000 kbit/s, and leave out transport overhead
+and retransmissions.]
 
 | Display or control feedback | Source topic or interface | Default rate | Estimated bandwidth | Default views |
 | --- | --- | --- | --- | --- |
-| Acknowledged state, source, task, fault reason | `/robot/mode` | `mode_rate`: 10 Hz + changes | 24 kbit/s, assuming 300 B/message, plus changes | TELEOP, AUTO, other states |
-| Battery | `/power/battery` | `battery_rate`: 10 Hz | 40 kbit/s, assuming 500 B/message | TELEOP, AUTO, other states |
-| Enable/disable, clear-fault, source/task request result | `/robot/request_mode` response; confirmed by `/robot/mode` | On demand | Event traffic only; approximately 500 B/exchange | TELEOP, AUTO, other states |
-| Controller and connection status | Gamepad API, WebSocket state, and freshness of `/robot/mode` | `autorepeat_rate`: 20 Hz for input; connection events | Local display adds no traffic; `/joy` traffic is separate | TELEOP, AUTO, other states; manual demands ignored in AUTO |
-| Camera | [TBD: camera topic, sensor contract] | `camera_rate`: 5 Hz | 800 kbit/s, assuming 20 kB/frame | TELEOP; optional in AUTO/other states |
-| Obstacle map | [TBD: map topic, autonomy contract] | `map_rate`: 1 Hz | 80 kbit/s, assuming 10 kB/update | AUTO; optional in other views |
-| Planned path | [TBD: path topic, autonomy contract] | `path_rate`: 2 Hz | 32 kbit/s, assuming 2 kB/update | AUTO; optional in other views |
-| Live TX/RX link bandwidth | [TBD: network owner to confirm statistics source] | `bandwidth_rate`: 1 Hz | 1.6 kbit/s, assuming 200 B/update; statistics interface pending | TELEOP, AUTO, other states |
+| Acknowledged state, source, task, fault reason | `/robot/mode` | 10 Hz and on change | 24 kbit/s, assuming 300 B a message | TELEOP, AUTO, other states |
+| Battery | `/power/battery` | 10 Hz | 40 kbit/s, assuming 500 B a message | TELEOP, AUTO, other states |
+| Mechanism state, stowed and hatch closed | `/mechanism/status` | 10 Hz and on change | 16 kbit/s, assuming 200 B a message | TELEOP, AUTO, other states |
+| Autonomy's cycle step and stop reasons | `/autonomy/status` | 1 Hz and on change | Under 1 kbit/s | AUTO |
+| Enable, disable, clear-fault, source and task results | `/robot/request_mode`'s response, confirmed by `/robot/mode` | On demand | About 500 B an exchange | TELEOP, AUTO, other states |
+| Controller and connection status | Gamepad API, WebSocket state, and how fresh `/robot/mode` is | 20 Hz for input; connection events | Shown on the laptop, so nothing crosses the link; `/joy` is counted in TPM-6 | TELEOP, AUTO, other states; manual commands ignored in AUTO |
+| Camera | The driving camera's compressed image ([sensors design](sensors.md#3-interfaces)) | `camera_rate`, 5 Hz | 800 kbit/s, assuming 20 kB a frame | TELEOP; optional in AUTO and other states |
+| Obstacle map | `/autonomy/obstacle_map` ([autonomy design](autonomy.md#3-interfaces)) | `map_rate`, 1 Hz | 80 kbit/s, assuming 10 kB an update | AUTO; optional in other views |
+| Planned path | `/autonomy/plan` | Each replan, at most 1 Hz | 16 kbit/s, assuming 2 kB an update | AUTO; optional in other views |
+| Live link bandwidth | [TBD: the statistics source, 5.7] | `bandwidth_rate`, 1 Hz | 1.6 kbit/s, assuming 200 B an update | TELEOP, AUTO, other states |
 
-Subscribe to the camera with CBOR so frames stay binary, on a separate rosbridge WebSocket connection from commands/status. Unsubscribe from optional streams when switched off; hiding a widget alone does not save bandwidth. Include both connections in the live bandwidth display.
+Subscribe to the camera with CBOR, so frames stay binary, on a separate rosbridge WebSocket
+connection from commands and status. Unsubscribe from optional streams when they are
+switched off, since hiding a widget alone saves no bandwidth. Include both connections in
+the live bandwidth display.
 
-Other subsystems own CAN, motor wiring, current limits, and the physical E-stop.
+Other subsystems own the CAN bus, motor wiring, current limits, and the physical E-stop.
 
 ## 6. Block diagram
 
-**Placement and network.** Blue is software/computers, green is team hardware, and gray is NASA equipment, using the team palette. Decision 5.7 supplies the robot radio and network settings.
+**Placement and network.** Blue is software and computers, green is team hardware, and
+gray is NASA's equipment, in the team's palette. Decision 5.7 supplies the network
+settings.
 
 ```mermaid
 flowchart TB
@@ -134,8 +238,8 @@ flowchart TB
     ap["GL.iNet GL-MT3000 (Beryl AX)"]
     subgraph rover["Rover"]
       direction TB
-      radio["Robot radio (5.7)"]
-      jetson["Jetson: rosbridge, teleop_node, mode_manager, command selection and actuator nodes, autonomy, sensors and telemetry"]
+      radio["Robot radio: the Jetson's Wi-Fi for now (5.7)"]
+      jetson["Robot computer: rosbridge, teleop_node, mode_manager, command_selector, drivetrain and mechanism, autonomy, sensors and telemetry"]
     end
   end
   pad -->|"USB-C data cable"| laptop
@@ -156,51 +260,68 @@ flowchart TB
 
 ## 7. Behavior on failure
 
-The frontend publishes `/operator/heartbeat` at `heartbeat_rate` (default 10 Hz) while running, including AUTO and with LB released. Moving Teleop to the Jetson must not replace this with a robot-generated heartbeat. After a disconnect, require fresh acknowledged state and explicit enable; controller loss also requires a fresh LB release and press. A retained old mode message must not rearm motion. TCP can deliver old inputs after a Wi-Fi stall: validate original input/command freshness, not just time since arrival, and drop expired messages without refreshing watchdogs or replaying demands. The final command freshness contract is part of questions 3 and 5.
+The frontend publishes `/operator/heartbeat` at `heartbeat_rate` (10 Hz by default) while
+it runs, including in AUTO and with LB released. Running teleop on the robot computer must
+never replace this with a heartbeat made on the robot. After a disconnect, moving again
+takes a fresh acknowledged state and an explicit enable; a lost controller also takes a
+fresh release and press of LB. A retained old mode message must not rearm motion. TCP can
+deliver old inputs after a Wi-Fi stall, so freshness is judged from each input's own stamp,
+not from when it arrived, and an expired message neither refreshes a timeout nor replays a
+command (section 3, open question 6).
 
 | Failure | How it is detected | What the subsystem does |
 | --- | --- | --- |
-| Controller/input lost in TELEOP | Connection check and input timeout | Zero manual demands; request DISABLED. |
-| Robot state updates stop | Operator `state_timeout` | Show connection unconfirmed; inhibit manual demands. |
-| Operator or Wi-Fi lost | Robot `link_timeout=0.5 s` | `mode_manager` disables, including in AUTO. Only fresh heartbeats refresh the timeout. |
-| Mode manager stops | Robot `mode_timeout=0.3 s` | Actuator nodes independently zero outputs. |
-| Command publisher stops | Robot command timeout | Affected actuator nodes zero outputs. |
-| Fault/E-stop | Robot safety/hardware | Use laptop clear-fault, then a separate enable; never automatically enable. |
+| Controller or input lost in TELEOP | The connection check and `input_timeout` | Zero manual commands; request DISABLED |
+| Robot state updates stop | The frontend's `state_timeout` | Show the connection as unconfirmed; inhibit manual commands |
+| Operator or Wi-Fi lost | The robot's `link_timeout`, 0.5 s | `mode_manager` disables, including in AUTO. Only fresh heartbeats refresh the timeout. |
+| `mode_manager` stops | The mode gates' `mode_timeout`, 0.3 s | The drivetrain and the mechanism zero their outputs on their own |
+| `teleop_node` stops | The actuators' command timeouts | The drivetrain brakes to zero and each mechanism function stops; the mode is unchanged |
+| A burst of old commands after a stall | Each command's stamp is older than the actuator's timeout | Dropped by the drivetrain and the mechanism |
+| Fault or E-stop | The robot's safety checks or the hardware | Clear the fault from the laptop, then enable separately; never enable automatically |
 
-Verify operating-modes requirement R3 on hardware: zero outputs within 100 ms of disable, and within `link_timeout + 100 ms` of the last heartbeat. Robot controls own recovery and current limits.
+Check operating modes requirement R3 on hardware: zero outputs within 100 ms of a disable,
+and within `link_timeout` plus 100 ms of the last heartbeat. The robot's controls own
+recovery and current limits.
 
 ## 8. Test plan
 
-Follow [Testing Layers](testing-layers.md). In Sim, fake or recorded `/joy` messages pass through rosbridge in place of the gamepad, with robot hardware on stand-ins. Bench requires passing Sim tests and a reviewed procedure; Robot requires a merged Bench log. Record results and recordings in the run logs.
+Follow [Testing layers](testing-layers.md). In Sim, recorded or scripted `/joy` messages
+pass through rosbridge in place of the gamepad, `heartbeat_publisher` in `luna_teleop`
+stands in for the frontend's heartbeat, and the robot's hardware is on stand-ins. Bench
+needs passing Sim tests and a reviewed procedure; Robot needs a merged Bench log.
 
 | Requirement | Test | Where | Result |
 | --- | --- | --- | --- |
-| R1 | Enumerate the controller through the Gamepad API on Windows, macOS, and Linux; observe every required input on `/joy` through rosbridge. | Bench | Not run |
-| R2 | Test deadzone, axis signs, opposing commands, and hold release; verify task restrictions, creep driving during EXCAVATE, conveyor control during DUMP, and AUTO ignoring input. | Unit, then Sim | Not run |
-| R3 | Check accepted and rejected requests and clear-then-enable recovery; verify link recovery does not replay queued operator requests. | Sim, then Bench | Not run |
-| R4 | Stop input and state updates in Sim; disconnect controller and Wi-Fi on hardware. Measure stopping times; verify heartbeat continues in AUTO and without LB, and reconnection requires rearming. | Sim, Bench, Robot | Not run |
-| R2–R4 | Repeat manual control, task restrictions, stopping, and recovery on the rover, on blocks before floor tests. | Robot | Not run |
-| R5 | Verify the information table, acknowledged status, default views, runtime overrides (including camera in AUTO), live bandwidth, and binary CBOR camera on its own connection. | Sim, Bench, Robot | Not run |
-| R6 | Teammate repeats setup and mapping on Windows, macOS, and Linux using configuration overrides; verify the selected HTTPS/desktop route and offline assets. | Bench | Not run |
-| R4 | Use `tc netem` packet loss and a Wi-Fi stall; measure button-to-motor latency and false disables. Verify expired TCP backlog is dropped, stopping deadlines hold, and reconnection does not resume motion. | Bench | Not run |
+| R1 | Find the controller through the Gamepad API on Windows, macOS, and Linux; see every required input on `/joy` through rosbridge (5.2). | Bench | Not run |
+| R2 | Unit tests of `teleop_node` (5.3): deadzone, axis signs, opposite commands, and releasing LB; task restrictions, creep driving in EXCAVATE, the conveyor in DUMP, and AUTO ignoring input. | Unit, then Sim | Not run |
+| R2, R4 | Launch test (5.3): a `/joy` recording drives the stub robot; once LB is released, `/teleop/cmd_vel` and every mechanism command are zero within one `command_rate` period. | Sim | Not run |
+| R4 | Launch test (5.4): with `heartbeat_publisher` running, freeze it with Ctrl+Z during a stub drive; the robot disables within `link_timeout` plus 100 ms. | Sim | Not run |
+| R3 | Accepted and refused requests, and clear-then-enable recovery; after the link recovers, no queued operator request runs. | Sim, then Bench | Not run |
+| R4 | Stop input and state updates in Sim; disconnect the controller and the Wi-Fi on hardware. Measure the stopping times; check that the heartbeat continues in AUTO and with LB released, and that reconnecting needs a fresh enable. | Sim, Bench, Robot | Not run |
+| R2 to R4 | Repeat manual control, task restrictions, stopping, and recovery on the rover, on blocks before the floor. | Robot | Not run |
+| R5 | The view table, acknowledged status, default views, runtime changes (including the camera in AUTO), live bandwidth, and the CBOR camera on its own connection (5.5). | Sim, Bench, Robot | Not run |
+| R6 | A teammate repeats the setup and mapping on Windows, macOS, and Linux from the repository's configuration; check the chosen delivery and the offline files. | Bench | Not run |
+| R4 | With `tc netem` packet loss and a Wi-Fi stall, measure button-to-motor latency and false disables. A burst of old input after the stall moves nothing, the stopping deadlines hold, and reconnecting does not resume motion (5.6, open question 6). | Bench | Not run |
 | R4 | Reject rate changes whose periods do not fit the heartbeat, input, mode, or actuator command timeouts. | Unit, then Sim | Not run |
 
 ## 9. Open questions
 
-| Question | Owner | Due |
+Review confirmed the controller and cable, the initial Linux station, the control mapping,
+creep driving in EXCAVATE, the conveyor in DUMP, and the laptop's clear-fault control. The
+operating modes doc still lists driving while digging and the conveyor in DUMP as open
+(its questions 2 and 3), for Mechanical to confirm.
+
+<!-- design: questions (generated from teleoperation.toml by scripts/design render: edit that file, not this table) -->
+
+| Question | Status | Turgor |
 | --- | --- | --- |
-| 3. What topics/message types carry movement commands, and which code selects TELEOP/AUTO commands? | Controls/mechanism owners | Before integration |
-| 4. What final network settings and frontend delivery will be used: Jetson HTTPS/secure WebSockets or a packaged desktop app? | Networking/teleop owners | Before integration |
-| 5. What granular command and telemetry interfaces let teleop expose any combination of functions? Agree one command topic per independently moving function (drive, coordinated depth raise/lower, excavator, conveyor, hatch) and one telemetry topic per source, not per motor or button. | Drivetrain, mechanism, and architecture owners | Before integration |
+| 3. Movement commands are TwistStamped on /teleop/cmd_vel and /auto/cmd_vel, and ActuatorCommand on one topic per mechanism function. command_selector forwards only the source /robot/mode names, and never falls back to the other ([system design, Command selection](system.md#command-selection)). | Decided 2026-11-14 | None |
+| 4. What final network settings and frontend delivery will be used: HTTPS and secure WebSockets served from the robot computer, or a packaged desktop app? | Open | 5.7 |
+| 5. One command topic for each function that moves on its own: drive, depth, excavator, conveyor, and hatch ([mechanism design, section 3](mechanism.md#3-interfaces)). Telemetry comes one topic per source, such as /mechanism/status and /power/battery, not one per motor or button. | Decided 2026-11-14 | None |
+| 6. How does the robot judge the age of a command whose stamp starts on the laptop? The frontend stamps /joy, so a stale command after a Wi-Fi stall is caught only if the laptop's clock agrees with the robot's. Proposed: the frontend measures the offset with rosapi's get_time service, part of the rosbridge suite, from round trips, and stamps /joy in the robot's time; an operator laptop's own clock cannot be relied on to be set. | Open | 5.4 |
 
-Drive coordination: retain `TwistStamped`. The lead has asked the drivetrain PR #17 owner to change its `Twist` type to match; the final topic name remains open in question 3. Both endpoints must agree before integration.
-
-Review confirmed the controller and cable, initial Linux station, control mapping, creep driving during EXCAVATE, conveyor use during DUMP, and laptop clear-fault controls. The shared operating-modes document still lists its excavation-driving and DUMP-conveyor questions as open; those entries need the same decisions recorded.
+<!-- /design -->
 
 ## Handoff
 
-- Design draft complete for team review.
-- Implementation and hardware validation remain pending.
-- Browser controller indices, frontend views/delivery, and portability verification remain pending.
-- Network and mechanism interfaces still need team agreement.
-- Next: bench-test `/joy`, mapping, hold release, and disconnection.
+Not yet written: this doc is a draft.

@@ -140,6 +140,7 @@ flowchart LR
   nplanner -->|"/auto/cmd_vel (TBR)"| ncommand_selection
   ntask_sequencer -.->|"/autonomy/navigate"| nplanner
   ntask_sequencer -->|"AUTO mechanism command topics (TBD)"| ncommand_selection
+  ntask_sequencer -->|"/autonomy/status"| noperator_frontend
   ndrivetrain -->|"/drivetrain/odom"| nlocalization
   ndrive_joint_states -->|"/drivetrain/joint_states"| nlocalization
   nmechanism -->|"/mechanism/status"| nmode_manager
@@ -152,7 +153,7 @@ flowchart LR
   noperator_frontend -->|"/joy"| nteleop_node
   noperator_frontend -->|"/operator/heartbeat"| nmode_manager
   nteleop_node -->|"/teleop/cmd_vel"| ncommand_selection
-  nteleop_node -->|"teleop's mechanism command topics (TBD)"| ncommand_selection
+  nteleop_node -->|"/teleop/mechanism/#lt;function#gt;/command"| ncommand_selection
 ```
 
 <!-- /design -->
@@ -188,8 +189,8 @@ are defined here.
 | `/robot/mode` | topic | `luna_interfaces/msg/RobotMode` | 10 Hz and on change | `mode_manager` | Drive mode gate, Mechanism mode gate, `command_selector`, Path planning and following, Task sequencer, Operator frontend, `teleop_node` | reliable, transient local, depth 1 |
 | /auto/cmd_vel [TBR: teleop open question 3] | topic | geometry_msgs/msg/TwistStamped [TBR: matches /teleop/cmd_vel] | `command_rate`, 20 Hz | Path planning and following | `command_selector` | best effort, volatile, depth 1 |
 | [TBD: AUTO mechanism command topics, teleop open questions 3 and 5] | topic | [TBD: mechanism doc (4.2)] | 20 Hz [TBR: matches teleop's command_rate] | Task sequencer | `command_selector` | [TBD: mechanism doc (4.2)] |
-| `/teleop/cmd_vel` | topic | geometry_msgs/msg/TwistStamped [TBR: teleop draft, PR #14] | `command_rate`, 20 Hz [TBR: teleop draft, PR #14] | `teleop_node` | `command_selector` | best effort, volatile, depth 1 [TBR: teleop draft, PR #14] |
-| [TBD: teleop's mechanism command topics, teleop open questions 3 and 5] | topic | [TBD: mechanism doc (4.2)] | `command_rate`, 20 Hz [TBR: teleop draft, PR #14, for the mechanism doc (4.2) to confirm] | `teleop_node` | `command_selector` | [TBD: teleoperation doc (5.1)] |
+| `/teleop/cmd_vel` | topic | `geometry_msgs/msg/TwistStamped` | `command_rate`, 20 Hz [TBR] | `teleop_node` | `command_selector` | best effort, volatile, depth 1 |
+| `/teleop/mechanism/<function>/command` | topic | luna_interfaces/msg/ActuatorCommand [TBR: proposed in the mechanism doc (4.2)] | `command_rate`, 20 Hz [TBR] | `teleop_node` | `command_selector` | best effort, volatile, depth 1 |
 
 <!-- /design -->
 

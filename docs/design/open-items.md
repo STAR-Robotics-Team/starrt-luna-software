@@ -68,13 +68,12 @@ by `scripts/design render`.
 | 3. What tells software the hatch is fully open, and how far does it travel? With a sensor at each end, the hatch can take an open or close command and stop by itself; without one, it runs only while its button is held. | 4.1 |
 | 4. Which way is positive for each function, once Mechanical mounts them? Proposed in section 3: positive raises the excavator, runs the chain and the conveyor the way they run while digging, and opens the hatch. | 4.1 |
 
-### [Teleoperation Subsystem Design](teleoperation.md)
+### [Teleoperation Subsystem Design](teleoperation.md#9-open-questions)
 
 | Question | Turgor |
 | --- | --- |
-| 3. What topics and message types carry movement commands, and which code selects TELEOP or AUTO commands? | None |
 | 4. What final network settings and frontend delivery will be used: HTTPS and secure WebSockets served from the robot computer, or a packaged desktop app? | 5.7 |
-| 5. What command and telemetry interfaces let teleop expose any combination of functions? The draft proposes one command topic per function that moves on its own (drive, coordinated depth raise and lower, excavator, conveyor, hatch) and one telemetry topic per source, not per motor or button. | None |
+| 6. How does the robot judge the age of a command whose stamp starts on the laptop? The frontend stamps /joy, so a stale command after a Wi-Fi stall is caught only if the laptop's clock agrees with the robot's. Proposed: the frontend measures the offset with rosapi's get_time service, part of the rosbridge suite, from round trips, and stamps /joy in the robot's time; an operator laptop's own clock cannot be relied on to be set. | 5.4 |
 
 ### [Testing Layers](testing-layers.md#open-questions)
 
@@ -211,18 +210,11 @@ that uses them; each is listed here once.
 
 | Entry | Field | Value |
 | --- | --- | --- |
-| node operator_frontend | package | Custom frontend with `roslibjs` [TBR: teleop draft, PR #14] |
-| node teleop_node | package | `luna_teleop` [TBR: teleop draft, PR #14] |
-| interface /joy | rate | `autorepeat_rate`, 20 Hz, and on change [TBR: teleop draft, PR #14] |
-| interface /joy | qos | [TBD: as rosbridge publishes it, teleoperation doc (5.1)] |
-| interface /teleop/cmd_vel | type | geometry_msgs/msg/TwistStamped [TBR: teleop draft, PR #14] |
-| interface /teleop/cmd_vel | rate | `command_rate`, 20 Hz [TBR: teleop draft, PR #14] |
-| interface /teleop/cmd_vel | qos | best effort, volatile, depth 1 [TBR: teleop draft, PR #14] |
-| interface /teleop/cmd_vel | note | The name comes from the teleop draft (PR #14) [TBR: teleop open question 3, which decides how TELEOP and AUTO commands reach the drivetrain]. |
-| interface teleop-mechanism-command | name | [TBD: teleop's mechanism command topics, teleop open questions 3 and 5] |
-| interface teleop-mechanism-command | type | [TBD: mechanism doc (4.2)] |
-| interface teleop-mechanism-command | rate | `command_rate`, 20 Hz [TBR: teleop draft, PR #14, for the mechanism doc (4.2) to confirm] |
-| interface teleop-mechanism-command | qos | [TBD: teleoperation doc (5.1)] |
+| interface /joy | rate | `autorepeat_rate`, 20 Hz, and on change [TBR] |
+| interface /joy | qos | [TBD: as rosbridge publishes it, 5.4] |
+| interface /teleop/cmd_vel | rate | `command_rate`, 20 Hz [TBR] |
+| interface teleop-mechanism-command | type | luna_interfaces/msg/ActuatorCommand [TBR: proposed in the mechanism doc (4.2)] |
+| interface teleop-mechanism-command | rate | `command_rate`, 20 Hz [TBR] |
 
 ## Marked in the test sheet
 
@@ -394,35 +386,20 @@ Every `[TBD]` and `[TBR]` in the docs' own text, by page and section.
 
 | Section | Marked |
 | --- | --- |
-| [Teleoperation Subsystem Design](teleoperation.md#teleoperation-subsystem-design) | [TBD: software lead to assign] |
-| [2. Nodes](teleoperation.md#2-nodes) | [TBR: proposed names.] |
-| [3. Interfaces](teleoperation.md#3-interfaces) | [TBR: `autorepeat_rate`, 20 Hz + changes] |
-| [3. Interfaces](teleoperation.md#3-interfaces) | [TBD: verify bridge QoS] |
-| [3. Interfaces](teleoperation.md#3-interfaces) | [TBR: `/teleop/cmd_vel`] |
-| [3. Interfaces](teleoperation.md#3-interfaces) | [TBR: `geometry_msgs/msg/TwistStamped`] |
-| [3. Interfaces](teleoperation.md#3-interfaces) | [TBR: `command_rate`, 20 Hz] |
-| [3. Interfaces](teleoperation.md#3-interfaces) | [TBR: best effort, volatile, depth 1] |
-| [3. Interfaces](teleoperation.md#3-interfaces) | [TBD: mechanism contract] |
-| [3. Interfaces](teleoperation.md#3-interfaces) | [TBR: `command_rate`, 20 Hz; controls owners confirm] |
-| [3. Interfaces](teleoperation.md#3-interfaces) | [TBD: ] |
-| [3. Interfaces](teleoperation.md#3-interfaces) | [TBD: sensor/autonomy contracts] |
-| [3. Interfaces](teleoperation.md#3-interfaces) | [TBD: ] |
-| [4. Parameters](teleoperation.md#4-parameters) | [TBD: enumerate] |
+| [4. Parameters](teleoperation.md#4-parameters) | [TBD: enumerated on each laptop] |
 | [4. Parameters](teleoperation.md#4-parameters) | [TBR: 0.05] |
 | [4. Parameters](teleoperation.md#4-parameters) | [TBR: 20] |
-| [4. Parameters](teleoperation.md#4-parameters) | [TBR: 20] |
-| [4. Parameters](teleoperation.md#4-parameters) | [TBR: 5 / 1 / 2] |
+| [4. Parameters](teleoperation.md#4-parameters) | [TBR: 5, 1, 1] |
 | [4. Parameters](teleoperation.md#4-parameters) | [TBR: 1] |
-| [4. Parameters](teleoperation.md#4-parameters) | [TBD: measured index] |
-| [4. Parameters](teleoperation.md#4-parameters) | [TBR: 0.15] |
 | [4. Parameters](teleoperation.md#4-parameters) | [TBR: 0.3] |
-| [4. Parameters](teleoperation.md#4-parameters) | [TBD: owners approve] |
-| [5. Libraries and hardware interfaces](teleoperation.md#5-libraries-and-hardware-interfaces) | [TBR: serve the frontend from the Jetson over HTTPS with secure rosbridge WebSockets, or package it as a desktop app; question 4 decides.] |
-| [5. Libraries and hardware interfaces](teleoperation.md#5-libraries-and-hardware-interfaces) | [TBR: Stream rates and bandwidth estimates below are starting values for testing. Estimates use `message bytes × Hz × 8 / 1000` kbit/s; they exclude transport overhead and retransmissions. Sensor/autonomy owners confirm their source topics.] |
-| [5. Libraries and hardware interfaces](teleoperation.md#5-libraries-and-hardware-interfaces) | [TBD: camera topic, sensor contract] |
-| [5. Libraries and hardware interfaces](teleoperation.md#5-libraries-and-hardware-interfaces) | [TBD: map topic, autonomy contract] |
-| [5. Libraries and hardware interfaces](teleoperation.md#5-libraries-and-hardware-interfaces) | [TBD: path topic, autonomy contract] |
-| [5. Libraries and hardware interfaces](teleoperation.md#5-libraries-and-hardware-interfaces) | [TBD: network owner to confirm statistics source] |
+| [4. Parameters](teleoperation.md#4-parameters) | [TBR: 20] |
+| [4. Parameters](teleoperation.md#4-parameters) | [TBD: measured index, 5.2] |
+| [4. Parameters](teleoperation.md#4-parameters) | [TBR: 0.15] |
+| [4. Parameters](teleoperation.md#4-parameters) | [TBD: the drivetrain's limits, 3.7] |
+| [5. Libraries and hardware interfaces](teleoperation.md#5-libraries-and-hardware-interfaces) | [TBR: Serve the frontend from the robot computer over HTTPS with secure rosbridge WebSockets, or package it as a desktop app; open question 4 decides.] |
+| [5. Libraries and hardware interfaces](teleoperation.md#5-libraries-and-hardware-interfaces) | [TBR: the Jetson's own Wi-Fi for now, while its Ethernet port serves the LiDAR; system open question 8] |
+| [5. Libraries and hardware interfaces](teleoperation.md#5-libraries-and-hardware-interfaces) | [TBR: The stream rates and bandwidth estimates below are starting values for testing. Estimates use bytes per message × Hz × 8 / 1000 kbit/s, and leave out transport overhead and retransmissions.] |
+| [5. Libraries and hardware interfaces](teleoperation.md#5-libraries-and-hardware-interfaces) | [TBD: the statistics source, 5.7] |
 
 ### [Testing Layers](testing-layers.md)
 
