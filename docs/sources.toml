@@ -587,6 +587,18 @@ checked = 2026-11-14
 notes = "What the L2's ROS 2 driver does with its parameters: initialize_type 2 is Ethernet (UDP), and the QoS it publishes with."
 
 [[source]]
+id = "nvidia-jetson-rootfs-r36-5"
+primary = true
+group = "Software references"
+title = "Jetson Linux Developer Guide r36.5: Root File System"
+publisher = "NVIDIA"
+url = "https://docs.nvidia.com/jetson/archives/r36.5/DeveloperGuide/SD/RootFileSystem.html"
+format = "web"
+expect = "Root File System"
+checked = 2026-11-14
+notes = "JetPack 6's sample root file systems are Ubuntu 22.04 (jammy), which ROS 2 Jazzy does not support on arm64."
+
+[[source]]
 id = "esa-margin-philosophy"
 primary = true
 group = "Engineering practice"

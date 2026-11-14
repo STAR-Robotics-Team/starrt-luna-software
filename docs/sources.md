@@ -14,7 +14,7 @@ the doc, and cite the page.
   primary source wins.
 - **To cite a source or add one,** see [Cite sources](writing-docs.md#cite-sources).
 
-47 sources, 42 of them primary, cited 297 times. PDF page
+48 sources, 43 of them primary, cited 301 times. PDF page
 numbers are the ones a PDF viewer shows, so each link opens the PDF at the cited page. This
 page is generated from `docs/sources.toml` by `scripts/sources render`.
 
@@ -325,6 +325,7 @@ ros-controls, *gz_ros2_control*. [Open the web page](https://control.ros.org/jaz
 - **Checked:** 2026-10-18
 - **Used for:** How ros2_control runs inside Gazebo: the controller manager in the simulator, and commands applied to simulated joints.
 - **Cited at:**
+    - [Platform Design](design/platform.md): [whole source](https://control.ros.org/jazzy/doc/gz_ros2_control/doc/index.html)
     - [System Design](design/system.md): [whole source](https://control.ros.org/jazzy/doc/gz_ros2_control/doc/index.html)
     - [Testing Layers](design/testing-layers.md): [section "Notes on the command interface"](https://control.ros.org/jazzy/doc/gz_ros2_control/doc/index.html#:~:text=Notes%20on%20the%20command%20interface), [section "gz_ros2_control"](https://control.ros.org/jazzy/doc/gz_ros2_control/doc/index.html#:~:text=gz_ros2_control)
 
@@ -345,6 +346,16 @@ NVIDIA, *Jetson Linux Developer Guide r36.5: Platform Power and Performance (Ori
 - **Checked:** 2026-10-07
 - **Used for:** The Jetson's power modes.
 - **Cited at:** not cited in these docs yet
+
+### `nvidia-jetson-rootfs-r36-5`
+
+NVIDIA, *Jetson Linux Developer Guide r36.5: Root File System*. [Open the web page](https://docs.nvidia.com/jetson/archives/r36.5/DeveloperGuide/SD/RootFileSystem.html).
+
+- **Primary source.**
+- **Checked:** 2026-11-14
+- **Used for:** JetPack 6's sample root file systems are Ubuntu 22.04 (jammy), which ROS 2 Jazzy does not support on arm64.
+- **Cited at:**
+    - [Platform Design](design/platform.md): [whole source](https://docs.nvidia.com/jetson/archives/r36.5/DeveloperGuide/SD/RootFileSystem.html)
 
 ### `ros-rep-103`
 
@@ -388,6 +399,7 @@ Open Robotics, *REP 2000: ROS 2 Releases and Target Platforms*. [Open the web pa
 - **Checked:** 2026-10-07
 - **Used for:** Which operating systems each ROS 2 release supports, and at which tier.
 - **Cited at:**
+    - [Platform Design](design/platform.md): [section "Jazzy Jalisco (May 2024 - May 2029)"](https://www.ros.org/reps/rep-2000.html#:~:text=Jazzy%20Jalisco%20%28May%202024%20%2D%20May%202029%29)
     - [Development environment](development-environment.md): [section "Jazzy Jalisco (May 2024 - May 2029)"](https://www.ros.org/reps/rep-2000.html#:~:text=Jazzy%20Jalisco%20%28May%202024%20%2D%20May%202029%29)
 
 ### `ros2-control-getting-started`

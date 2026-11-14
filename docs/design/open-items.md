@@ -68,6 +68,15 @@ by `scripts/design render`.
 | 3. What tells software the hatch is fully open, and how far does it travel? With a sensor at each end, the hatch can take an open or close command and stop by itself; without one, it runs only while its button is held. | 4.1 |
 | 4. Which way is positive for each function, once Mechanical mounts them? Proposed in section 3: positive raises the excavator, runs the chain and the conveyor the way they run while digging, and opens the hatch. | 4.1 |
 
+### [Platform Design](platform.md#9-open-questions)
+
+| Question | Turgor |
+| --- | --- |
+| 1. Does the robot computer run ROS 2 in the dev container's image, or natively? On the Jetson, JetPack 6's Ubuntu 22.04 has no Jazzy for arm64, so the container is proposed (section 5); a mini PC (system open question 7) could run either. | 2.9 |
+| 2. How does code reach the robot: pull a commit and build on the robot computer, or install a prebuilt arm64 image? | 2.10 |
+| 3. Where do recordings live on the robot, how do they come off it after a run, and how long are they kept? The system design's conventions say where recordings live for good (1.5). | 2.10 |
+| 4. Should the robot's ROS 2 discovery stay on the robot computer (ROS_AUTOMATIC_DISCOVERY_RANGE set to LOCALHOST), since the operator laptop reaches it only through rosbridge? Discovery traffic would then never cross the Wi-Fi, and a teammate debugging from a laptop would use rosbridge or ssh instead. | 5.6 |
+
 ### [Sensors and Robot Model Design](sensors.md#9-open-questions)
 
 | Question | Turgor |
@@ -197,6 +206,12 @@ that uses them; each is listed here once.
 | TPM-12 | row "Every robot program starts": value | [TBD: measured in 2.10] |
 | TPM-12 | row "Self-test finds every CAN device": value | ≤10, with FAULT at 60 [TBR: proposed in the PDR (1.6)] |
 | TPM-12 | row "Sensor drivers publishing": value | [TBD: sensors doc (6.2)] |
+
+### `platform.toml`
+
+| Entry | Field | Value |
+| --- | --- | --- |
+| node recorder | does | Records every run to the robot computer's storage: every topic except raw images, from DISABLED on [TBR: 2.10] |
 
 ### `sensors.toml`
 
@@ -388,6 +403,25 @@ Every `[TBD]` and `[TBR]` in the docs' own text, by page and section.
 | [5. Libraries and hardware interfaces](mechanism.md#5-libraries-and-hardware-interfaces) | [TBR: a Talon SRX's limit switch input is one place to wire them, for 4.3] |
 | [7. Behavior on failure](mechanism.md#7-behavior-on-failure) | [TBR: It stops, with a WARN on `/diagnostics`; it moves again once its command returns to zero] |
 | [8. Test plan](mechanism.md#8-test-plan) | [TBR: One depth actuator on the bench (4.6): run its full stroke from a ROS command, and its reported position matches a tape measure at both ends and the middle, within 5 mm . Hold it against a stop: it stops within `stall_time` and warns on `/diagnostics`.] |
+
+### [Platform Design](platform.md)
+
+| Section | Marked |
+| --- | --- |
+| [4. Parameters](platform.md#4-parameters) | [TBR: rosbridge's default, for 5.7 to confirm] |
+| [4. Parameters](platform.md#4-parameters) | [TBR: 2.10] |
+| [4. Parameters](platform.md#4-parameters) | [TBD: open question 3] |
+| [4. Parameters](platform.md#4-parameters) | [TBR: `LOCALHOST`, open question 4] |
+| [4. Parameters](platform.md#4-parameters) | [TBD: the team's ID for bench work across computers, 5.6] |
+| [4. Parameters](platform.md#4-parameters) | [TBD: named in deliverable 1.4] |
+| [5. Libraries and hardware interfaces](platform.md#5-libraries-and-hardware-interfaces) | [TBD: 2.2] |
+| [5. Libraries and hardware interfaces](platform.md#5-libraries-and-hardware-interfaces) | [TBD: a mini PC replaces it if the grant pays, system open question 7] |
+| [5. Libraries and hardware interfaces](platform.md#5-libraries-and-hardware-interfaces) | [TBR: open question 1; 2.9 records our Jetson's JetPack version] |
+| [5. Libraries and hardware interfaces](platform.md#5-libraries-and-hardware-interfaces) | [TBR: `luna_bringup`'s robot launch, at boot, and restarts it if it stops . The robot reaches] |
+| [5. Libraries and hardware interfaces](platform.md#5-libraries-and-hardware-interfaces) | [TBR: open question 3] |
+| [7. Behavior on failure](platform.md#7-behavior-on-failure) | [TBR: systemd starts it again ; the robot comes back in BOOT and must be enabled again] |
+| [7. Behavior on failure](platform.md#7-behavior-on-failure) | [TBD: 2.10] |
+| [7. Behavior on failure](platform.md#7-behavior-on-failure) | [TBR: teleoperation open question 6] |
 
 ### [Sensors and Robot Model Design](sensors.md)
 

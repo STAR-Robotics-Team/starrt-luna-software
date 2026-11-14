@@ -1,13 +1,13 @@
-# Registry for the platform design (platform.md, deliverable 2.11, not written yet). See
-# "Registries" in README.md, then run scripts/design render.
+# Registry for the platform design (platform.md, deliverable 2.11). See "Registries" in
+# README.md, then run scripts/design render.
 
 [[node]]
 id = "rosbridge"
 name = "`rosbridge_websocket`"
-package = "`rosbridge_server`"
+package = "`rosbridge_server`, with `rosapi`"
 runs_on = "Robot computer"
 element = "SW.4"
-does = "Carries the operator frontend's topics and service calls over one WebSocket connection; what crosses the radio link is set here (PR #14 review, 2026-10-26)"
+does = "Carries the operator frontend's topics and service calls over one WebSocket connection, so what crosses the radio link is only what the frontend subscribes to. rosapi, beside it, serves get_time, which the frontend uses to stamp /joy in the robot's time (teleoperation open question 6)."
 
 [[node]]
 id = "recorder"
@@ -15,4 +15,32 @@ name = "`ros2 bag` recorder"
 package = "`rosbag2`"
 runs_on = "Robot computer"
 element = "SW.4"
-does = "Records every run"
+does = "Records every run to the robot computer's storage: every topic except raw images, from DISABLED on [TBR: 2.10]"
+
+# ----------------------------------------------------------------------------------------
+# Open questions (section 9). Who answers each one, and by when, is in Turgor.
+# ----------------------------------------------------------------------------------------
+
+[[question]]
+number = 1
+status = "open"
+turgor = ["2.9"]
+text = "Does the robot computer run ROS 2 in the dev container's image, or natively? On the Jetson, JetPack 6's Ubuntu 22.04 has no Jazzy for arm64, so the container is proposed (section 5); a mini PC (system open question 7) could run either."
+
+[[question]]
+number = 2
+status = "open"
+turgor = ["2.10"]
+text = "How does code reach the robot: pull a commit and build on the robot computer, or install a prebuilt arm64 image?"
+
+[[question]]
+number = 3
+status = "open"
+turgor = ["2.10"]
+text = "Where do recordings live on the robot, how do they come off it after a run, and how long are they kept? The system design's conventions say where recordings live for good (1.5)."
+
+[[question]]
+number = 4
+status = "open"
+turgor = ["5.6"]
+text = "Should the robot's ROS 2 discovery stay on the robot computer (ROS_AUTOMATIC_DISCOVERY_RANGE set to LOCALHOST), since the operator laptop reaches it only through rosbridge? Discovery traffic would then never cross the Wi-Fi, and a teammate debugging from a laptop would use rosbridge or ssh instead."
