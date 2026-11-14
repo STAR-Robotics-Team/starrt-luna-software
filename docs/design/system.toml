@@ -37,7 +37,7 @@ turgor = ["1.19"]
 id = "SW.1.2"
 name = "Drivetrain control"
 parent = "SW.1"
-function = "Sends drive motor commands and per-mode current limits; computes wheel odometry [TBD: which node, system open question 9]"
+function = "Turns velocity commands into wheel speeds within the mode's limits, sends them and per-mode current limits to the drive motor controllers, and computes wheel odometry"
 connects_to = "Drive motor controllers; wheel and track geometry"
 doc = "drivetrain.md"
 turgor = ["3.1"]
@@ -64,7 +64,7 @@ turgor = ["1.19"]
 id = "SW.1.5"
 name = "Command selection"
 parent = "SW.1"
-function = "Passes on drive and mechanism commands from the active control source, TELEOP or AUTO, and drops the other source's [TBR: proposed in the PDR; whether it is a node of its own, and which doc designs it, wait on teleop open question 3]"
+function = "Passes on drive and mechanism commands from the control source /robot/mode names, TELEOP or AUTO, and drops the other source's"
 connects_to = "None outside Software"
 doc = "system.md"
 
@@ -155,25 +155,27 @@ turgor = ["2.11"]
 
 [[node]]
 id = "command_selection"
-name = "Command selection node"
-package = "[TBD: teleop open question 3]"
+name = "`command_selector`"
+package = "`luna_modes`"
 runs_on = "Robot computer"
 element = "SW.1.5"
-does = "Passes on the drive and mechanism commands of the active control source, as /robot/mode names it, and drops the other source's"
+does = "Forwards, unchanged, the drive and mechanism commands of the control source /robot/mode names, and drops the other source's. It never falls back to the other source, forwards nothing unless the robot is ENABLED, and sends one zero command on each output when the source changes."
 subscribes = ["/robot/mode", "/teleop/cmd_vel", "auto-drive-command", "teleop-mechanism-command", "auto-mechanism-command"]
 
 [[node.publishes]]
 name = "/cmd_vel"
-type = "geometry_msgs/msg/TwistStamped [TBR: the drivetrain draft (PR #17) uses Twist; Turgor 3.1 and 5.3 and the teleop draft use TwistStamped]"
-rate = "20 Hz [TBR: drivetrain draft, PR #17]"
-qos = "best effort, depth 1 [TBR: drivetrain draft, PR #17]"
+type = "geometry_msgs/msg/TwistStamped"
+rate = "The active source's rate: `command_rate`, 20 Hz"
+qos = "reliable, volatile, depth 1"
+note = "Reliable, because the diff drive controller subscribes with the system default QoS, which is reliable, and a reliable subscription never hears a best effort publisher (drivetrain design, section 3)."
 
 [[node.publishes]]
 id = "mechanism-command"
-name = "[TBD: mechanism command topic, teleop open question 3]"
-type = "[TBD: in the mechanism doc (4.2)]"
-rate = "[TBD: in the mechanism doc (4.2)]"
-qos = "[TBD: in the mechanism doc (4.2)]"
+name = "/mechanism/<function>/command"
+type = "luna_interfaces/msg/ActuatorCommand [TBR: proposed in the mechanism doc (4.2)]"
+rate = "The active source's rate: `command_rate`, 20 Hz"
+qos = "reliable, volatile, depth 1"
+note = "One topic for each function that moves on its own: depth, excavator, conveyor, and hatch (mechanism design, section 3)."
 
 [[shared]]
 name = "/diagnostics"
@@ -230,12 +232,13 @@ turgor = ["1.16"]
 
 [[question]]
 number = 8
-text = "Should the robot's radio be the robot computer's own Wi-Fi? The computer runs on its own battery, so a main-battery sag in a stall could not drop the link, while a separate radio on the main battery reboots if the pack falls below its converter's 9 V minimum ([operating modes, section 7](operating-modes.md#7-behavior-on-failure)). It must still meet the radio rules ([Rules the robot must follow](../competition/robot-rules.md#communications))."
+text = "Should the robot's radio be the robot computer's own Wi-Fi? The computer runs on its own battery, so a main-battery sag in a stall could not drop the link, while a separate radio on the main battery reboots if the pack falls below its converter's 9 V minimum ([operating modes, section 7](operating-modes.md#7-behavior-on-failure)). It must still meet the radio rules ([Rules the robot must follow](../competition/robot-rules.md#communications)). [TBR: Yes for now. The Jetson's one Ethernet port goes to the LiDAR ([sensors design](sensors.md)), so the radio is the Jetson's own Wi-Fi until the 5.6 bench test measures its dropouts. A wired radio would then need a second Ethernet port, such as a USB adapter.]"
 status = "open"
 turgor = ["5.7"]
 
 [[question]]
 number = 9
-text = "Which node publishes wheel odometry, and on which topic? The drivetrain draft (PR #17) has one drivetrain_node that publishes joint states only; Turgor 3.3 and 3.5 plan ros2_control, whose diff drive controller publishes odometry. Localization (7.5) and the position error budget depend on it."
-status = "open"
+text = "The drivetrain's diff drive controller publishes wheel odometry on /drivetrain/odom ([drivetrain design](drivetrain.md)), with its own odom to base_link transform turned off, because localization publishes that transform ([autonomy design](autonomy.md))."
+status = "decided"
+decided = 2026-11-14
 turgor = ["3.1"]

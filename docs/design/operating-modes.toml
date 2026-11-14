@@ -81,7 +81,7 @@ text = "Which motor controller runs each mechanism motor? Motors that need a cur
 number = 6
 status = "open"
 turgor = ["3.6"]
-text = "Does one process's Phoenix enable keep another process's motor controllers enabled? This decides which node feeds the enable. With Phoenix 5 and Phoenix 6 in separate nodes (section 5), also check whether either library's enable reaches the other's controllers. Test on the bench."
+text = "Does one process's Phoenix enable keep another process's motor controllers enabled? The drivetrain and the mechanism each feed the enable from their own hardware plugin, only while their own mode gate allows (section 5), so this decides whether those separate enables also separate the motor controllers. With Phoenix 5 and Phoenix 6 in separate nodes, also check whether either library's enable reaches the other's controllers. Test on the bench. If one enable reaches every motor controller on the bus, a second CAN bus, one for each subsystem, would separate them in hardware."
 
 [[question]]
 number = 7

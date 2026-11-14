@@ -23,8 +23,7 @@ by `scripts/design render`.
 | 5. How do stand-ins swap in for hardware, system by system, and what are the launch arguments called? | 1.4 |
 | 6. May the robot use 5 GHz during runs? The guidebook's §14.1.17 and §14.4 disagree (Rules the robot must follow). Ask the organizers. Asked through 5.7; [TBD: no answer yet as of 2026-11-04]. | 5.7 |
 | 7. Does a mini PC replace the Jetson on the rover? The team's Hacker Initiative grant application budgets one, an ASRock 4X4 BOX-AI340 with 32 GB of memory, for its faster CPU and hardware video encoding, plus an isolated CANable 2.0 Pro clone. The Jetson would then run the bench testbed. [TBD: decided by the grant, announced by Dec 21, 2026.] If it does, this doc's Jetson references become the mini PC, and on its standard Ubuntu kernel the CANable needs no driver build (CAN bus). | 1.16 |
-| 8. Should the robot's radio be the robot computer's own Wi-Fi? The computer runs on its own battery, so a main-battery sag in a stall could not drop the link, while a separate radio on the main battery reboots if the pack falls below its converter's 9 V minimum (operating modes, section 7). It must still meet the radio rules (Rules the robot must follow). | 5.7 |
-| 9. Which node publishes wheel odometry, and on which topic? The drivetrain draft (PR #17) has one drivetrain_node that publishes joint states only; Turgor 3.3 and 3.5 plan ros2_control, whose diff drive controller publishes odometry. Localization (7.5) and the position error budget depend on it. | 3.1 |
+| 8. Should the robot's radio be the robot computer's own Wi-Fi? The computer runs on its own battery, so a main-battery sag in a stall could not drop the link, while a separate radio on the main battery reboots if the pack falls below its converter's 9 V minimum (operating modes, section 7). It must still meet the radio rules (Rules the robot must follow). TBR: Yes for now. The Jetson's one Ethernet port goes to the LiDAR ([sensors design), so the radio is the Jetson's own Wi-Fi until the 5.6 bench test measures its dropouts. A wired radio would then need a second Ethernet port, such as a USB adapter.] | 5.7 |
 
 ### [Operating Modes Design](operating-modes.md#9-open-questions)
 
@@ -34,7 +33,7 @@ by `scripts/design render`.
 | 3. Does the conveyor run during DUMP? [TBR: the software lead answered yes in the teleoperation review on 2026-10-23; for Mechanical to confirm.] | 4.1 |
 | 4. Which sensors tell software that the excavator is stowed and the hatch is closed? The entry guards need them. For Mechanical and Electrical. | 4.1 |
 | 5. Which motor controller runs each mechanism motor? Motors that need a current limit must be on a Talon SRX: the excavator's 775 RedLine (130 A stall, test report, p. 1) and the depth actuators (about 50 A stall, Pololu product page, section "Using the actuator"). For Electrical. | 4.3 |
-| 6. Does one process's Phoenix enable keep another process's motor controllers enabled? This decides which node feeds the enable. With Phoenix 5 and Phoenix 6 in separate nodes (section 5), also check whether either library's enable reaches the other's controllers. Test on the bench. | 3.6 |
+| 6. Does one process's Phoenix enable keep another process's motor controllers enabled? The drivetrain and the mechanism each feed the enable from their own hardware plugin, only while their own mode gate allows (section 5), so this decides whether those separate enables also separate the motor controllers. With Phoenix 5 and Phoenix 6 in separate nodes, also check whether either library's enable reaches the other's controllers. Test on the bench. If one enable reaches every motor controller on the bus, a second CAN bus, one for each subsystem, would separate them in hardware. | 3.6 |
 | 8. Ask the organizers: does energy used during the 10-minute setup count, and does a separate compute battery have to go through the energy logger? | None |
 | 9. Should `link_timeout` be longer in AUTO, to ride through Wi-Fi dropouts? Measure dropouts in the pits first. | 5.6 |
 | 10. Does anything deploy after the run starts (stowed envelope 150 × 75 × 75 cm, §13.3, p. 42)? If so, add a DEPLOY step. For Mechanical. | 4.1 |
@@ -50,7 +49,7 @@ by `scripts/design render`.
 | 5. How does the task sequencer know the bin is full: a reading on /mechanism/status (motor current, a load cell, a level sensor) or a fixed dig time? For the mechanism doc. | 4.2 |
 | 6. May the robot drive to the berm target's published position (guidebook §11.2, pp. 34-35), or does that count as prior knowledge of the arena, which §16.3 forbids for travel? Ask in the FAQ. If it may not, the robot must find the construction zone from what it sees. | None |
 
-### `teleoperation.md`, not written yet (5.1)
+### [Teleoperation Subsystem Design](teleoperation.md)
 
 | Question | Turgor |
 | --- | --- |
@@ -74,17 +73,8 @@ that uses them; each is listed here once.
 
 | Entry | Field | Value |
 | --- | --- | --- |
-| element SW.1.2 | function | Sends drive motor commands and per-mode current limits; computes wheel odometry [TBD: which node, system open question 9] |
-| element SW.1.5 | function | Passes on drive and mechanism commands from the active control source, TELEOP or AUTO, and drops the other source's [TBR: proposed in the PDR; whether it is a node of its own, and which doc designs it, wait on teleop open question 3] |
 | element SW.3.1 | connects_to | Gamepad (Xbox Model 1914, USB-C cable); operator laptop [TBR: an HTTPS page served by the robot, or a desktop app, teleoperation doc (5.1)] |
-| node command_selection | package | [TBD: teleop open question 3] |
-| interface /cmd_vel | type | geometry_msgs/msg/TwistStamped [TBR: the drivetrain draft (PR #17) uses Twist; Turgor 3.1 and 5.3 and the teleop draft use TwistStamped] |
-| interface /cmd_vel | rate | 20 Hz [TBR: drivetrain draft, PR #17] |
-| interface /cmd_vel | qos | best effort, depth 1 [TBR: drivetrain draft, PR #17] |
-| interface mechanism-command | name | [TBD: mechanism command topic, teleop open question 3] |
-| interface mechanism-command | type | [TBD: in the mechanism doc (4.2)] |
-| interface mechanism-command | rate | [TBD: in the mechanism doc (4.2)] |
-| interface mechanism-command | qos | [TBD: in the mechanism doc (4.2)] |
+| interface mechanism-command | type | luna_interfaces/msg/ActuatorCommand [TBR: proposed in the mechanism doc (4.2)] |
 
 ### `operating-modes.toml`
 
@@ -236,14 +226,13 @@ Every `[TBD]` and `[TBR]` in the docs' own text, by page and section.
 
 | Section | Marked |
 | --- | --- |
-| [Hardware lines](system.md#hardware-lines) | [TBD: the limit switch and stowed signals, which the mechanism doc defines (4.2)] |
 | [Hardware lines](system.md#hardware-lines) | [TBD: the image and camera info topics and frames of the cameras chosen in 6.1] |
 | [Hardware lines](system.md#hardware-lines) | [TBR: chosen in the PR #14 review, 2026-10-26] |
 | [Hardware lines](system.md#hardware-lines) | [TBD: the button and stick numbers from the gamepad's table (5.2)] |
 | [Hardware lines](system.md#hardware-lines) | [TBR: chosen in the PR #14 review, 2026-10-26] |
 | [The two IMUs](system.md#the-two-imus) | [TBD: the sensor suite evaluation (6.1) picks it] |
 | [4. Parameters](system.md#4-parameters) | [TBD: named in deliverable 1.4, by Oct 21] |
-| [4. Parameters](system.md#4-parameters) | [TBD: written with the node graph, by Oct 28] |
+| [4. Parameters](system.md#4-parameters) | [TBD: QoS defaults, frame names, and parameter files, with the node graph (1.5)] |
 | [5. Libraries and hardware interfaces](system.md#5-libraries-and-hardware-interfaces) | [TBD: the controllers, in 3.2 (drive) and 4.3 (mechanism)] |
 | [5. Libraries and hardware interfaces](system.md#5-libraries-and-hardware-interfaces) | [TBD: the robot's link, in the sensors doc (6.2)] |
 | [5. Libraries and hardware interfaces](system.md#5-libraries-and-hardware-interfaces) | [TBD: ] |
@@ -276,8 +265,11 @@ Every `[TBD]` and `[TBR]` in the docs' own text, by page and section.
 | [3. Interfaces](operating-modes.md#3-interfaces) | [TBR: Proposed] |
 | [3. Interfaces](operating-modes.md#3-interfaces) | [TBR: Proposed] |
 | [5. Libraries and hardware interfaces](operating-modes.md#5-libraries-and-hardware-interfaces) | [TBR: reported by other teams, not tried on our bus] |
+| [5. Libraries and hardware interfaces](operating-modes.md#5-libraries-and-hardware-interfaces) | [TBR: proposed here for 1.17, which builds it] |
+| [5. Libraries and hardware interfaces](operating-modes.md#5-libraries-and-hardware-interfaces) | [TBR: Whether Gazebo's simulated hardware offers them too is not checked. If it does not, the gate also goes between the diff drive controller and the wheel joints, as a chainable controller, so it can zero the joints in every test mode; 1.17 decides.] |
 | [5. Libraries and hardware interfaces](operating-modes.md#5-libraries-and-hardware-interfaces) | [TBR: the point, for the electrical lead] |
 | [5. Libraries and hardware interfaces](operating-modes.md#5-libraries-and-hardware-interfaces) | [TBR: Once the grant's Mean Well RSD-30G converters replace the VRM, their output ground is tied to the computer's ground. They isolate input from output (RSD-30 datasheet, p. 2), so the sensors then share the computer's ground with no second path to the main battery's. The VRM's output must not be tied to it, since that would join the two grounds a second time.] |
+| [8. Test plan](operating-modes.md#8-test-plan) | [TBR: the margin] |
 
 ### [Autonomy Subsystem Design](autonomy.md)
 
@@ -318,6 +310,40 @@ Every `[TBD]` and `[TBR]` in the docs' own text, by page and section.
 | [Cameras: Gazebo (Sim)](hardware-test-modes.md#cameras-gazebo-sim) | [TBD: `cameras:=gazebo`] |
 | [Cameras: Bench](hardware-test-modes.md#cameras-bench) | [TBD: `cameras:=real`] |
 | [Radio link](hardware-test-modes.md#radio-link) | [TBR: chosen in the PR #14 review, 2026-10-26] |
+
+### [Teleoperation Subsystem Design](teleoperation.md)
+
+| Section | Marked |
+| --- | --- |
+| [Teleoperation Subsystem Design](teleoperation.md#teleoperation-subsystem-design) | [TBD: software lead to assign] |
+| [2. Nodes](teleoperation.md#2-nodes) | [TBR: proposed names.] |
+| [3. Interfaces](teleoperation.md#3-interfaces) | [TBR: `autorepeat_rate`, 20 Hz + changes] |
+| [3. Interfaces](teleoperation.md#3-interfaces) | [TBD: verify bridge QoS] |
+| [3. Interfaces](teleoperation.md#3-interfaces) | [TBR: `/teleop/cmd_vel`] |
+| [3. Interfaces](teleoperation.md#3-interfaces) | [TBR: `geometry_msgs/msg/TwistStamped`] |
+| [3. Interfaces](teleoperation.md#3-interfaces) | [TBR: `command_rate`, 20 Hz] |
+| [3. Interfaces](teleoperation.md#3-interfaces) | [TBR: best effort, volatile, depth 1] |
+| [3. Interfaces](teleoperation.md#3-interfaces) | [TBD: mechanism contract] |
+| [3. Interfaces](teleoperation.md#3-interfaces) | [TBR: `command_rate`, 20 Hz; controls owners confirm] |
+| [3. Interfaces](teleoperation.md#3-interfaces) | [TBD: ] |
+| [3. Interfaces](teleoperation.md#3-interfaces) | [TBD: sensor/autonomy contracts] |
+| [3. Interfaces](teleoperation.md#3-interfaces) | [TBD: ] |
+| [4. Parameters](teleoperation.md#4-parameters) | [TBD: enumerate] |
+| [4. Parameters](teleoperation.md#4-parameters) | [TBR: 0.05] |
+| [4. Parameters](teleoperation.md#4-parameters) | [TBR: 20] |
+| [4. Parameters](teleoperation.md#4-parameters) | [TBR: 20] |
+| [4. Parameters](teleoperation.md#4-parameters) | [TBR: 5 / 1 / 2] |
+| [4. Parameters](teleoperation.md#4-parameters) | [TBR: 1] |
+| [4. Parameters](teleoperation.md#4-parameters) | [TBD: measured index] |
+| [4. Parameters](teleoperation.md#4-parameters) | [TBR: 0.15] |
+| [4. Parameters](teleoperation.md#4-parameters) | [TBR: 0.3] |
+| [4. Parameters](teleoperation.md#4-parameters) | [TBD: owners approve] |
+| [5. Libraries and hardware interfaces](teleoperation.md#5-libraries-and-hardware-interfaces) | [TBR: serve the frontend from the Jetson over HTTPS with secure rosbridge WebSockets, or package it as a desktop app; question 4 decides.] |
+| [5. Libraries and hardware interfaces](teleoperation.md#5-libraries-and-hardware-interfaces) | [TBR: Stream rates and bandwidth estimates below are starting values for testing. Estimates use `message bytes × Hz × 8 / 1000` kbit/s; they exclude transport overhead and retransmissions. Sensor/autonomy owners confirm their source topics.] |
+| [5. Libraries and hardware interfaces](teleoperation.md#5-libraries-and-hardware-interfaces) | [TBD: camera topic, sensor contract] |
+| [5. Libraries and hardware interfaces](teleoperation.md#5-libraries-and-hardware-interfaces) | [TBD: map topic, autonomy contract] |
+| [5. Libraries and hardware interfaces](teleoperation.md#5-libraries-and-hardware-interfaces) | [TBD: path topic, autonomy contract] |
+| [5. Libraries and hardware interfaces](teleoperation.md#5-libraries-and-hardware-interfaces) | [TBD: network owner to confirm statistics source] |
 
 ### [Testing Layers](testing-layers.md)
 

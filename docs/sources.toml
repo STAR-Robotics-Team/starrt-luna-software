@@ -522,6 +522,20 @@ checked = 2026-10-18
 notes = "How ros2_control runs inside Gazebo: the controller manager in the simulator, and commands applied to simulated joints."
 
 [[source]]
+id = "twist-mux-topic-handle"
+primary = true
+group = "Software references"
+title = "twist_mux 4.5.0: topic_handle.hpp"
+publisher = "ros-teleop"
+version = "4.5.0, the version Jazzy installs"
+url = "https://github.com/ros-teleop/twist_mux/blob/4.5.0/include/twist_mux/topic_handle.hpp"
+fetch_url = "https://raw.githubusercontent.com/ros-teleop/twist_mux/4.5.0/include/twist_mux/topic_handle.hpp"
+format = "web"
+expect = "hasExpired"
+checked = 2026-11-14
+notes = "How twist_mux chooses an input: the highest priority whose last message, timed from when it arrived, is younger than its timeout."
+
+[[source]]
 id = "esa-margin-philosophy"
 primary = true
 group = "Engineering practice"

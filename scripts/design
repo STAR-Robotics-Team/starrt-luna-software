@@ -586,7 +586,9 @@ def mermaid_text(text):
         # A name that is only a marker, such as "[TBD: obstacle map topic, ...]".
         text = bare.group(1)
     text = re.sub(r"\s*\[(?:TBD|TBR)(?::[^\]]*)?\]", "", text)
-    text = text.replace("`", "").replace('"', "#quot;").strip()
+    # Mermaid reads < and > as HTML, so a name like /mechanism/<function>/command would
+    # lose its <function>; its entity codes keep them.
+    text = text.replace("`", "").replace('"', "#quot;").replace("<", "#lt;").replace(">", "#gt;").strip()
     return (text or "not named yet") + tag
 
 
