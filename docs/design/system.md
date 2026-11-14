@@ -64,7 +64,7 @@ design doc. The Turgor column gives the deliverable that writes that doc.
 | SW | Robot software | Controls and monitors the rover, by remote control and on its own | Robot computer, operator laptop, radio link | [System Design](system.md) | 1.20 |
 | SW.1 | Robot control software | Moves actuators only as the current mode allows | Motor controllers and power distribution panel (PDP), over CAN | [Operating Modes Design](operating-modes.md) | 1.19 |
 | SW.1.1 | Mode manager | Owns the robot's state and task mode; disables the robot on link loss, a fault, or a command | None directly; it hears about CAN devices through SW.1.2 to SW.1.4 | [Operating Modes Design](operating-modes.md) | 1.19 |
-| SW.1.2 | Drivetrain control | Turns velocity commands into wheel speeds within the mode's limits, sends them and per-mode current limits to the drive motor controllers, and computes wheel odometry | Drive motor controllers; wheel and track geometry | [[Drivetrain] Subsystem Design](drivetrain.md) | 3.1 |
+| SW.1.2 | Drivetrain control | Turns velocity commands into wheel speeds within the mode's limits, sends them and per-mode current limits to the drive motor controllers, and computes wheel odometry | Drive motor controllers; wheel and track geometry | [Drivetrain Subsystem Design](drivetrain.md) | 3.1 |
 | SW.1.3 | Mechanism control | Sends mechanism commands and per-mode limits; reports whether the excavator is stowed and the hatch is closed | Mechanism motor controllers, stowed and hatch sensors, limit switches | `mechanism.md`, not written yet (4.2) | 4.2 |
 | SW.1.4 | Power telemetry | Reports battery voltage, each channel's current, and energy used, decoded from the PDP's CAN frames | PDP (CAN ID 0, firmware 1.40 or later) | [Operating Modes Design](operating-modes.md) | 1.19 |
 | SW.1.5 | Command selection | Passes on drive and mechanism commands from the control source /robot/mode names, TELEOP or AUTO, and drops the other source's | None outside Software | [System Design](system.md) | None |
@@ -97,7 +97,9 @@ in shape, but most of its names and rates wait on those docs.
 flowchart LR
   subgraph g0["Robot computer"]
     nmode_manager["mode_manager"]
-    ndrivetrain["Drivetrain node"]
+    ndrive_mode_gate["Drive mode gate"]
+    ndrivetrain["diff_drive_controller"]
+    ndrive_joint_states["joint_state_broadcaster (drivetrain)"]
     nmechanism["Mechanism node"]
     npower_panel["Power panel reading node"]
     ncommand_selection["command_selector"]
@@ -119,7 +121,7 @@ flowchart LR
   nmode_manager -->|"/robot/mode"| ncommand_selection
   nmode_manager -->|"/robot/mode"| nplanner
   nmode_manager -->|"/robot/mode"| ntask_sequencer
-  nmode_manager -->|"/robot/mode"| ndrivetrain
+  nmode_manager -->|"/robot/mode"| ndrive_mode_gate
   nmode_manager -->|"/robot/mode"| nmechanism
   nmode_manager -->|"/robot/mode"| noperator_frontend
   nmode_manager -->|"/robot/mode"| nteleop_node
@@ -136,8 +138,8 @@ flowchart LR
   nplanner -->|"/auto/cmd_vel (TBR)"| ncommand_selection
   ntask_sequencer -.->|"/autonomy/navigate"| nplanner
   ntask_sequencer -->|"AUTO mechanism command topics (TBD)"| ncommand_selection
-  ndrivetrain -->|"/drivetrain/joint_states"| nlocalization
-  ndrivetrain -->|"wheel odometry topic (TBD)"| nlocalization
+  ndrivetrain -->|"/drivetrain/odom"| nlocalization
+  ndrive_joint_states -->|"/drivetrain/joint_states"| nlocalization
   nmechanism -->|"/mechanism/status"| nmode_manager
   nmechanism -->|"/mechanism/status"| ntask_sequencer
   nmechanism -->|"/mechanism/status"| noperator_frontend
@@ -178,10 +180,10 @@ are defined here.
 
 | Name | Kind | Type | Rate | Publisher or server | Subscriber or client | QoS |
 | --- | --- | --- | --- | --- | --- | --- |
-| `/cmd_vel` | topic | `geometry_msgs/msg/TwistStamped` | The active source's rate: `command_rate`, 20 Hz | `command_selector` | Drivetrain node | reliable, volatile, depth 1 |
+| `/cmd_vel` | topic | `geometry_msgs/msg/TwistStamped` | The active source's rate: `command_rate`, 20 Hz | `command_selector` | `diff_drive_controller` | reliable, volatile, depth 1 |
 | `/mechanism/<function>/command` | topic | luna_interfaces/msg/ActuatorCommand [TBR: proposed in the mechanism doc (4.2)] | The active source's rate: `command_rate`, 20 Hz | `command_selector` | Mechanism node | reliable, volatile, depth 1 |
-| `/diagnostics` | topic | `diagnostic_msgs/msg/DiagnosticArray` | 1 Hz and on change | Drivetrain node, Mechanism node, Camera driver, Dedicated IMU driver, Localization and mapping, Path planning and following, Task sequencer | `mode_manager` | reliable, depth 10 |
-| `/robot/mode` | topic | `luna_interfaces/msg/RobotMode` | 10 Hz and on change | `mode_manager` | Drivetrain node, Mechanism node, `command_selector`, Path planning and following, Task sequencer, Operator frontend, `teleop_node` | reliable, transient local, depth 1 |
+| `/diagnostics` | topic | `diagnostic_msgs/msg/DiagnosticArray` | 1 Hz and on change | Drive mode gate, Mechanism node, Camera driver, Dedicated IMU driver, Localization and mapping, Path planning and following, Task sequencer | `mode_manager` | reliable, depth 10 |
+| `/robot/mode` | topic | `luna_interfaces/msg/RobotMode` | 10 Hz and on change | `mode_manager` | Drive mode gate, Mechanism node, `command_selector`, Path planning and following, Task sequencer, Operator frontend, `teleop_node` | reliable, transient local, depth 1 |
 | /auto/cmd_vel [TBR: teleop open question 3] | topic | geometry_msgs/msg/TwistStamped [TBR: matches /teleop/cmd_vel] | `command_rate`, 20 Hz | Path planning and following | `command_selector` | best effort, volatile, depth 1 |
 | [TBD: AUTO mechanism command topics, teleop open questions 3 and 5] | topic | [TBD: mechanism doc (4.2)] | 20 Hz [TBR: matches teleop's command_rate] | Task sequencer | `command_selector` | [TBD: mechanism doc (4.2)] |
 | `/teleop/cmd_vel` | topic | geometry_msgs/msg/TwistStamped [TBR: teleop draft, PR #14] | `command_rate`, 20 Hz [TBR: teleop draft, PR #14] | `teleop_node` | `command_selector` | best effort, volatile, depth 1 [TBR: teleop draft, PR #14] |

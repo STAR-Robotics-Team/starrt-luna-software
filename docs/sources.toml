@@ -536,6 +536,31 @@ checked = 2026-11-14
 notes = "How twist_mux chooses an input: the highest priority whose last message, timed from when it arrived, is younger than its timeout."
 
 [[source]]
+id = "ros2-controllers-diff-drive"
+primary = true
+group = "Software references"
+title = "ros2_controllers: diff_drive_controller (Jazzy)"
+publisher = "ros-controls"
+url = "https://control.ros.org/jazzy/doc/ros2_controllers/diff_drive_controller/doc/userdoc.html"
+format = "web"
+expect = "diff_drive_controller"
+checked = 2026-11-14
+notes = "The drivetrain's controller: its topics, its parameters and their defaults, and the timeout on stale commands. The Jazzy page, because later versions drop parameters Jazzy still has, such as publish_rate."
+
+[[source]]
+id = "ros2-controllers-diff-drive-source"
+primary = true
+group = "Software references"
+title = "ros2_controllers, jazzy branch: diff_drive_controller.cpp"
+publisher = "ros-controls"
+url = "https://github.com/ros-controls/ros2_controllers/blob/jazzy/diff_drive_controller/src/diff_drive_controller.cpp"
+fetch_url = "https://raw.githubusercontent.com/ros-controls/ros2_controllers/jazzy/diff_drive_controller/src/diff_drive_controller.cpp"
+format = "web"
+expect = "cmd_vel_timeout"
+checked = 2026-11-14
+notes = "What the documentation leaves out: the QoS of its subscription and publishers, and that it judges a command's age by the command's own timestamp."
+
+[[source]]
 id = "esa-margin-philosophy"
 primary = true
 group = "Engineering practice"

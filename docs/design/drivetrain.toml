@@ -1,27 +1,83 @@
-# Registry for the drivetrain design (drivetrain.md, deliverable 3.1, not written yet).
-# These rows are the contract the other docs build against until the drivetrain doc
-# confirms or changes them. See "Registries" in README.md, then run scripts/design render.
+# Registry for the drivetrain design (drivetrain.md, deliverable 3.1). See "Registries" in
+# README.md, then run scripts/design render.
+#
+# The drivetrain runs in its own ros2_control controller manager. Its nodes are the
+# controllers loaded there: the stock diff drive controller and joint state broadcaster,
+# and the drive mode gate of ours (operating modes, section 5). The hardware plugin is not
+# a node; section 5 of the doc describes it.
 
 [[node]]
 id = "drivetrain"
-name = "Drivetrain node"
-package = "`luna_drivetrain`"
+name = "`diff_drive_controller`"
+package = "`diff_drive_controller` (ros2_controllers), in the drivetrain's controller manager"
 runs_on = "Robot computer"
 element = "SW.1.2"
-does = "Drives only when the mode allows it, within the mode's current limits [TBD: one drivetrain_node, or ros2_control's controller manager with a diff drive controller, drivetrain doc (3.1)]"
-subscribes = ["/robot/mode", "/cmd_vel"]
-publishes_shared = ["/diagnostics"]
+does = "Turns /cmd_vel into left and right wheel speeds within the speed and acceleration limits, drops a command older than cmd_vel_timeout, zeroes the wheels when commands stop, and publishes wheel odometry"
+subscribes = ["/cmd_vel"]
+
+[[node.publishes]]
+id = "wheel-odometry"
+name = "/drivetrain/odom"
+type = "nav_msgs/msg/Odometry"
+rate = "`publish_rate`, 50 Hz"
+qos = "the system default: reliable, volatile"
+note = "Remapped from the controller's ~/odom. Its own odom to base_link transform is off (enable_odom_tf is false), because localization publishes that transform (autonomy design)."
+
+[[node]]
+id = "drive_joint_states"
+name = "`joint_state_broadcaster` (drivetrain)"
+package = "`joint_state_broadcaster` (ros2_controllers), in the drivetrain's controller manager"
+runs_on = "Robot computer"
+element = "SW.1.2"
+does = "Publishes each wheel joint's position and velocity from the drive hardware plugin's state interfaces"
 
 [[node.publishes]]
 name = "/drivetrain/joint_states"
 type = "sensor_msgs/msg/JointState"
-rate = "50 Hz [TBR: drivetrain draft, PR #17]"
-qos = "sensor data: best effort, depth 5 [TBR: drivetrain draft, PR #17]"
+rate = "The controller manager's `update_rate`, 50 Hz"
+qos = "the system default: reliable, volatile"
+note = "Remapped from joint_states, so the drivetrain's and the mechanism's broadcasters each have a topic of their own."
 
-[[node.publishes]]
-id = "wheel-odometry"
-name = "[TBD: wheel odometry topic, system open question 9]"
-type = "nav_msgs/msg/Odometry [TBR: system open question 9]"
-rate = "[TBD: drivetrain doc (3.1)]"
-qos = "[TBD: drivetrain doc (3.1)]"
+[[node]]
+id = "drive_mode_gate"
+name = "Drive mode gate"
+package = "`luna_modes` [TBR: 1.17 builds it], in the drivetrain's controller manager"
+runs_on = "Robot computer"
+element = "SW.1.2"
+does = "Writes enable and the task mode to the drive hardware plugin from /robot/mode, writes enable 0 when /robot/mode goes stale, and reports the plugin's faults and stalls on /diagnostics"
+subscribes = ["/robot/mode"]
+publishes_shared = ["/diagnostics"]
 
+# ----------------------------------------------------------------------------------------
+# Open questions (section 9). Who answers each one, and by when, is in Turgor.
+# ----------------------------------------------------------------------------------------
+
+[[question]]
+number = 1
+status = "open"
+turgor = ["3.2"]
+text = "Does each side's second motor run behind a Victor SPX that follows the side's Talon SRX, as last season's wiring did, or do the Talon FXS in the grant request replace them? A Talon FXS measures its own current, so with one on every drive motor, stall detection would need no PDP readings (question 3)."
+
+[[question]]
+number = 2
+status = "open"
+turgor = ["6.1"]
+text = "Do the drive gearboxes have encoders the motor controllers can read? Without them the plugin runs open loop, and the diff drive controller's odometry adds up the commands instead of measured wheel turns (open_loop is true), which the wheel odometry row of TPM-5 cannot rely on."
+
+[[question]]
+number = 3
+status = "open"
+turgor = ["3.6"]
+text = "How is a stall caught on a motor behind a Victor SPX, which cannot measure its own current? Proposed (section 5): from its PDP channel's current, which the plugin decodes from the PDP's CAN frames, with a threshold that grows with the commanded output. It needs the channel each Victor is wired to, from Electrical, and the PDP's frame period, measured with candump on the bench."
+
+[[question]]
+number = 4
+status = "open"
+turgor = ["1.17"]
+text = "How does the drive plugin learn that the battery is low, so it halves its current limits (operating modes, section 7)? Proposed: a current limit scale in RobotMode, 1.0 or 0.5, which the mode gate writes to the plugin with enable and the task mode."
+
+[[question]]
+number = 5
+status = "open"
+turgor = ["3.7"]
+text = "What wheel_separation_multiplier makes the odometry's turns right on the arena's surface? A skid-steer robot's wheels slide sideways as it turns, so it turns as if its wheels were farther apart than they are. Calibrate by spinning in place 10 times on ground like the arena's and comparing the odometry's heading with a mark on the floor."

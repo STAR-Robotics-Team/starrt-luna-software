@@ -224,7 +224,7 @@ This doc's share of each technical performance measure, from the
 | --- | --- | --- | --- | --- | --- |
 | `mode_manager` | `luna_modes` [TBR: proposed name] | Robot computer | SW.1.1 Mode manager | [Operating Modes Design](operating-modes.md) | Owns the robot state and task mode, runs the boot self-test, watches the heartbeat, faults, and battery, and accepts or refuses mode requests |
 | Power panel reading node | [TBD: operating modes v1 (1.19)] | Robot computer | SW.1.4 Power telemetry | [Operating Modes Design](operating-modes.md) | Decodes the PDP's CAN frames from can0 (section 5) and publishes the battery voltage, each channel's current, and the energy used. It is a node of its own, since reading the PDP needs no Phoenix library. |
-| Drivetrain node | `luna_drivetrain` | Robot computer | SW.1.2 Drivetrain control | [[Drivetrain] Subsystem Design](drivetrain.md) | Drives only when the mode allows it, within the mode's current limits [TBD: one drivetrain_node, or ros2_control's controller manager with a diff drive controller, drivetrain doc (3.1)] |
+| Drive mode gate | `luna_modes` [TBR: 1.17 builds it], in the drivetrain's controller manager | Robot computer | SW.1.2 Drivetrain control | [Drivetrain Subsystem Design](drivetrain.md) | Writes enable and the task mode to the drive hardware plugin from /robot/mode, writes enable 0 when /robot/mode goes stale, and reports the plugin's faults and stalls on /diagnostics |
 | Mechanism node | `luna_mechanism` | Robot computer | SW.1.3 Mechanism control | `mechanism.md`, not written yet (4.2) | Runs each mechanism actuator only when the mode allows it, within the mode's limits, and reports whether the excavator is stowed and the hatch is closed |
 | `command_selector` | `luna_modes` | Robot computer | SW.1.5 Command selection | [System Design](system.md) | Forwards, unchanged, the drive and mechanism commands of the control source /robot/mode names, and drops the other source's. It never falls back to the other source, forwards nothing unless the robot is ENABLED, and sends one zero command on each output when the source changes. |
 | Camera driver | [TBD: the cameras, sensor suite evaluation (6.1)] | Robot computer | SW.2.1 Sensor interface and robot model | `sensors.md`, not written yet (6.2) | Publishes the driving camera's compressed images for the operator view |
@@ -269,11 +269,11 @@ on in AUTO, and the operator station shows live link bandwidth so the cost is vi
 
 | Name | Kind | Type | Rate | Publisher or server | Subscriber or client | QoS |
 | --- | --- | --- | --- | --- | --- | --- |
-| `/robot/mode` | topic | `luna_interfaces/msg/RobotMode` | 10 Hz and on change | `mode_manager` | Drivetrain node, Mechanism node, `command_selector`, Path planning and following, Task sequencer, Operator frontend, `teleop_node` | reliable, transient local, depth 1 |
+| `/robot/mode` | topic | `luna_interfaces/msg/RobotMode` | 10 Hz and on change | `mode_manager` | Drive mode gate, Mechanism node, `command_selector`, Path planning and following, Task sequencer, Operator frontend, `teleop_node` | reliable, transient local, depth 1 |
 | `/robot/request_mode` | service | `luna_interfaces/srv/RequestMode` | On demand | `mode_manager` | Operator frontend, `teleop_node` | default |
 | `/robot/request_task` | service | `luna_interfaces/srv/RequestTask` | On demand | `mode_manager` | Task sequencer | default |
 | `/power/battery` | topic | `sensor_msgs/msg/BatteryState` | 10 Hz | Power panel reading node | `mode_manager`, Operator frontend | best effort, depth 1 |
-| `/diagnostics` | topic | `diagnostic_msgs/msg/DiagnosticArray` | 1 Hz and on change | Drivetrain node, Mechanism node, Camera driver, Dedicated IMU driver, Localization and mapping, Path planning and following, Task sequencer | `mode_manager` | reliable, depth 10 |
+| `/diagnostics` | topic | `diagnostic_msgs/msg/DiagnosticArray` | 1 Hz and on change | Drive mode gate, Mechanism node, Camera driver, Dedicated IMU driver, Localization and mapping, Path planning and following, Task sequencer | `mode_manager` | reliable, depth 10 |
 | `/mechanism/status` | topic | [TBD: mechanism doc (4.2)] | [TBD: mechanism doc (4.2)] | Mechanism node | `mode_manager`, Task sequencer, Operator frontend | [TBD: mechanism doc (4.2)] |
 | `/operator/heartbeat` | topic | `std_msgs/msg/Header` | `heartbeat_rate`, 10 Hz, including in AUTO and with the hold button released | Operator frontend | `mode_manager` | best effort, depth 1 |
 

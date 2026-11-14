@@ -49,6 +49,16 @@ by `scripts/design render`.
 | 5. How does the task sequencer know the bin is full: a reading on /mechanism/status (motor current, a load cell, a level sensor) or a fixed dig time? For the mechanism doc. | 4.2 |
 | 6. May the robot drive to the berm target's published position (guidebook §11.2, pp. 34-35), or does that count as prior knowledge of the arena, which §16.3 forbids for travel? Ask in the FAQ. If it may not, the robot must find the construction zone from what it sees. | None |
 
+### [Drivetrain Subsystem Design](drivetrain.md#9-open-questions)
+
+| Question | Turgor |
+| --- | --- |
+| 1. Does each side's second motor run behind a Victor SPX that follows the side's Talon SRX, as last season's wiring did, or do the Talon FXS in the grant request replace them? A Talon FXS measures its own current, so with one on every drive motor, stall detection would need no PDP readings (question 3). | 3.2 |
+| 2. Do the drive gearboxes have encoders the motor controllers can read? Without them the plugin runs open loop, and the diff drive controller's odometry adds up the commands instead of measured wheel turns (open_loop is true), which the wheel odometry row of TPM-5 cannot rely on. | 6.1 |
+| 3. How is a stall caught on a motor behind a Victor SPX, which cannot measure its own current? Proposed (section 5): from its PDP channel's current, which the plugin decodes from the PDP's CAN frames, with a threshold that grows with the commanded output. It needs the channel each Victor is wired to, from Electrical, and the PDP's frame period, measured with candump on the bench. | 3.6 |
+| 4. How does the drive plugin learn that the battery is low, so it halves its current limits (operating modes, section 7)? Proposed: a current limit scale in RobotMode, 1.0 or 0.5, which the mode gate writes to the plugin with enable and the task mode. | 1.17 |
+| 5. What wheel_separation_multiplier makes the odometry's turns right on the arena's surface? A skid-steer robot's wheels slide sideways as it turns, so it turns as if its wheels were farther apart than they are. Calibrate by spinning in place 10 times on ground like the arena's and comparing the odometry's heading with a mark on the floor. | 3.7 |
+
 ### [Teleoperation Subsystem Design](teleoperation.md)
 
 | Question | Turgor |
@@ -104,13 +114,7 @@ that uses them; each is listed here once.
 
 | Entry | Field | Value |
 | --- | --- | --- |
-| node drivetrain | does | Drives only when the mode allows it, within the mode's current limits [TBD: one drivetrain_node, or ros2_control's controller manager with a diff drive controller, drivetrain doc (3.1)] |
-| interface /drivetrain/joint_states | rate | 50 Hz [TBR: drivetrain draft, PR #17] |
-| interface /drivetrain/joint_states | qos | sensor data: best effort, depth 5 [TBR: drivetrain draft, PR #17] |
-| interface wheel-odometry | name | [TBD: wheel odometry topic, system open question 9] |
-| interface wheel-odometry | type | nav_msgs/msg/Odometry [TBR: system open question 9] |
-| interface wheel-odometry | rate | [TBD: drivetrain doc (3.1)] |
-| interface wheel-odometry | qos | [TBD: drivetrain doc (3.1)] |
+| node drive_mode_gate | package | `luna_modes` [TBR: 1.17 builds it], in the drivetrain's controller manager |
 
 ### `mechanism.toml`
 
@@ -282,6 +286,37 @@ Every `[TBD]` and `[TBR]` in the docs' own text, by page and section.
 | [5. Libraries and hardware interfaces](autonomy.md#5-libraries-and-hardware-interfaces) | [TBD: chosen in 7.5, autonomy open question 2] |
 | [5. Libraries and hardware interfaces](autonomy.md#5-libraries-and-hardware-interfaces) | [TBR: autonomy open question 2] |
 | [5. Libraries and hardware interfaces](autonomy.md#5-libraries-and-hardware-interfaces) | [TBR: autonomy open question 2] |
+
+### [Drivetrain Subsystem Design](drivetrain.md)
+
+| Section | Marked |
+| --- | --- |
+| [1. Purpose and requirements](drivetrain.md#1-purpose-and-requirements) | [TBR: TPM-6's drivetrain row] |
+| [2. Nodes](drivetrain.md#2-nodes) | [TBR: `/drivetrain` namespace , so its nodes are named `/drivetrain/controller_manager`,] |
+| [3. Interfaces](drivetrain.md#3-interfaces) | [TBR: `front_left_wheel_joint`, `rear_left_wheel_joint`, `front_right_wheel_joint`, and `rear_right_wheel_joint`, for the robot model (6.3) to confirm] |
+| [4. Parameters](drivetrain.md#4-parameters) | [TBR: 50] |
+| [4. Parameters](drivetrain.md#4-parameters) | [TBD: measured on the drive base] |
+| [4. Parameters](drivetrain.md#4-parameters) | [TBR: calibrated, open question 5] |
+| [4. Parameters](drivetrain.md#4-parameters) | [TBD: measured on the drive base] |
+| [4. Parameters](drivetrain.md#4-parameters) | [TBR: 0.25] |
+| [4. Parameters](drivetrain.md#4-parameters) | [TBD: the drive base's top speed, 3.7] |
+| [4. Parameters](drivetrain.md#4-parameters) | [TBD: 3.7] |
+| [4. Parameters](drivetrain.md#4-parameters) | [TBD: 3.7] |
+| [4. Parameters](drivetrain.md#4-parameters) | [TBR: as high as the drive base takes without tipping or skidding, 3.7] |
+| [4. Parameters](drivetrain.md#4-parameters) | [TBD: 3.7] |
+| [4. Parameters](drivetrain.md#4-parameters) | [TBR: true without encoders, open question 2] |
+| [4. Parameters](drivetrain.md#4-parameters) | [TBD: from the 2 m square, 3.9 and 3.7] |
+| [4. Parameters](drivetrain.md#4-parameters) | [TBD: 3.2 and the wiring] |
+| [4. Parameters](drivetrain.md#4-parameters) | [TBD: Electrical's wiring] |
+| [4. Parameters](drivetrain.md#4-parameters) | [TBD: measured, 3.6] |
+| [4. Parameters](drivetrain.md#4-parameters) | [TBR: 30 in TRAVEL, 15 otherwise] |
+| [4. Parameters](drivetrain.md#4-parameters) | [TBD: 3.6] |
+| [5. Libraries and hardware interfaces](drivetrain.md#5-libraries-and-hardware-interfaces) | [TBR: one decoding library, shared by both] |
+| [5. Libraries and hardware interfaces](drivetrain.md#5-libraries-and-hardware-interfaces) | [TBD: measured with `candump` on the bench, 3.6] |
+| [5. Libraries and hardware interfaces](drivetrain.md#5-libraries-and-hardware-interfaces) | [TBD: Electrical's wiring] |
+| [5. Libraries and hardware interfaces](drivetrain.md#5-libraries-and-hardware-interfaces) | [TBR: `/diagnostics`. Driving resumes once the command returns to zero .] |
+| [5. Libraries and hardware interfaces](drivetrain.md#5-libraries-and-hardware-interfaces) | [TBD: decided with Electrical in 3.2; new Talon SRX and Victor SPX can no longer be bought] |
+| [7. Behavior on failure](drivetrain.md#7-behavior-on-failure) | [TBR: That side's output zero and a WARN on `/diagnostics`; driving resumes once the command returns to zero] |
 
 ### [Hardware Test Modes](hardware-test-modes.md)
 

@@ -14,7 +14,7 @@ the doc, and cite the page.
   primary source wins.
 - **To cite a source or add one,** see [Cite sources](writing-docs.md#cite-sources).
 
-43 sources, 38 of them primary, cited 272 times. PDF page
+45 sources, 40 of them primary, cited 282 times. PDF page
 numbers are the ones a PDF viewer shows, so each link opens the PDF at the cited page. This
 page is generated from `docs/sources.toml` by `scripts/sources render`.
 
@@ -44,7 +44,7 @@ NASA and the Astronauts Memorial Foundation, *NASA Lunabotics Challenge Guideboo
     - [Rules the robot must follow](competition/robot-rules.md): [p. 15](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=15), [p. 30](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=30), [pp. 31-32](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=31), [p. 32](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=32), [p. 40](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=40), [p. 41](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=41), [pp. 41-42](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=41), [pp. 41-44](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=41), [p. 42](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=42), [pp. 42-43](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=42), [p. 43](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=43), [pp. 43-44](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=43), [p. 44](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=44), [pp. 44-45](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=44), [p. 45](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=45), [pp. 47-48](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=47), [p. 48](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=48), [pp. 48-49](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=48), [p. 49](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=49), [pp. 49-50](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=49), [p. 52](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=52), [p. 55](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=55), [p. 56](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=56), [p. 59](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=59)
     - [How scoring works](competition/scoring.md): [p. 13](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=13), [p. 17](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=17), [pp. 36-37](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=36), [p. 41](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=41), [p. 48](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=48), [pp. 48-49](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=48), [p. 53](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=53), [p. 54](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=54), [p. 55](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=55), [pp. 55-56](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=55), [pp. 55-59](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=55), [p. 56](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=56), [pp. 56-57](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=56), [p. 57](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=57), [p. 58](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=58), [pp. 58-59](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=58), [p. 59](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=59), [pp. 59-61](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=59), [pp. 59-62](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=59), [p. 60](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=60), [pp. 60-61](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=60), [p. 61](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=61), [pp. 61-62](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=61), [p. 62](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=62), [p. 66](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=66), [p. 69](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=69), [p. 77](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=77), [p. 78](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=78)
     - [Autonomy Subsystem Design](design/autonomy.md): [pp. 34-35](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=34), [p. 35](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=35), [p. 43](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=43), [p. 44](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=44), [p. 53](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=53), [pp. 55-56](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=55), [p. 56](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=56)
-    - [[Drivetrain] Subsystem Design](design/drivetrain.md): [p. 45](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=45)
+    - [Drivetrain Subsystem Design](design/drivetrain.md): [p. 45](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=45)
     - [Operating Modes Design](design/operating-modes.md): [p. 7](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=7), [p. 40](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=40), [p. 41](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=41), [pp. 41-42](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=41), [p. 42](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=42), [p. 45](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=45), [p. 48](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=48), [p. 54](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=54), [p. 55](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=55), [pp. 55-56](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=55), [pp. 55-57](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=55), [p. 60](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=60)
     - [System Design](design/system.md): [p. 43](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=43), [pp. 47-48](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=47), [p. 48](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=48), [p. 49](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=49), [p. 50](https://www.amfcse.org/s/Lunabotics-Guidebook-2027-10-5-27.pdf#page=50)
 
@@ -87,7 +87,7 @@ CTRE, *PDP User's Guide* (3/28/2018). [Open the PDF](https://ctre.download/files
 - **Fingerprint:** SHA-256 `224b3486e9db72e8`, checked 2026-10-26.
 - **Used for:** Channels, fused outputs, wire sizes, input range and absolute maximum, CAN rate, the termination jumper, and the firmware needed for correct power and energy.
 - **Cited at:**
-    - [[Drivetrain] Subsystem Design](design/drivetrain.md): [pp. 17-20](https://ctre.download/files/user-manual/PDP%20User's%20Guide.pdf#page=17)
+    - [Drivetrain Subsystem Design](design/drivetrain.md): [p. 17](https://ctre.download/files/user-manual/PDP%20User's%20Guide.pdf#page=17)
     - [Operating Modes Design](design/operating-modes.md): [p. 6](https://ctre.download/files/user-manual/PDP%20User's%20Guide.pdf#page=6), [p. 17](https://ctre.download/files/user-manual/PDP%20User's%20Guide.pdf#page=17)
 
 ### `ctre-pdp2-guide`
@@ -277,7 +277,7 @@ CTRE, *Phoenix 5 documentation: Bring Up: Talon FX/SRX and Victor SPX*. [Open th
 - **Checked:** 2026-10-07
 - **Used for:** Current limiting (Talon SRX only) and what the Victor SPX can measure.
 - **Cited at:**
-    - [[Drivetrain] Subsystem Design](design/drivetrain.md): [section "Plot tab"](https://v5.docs.ctr-electronics.com/en/stable/ch13_MC.html#:~:text=Plot%20tab)
+    - [Drivetrain Subsystem Design](design/drivetrain.md): [section "Plot tab"](https://v5.docs.ctr-electronics.com/en/stable/ch13_MC.html#:~:text=Plot%20tab)
     - [Operating Modes Design](design/operating-modes.md): [section "Current Limit"](https://v5.docs.ctr-electronics.com/en/stable/ch13_MC.html#:~:text=Current%20Limit), [section "Plot tab"](https://v5.docs.ctr-electronics.com/en/stable/ch13_MC.html#:~:text=Plot%20tab)
 
 ### `ctre-phoenix5-primer`
@@ -299,7 +299,7 @@ CTRE, *CTRE Phoenix C++: ctre::phoenix::unmanaged::Unmanaged Class Reference*. [
 - **Checked:** 2026-10-07
 - **Used for:** FeedEnable(timeoutMs): the controllers disable themselves when the enable is not fed again within the timeout.
 - **Cited at:**
-    - [[Drivetrain] Subsystem Design](design/drivetrain.md): [section "FeedEnable()"](https://api.ctr-electronics.com/phoenix/stable/cpp/classctre_1_1phoenix_1_1unmanaged_1_1_unmanaged.html#:~:text=FeedEnable%28%29)
+    - [Drivetrain Subsystem Design](design/drivetrain.md): [section "FeedEnable()"](https://api.ctr-electronics.com/phoenix/stable/cpp/classctre_1_1phoenix_1_1unmanaged_1_1_unmanaged.html#:~:text=FeedEnable%28%29)
     - [Operating Modes Design](design/operating-modes.md): [section "FeedEnable()"](https://api.ctr-electronics.com/phoenix/stable/cpp/classctre_1_1phoenix_1_1unmanaged_1_1_unmanaged.html#:~:text=FeedEnable%28%29)
 
 ### `ctre-phoenix6-enabling-actuators`
@@ -363,6 +363,7 @@ Open Robotics, *REP 105: Coordinate Frames for Mobile Platforms*. [Open the web 
 - **Used for:** The standard frame names for a mobile robot (map, odom, base_link) and how they connect.
 - **Cited at:**
     - [Autonomy Subsystem Design](design/autonomy.md): [whole source](https://www.ros.org/reps/rep-0105.html)
+    - [Drivetrain Subsystem Design](design/drivetrain.md): [whole source](https://www.ros.org/reps/rep-0105.html)
     - [Frames, tf2, and RViz](learn/ros2-frames-and-rviz.md): [whole source](https://www.ros.org/reps/rep-0105.html), [section "Relationship between Frames"](https://www.ros.org/reps/rep-0105.html#:~:text=Relationship%20between%20Frames), [section "base_link"](https://www.ros.org/reps/rep-0105.html#:~:text=base_link), [section "map"](https://www.ros.org/reps/rep-0105.html#:~:text=map), [section "odom"](https://www.ros.org/reps/rep-0105.html#:~:text=odom)
 
 ### `ros-rep-145`
@@ -393,6 +394,7 @@ ros-controls, *ros2_control: Getting Started*. [Open the web page](https://contr
 - **Checked:** 2026-10-18
 - **Used for:** How ros2_control is put together, and how a robot description lists each hardware component with its own plugin.
 - **Cited at:**
+    - [Drivetrain Subsystem Design](design/drivetrain.md): [whole source](https://control.ros.org/jazzy/doc/getting_started/getting_started.html)
     - [Testing Layers](design/testing-layers.md): [section "Hardware Description in URDF"](https://control.ros.org/jazzy/doc/getting_started/getting_started.html#:~:text=Hardware%20Description%20in%20URDF)
 
 ### `ros2-control-mock-components`
@@ -406,6 +408,26 @@ ros-controls, *ros2_control: Mock Components*. [Open the web page](https://contr
     - [Operating Modes Design](design/operating-modes.md): [whole source](https://control.ros.org/jazzy/doc/ros2_control/hardware_interface/doc/mock_components_userdoc.html)
     - [System Design](design/system.md): [whole source](https://control.ros.org/jazzy/doc/ros2_control/hardware_interface/doc/mock_components_userdoc.html)
     - [Testing Layers](design/testing-layers.md): [section "Mock Components"](https://control.ros.org/jazzy/doc/ros2_control/hardware_interface/doc/mock_components_userdoc.html#:~:text=Mock%20Components)
+
+### `ros2-controllers-diff-drive`
+
+ros-controls, *ros2_controllers: diff_drive_controller (Jazzy)*. [Open the web page](https://control.ros.org/jazzy/doc/ros2_controllers/diff_drive_controller/doc/userdoc.html).
+
+- **Primary source.**
+- **Checked:** 2026-11-14
+- **Used for:** The drivetrain's controller: its topics, its parameters and their defaults, and the timeout on stale commands. The Jazzy page, because later versions drop parameters Jazzy still has, such as publish_rate.
+- **Cited at:**
+    - [Drivetrain Subsystem Design](design/drivetrain.md): [whole source](https://control.ros.org/jazzy/doc/ros2_controllers/diff_drive_controller/doc/userdoc.html), [section "Parameters"](https://control.ros.org/jazzy/doc/ros2_controllers/diff_drive_controller/doc/userdoc.html#:~:text=Parameters), [section "ROS 2 Interfaces"](https://control.ros.org/jazzy/doc/ros2_controllers/diff_drive_controller/doc/userdoc.html#:~:text=ROS%202%20Interfaces)
+
+### `ros2-controllers-diff-drive-source`
+
+ros-controls, *ros2_controllers, jazzy branch: diff_drive_controller.cpp*. [Open the web page](https://github.com/ros-controls/ros2_controllers/blob/jazzy/diff_drive_controller/src/diff_drive_controller.cpp).
+
+- **Primary source.**
+- **Checked:** 2026-11-14
+- **Used for:** What the documentation leaves out: the QoS of its subscription and publishers, and that it judges a command's age by the command's own timestamp.
+- **Cited at:**
+    - [Drivetrain Subsystem Design](design/drivetrain.md): [whole source](https://github.com/ros-controls/ros2_controllers/blob/jazzy/diff_drive_controller/src/diff_drive_controller.cpp)
 
 ### `twist-mux-topic-handle`
 
@@ -437,6 +459,7 @@ WPILib, *allwpilib: hal/src/main/native/systemcore/CTREPDP.cpp* (Commit 4817543)
 - **Used for:** The PDP's status frames and their layout, read without sending any request. WPILib's code, not CTRE's: CTRE does not publish the frames.
 - **Cited at:**
     - [CAN bus](can-bus.md): [whole source](https://github.com/wpilibsuite/allwpilib/blob/4817543253e343afcf2b630537e995d74d21db62/hal/src/main/native/systemcore/CTREPDP.cpp)
+    - [Drivetrain Subsystem Design](design/drivetrain.md): [whole source](https://github.com/wpilibsuite/allwpilib/blob/4817543253e343afcf2b630537e995d74d21db62/hal/src/main/native/systemcore/CTREPDP.cpp)
     - [Operating Modes Design](design/operating-modes.md): [whole source](https://github.com/wpilibsuite/allwpilib/blob/4817543253e343afcf2b630537e995d74d21db62/hal/src/main/native/systemcore/CTREPDP.cpp)
 
 ## Engineering practice
