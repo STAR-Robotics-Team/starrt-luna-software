@@ -44,6 +44,11 @@ by `scripts/design render`.
 | Question | Turgor |
 | --- | --- |
 | 1. I added an extra section for scoring, is that fine? | None |
+| 2. Which LiDAR-inertial odometry package runs on the Unitree L2, and does it, with Nav2, fit the Jetson inside the TPM-11 budget? Until it is chosen, every rate and package marked with this question is a proposal. | 7.5 |
+| 3. How are craters, which sit below the ground, found in the point cloud: cells below the local ground height by more than crater_min_depth, or cells the LiDAR cannot see? Test both on a recording of a dug hole. | 7.5 |
+| 4. Find the start position and heading from the LiDAR alone, or add markers on the arena frame beside the starting zone? Markers are allowed there, but count toward the robot's mass (guidebook §13.7, p. 43). | 7.5 |
+| 5. How does the task sequencer know the bin is full: a reading on /mechanism/status (motor current, a load cell, a level sensor) or a fixed dig time? For the mechanism doc. | 4.2 |
+| 6. May the robot drive to the berm target's published position (guidebook §11.2, pp. 34-35), or does that count as prior knowledge of the arena, which §16.3 forbids for travel? Ask in the FAQ. If it may not, the robot must find the construction zone from what it sees. | None |
 
 ### `teleoperation.md`, not written yet (5.1)
 
@@ -92,25 +97,18 @@ that uses them; each is listed here once.
 
 | Entry | Field | Value |
 | --- | --- | --- |
-| node localization | package | [TBD: its nodes, autonomy doc (7.2)] |
-| node planner | package | [TBD: its nodes, autonomy doc (7.2)] |
-| node task_sequencer | package | [TBD: autonomy doc (7.2)] |
-| interface obstacle-map | name | [TBD: obstacle map topic, autonomy doc (7.2)] |
-| interface obstacle-map | type | nav_msgs/msg/OccupancyGrid [TBR: autonomy doc (7.2)] |
-| interface obstacle-map | rate | [TBD: autonomy doc (7.2)] |
-| interface obstacle-map | qos | [TBD: autonomy doc (7.2)] |
-| interface planned-path | name | [TBD: planned path topic, autonomy doc (7.2)] |
-| interface planned-path | type | nav_msgs/msg/Path [TBR: autonomy doc (7.2)] |
-| interface planned-path | rate | [TBD: autonomy doc (7.2)] |
-| interface planned-path | qos | [TBD: autonomy doc (7.2)] |
-| interface auto-drive-command | name | [TBD: AUTO drive command topic, teleop open question 3] |
-| interface auto-drive-command | type | geometry_msgs/msg/TwistStamped [TBR: matches /cmd_vel] |
-| interface auto-drive-command | rate | [TBD: autonomy doc (7.2)] |
-| interface auto-drive-command | qos | [TBD: autonomy doc (7.2)] |
-| interface auto-mechanism-command | name | [TBD: AUTO mechanism command topic, teleop open question 3] |
+| node localization | package | `luna_autonomy` [TBR: autonomy open question 2] |
+| node planner | package | `luna_autonomy`, with Nav2 [TBR: autonomy open question 2] |
+| interface robot-pose | rate | 50 Hz [TBR: autonomy open question 2] |
+| interface obstacle-map | rate | `map_publish_rate`, 2 Hz [TBR: autonomy open question 2] |
+| interface auto-drive-command | name | /auto/cmd_vel [TBR: teleop open question 3] |
+| interface auto-drive-command | type | geometry_msgs/msg/TwistStamped [TBR: matches /teleop/cmd_vel] |
+| interface navigate | type | nav2_msgs/action/NavigateToPose [TBR: autonomy open question 2] |
+| interface auto-mechanism-command | name | [TBD: AUTO mechanism command topics, teleop open questions 3 and 5] |
 | interface auto-mechanism-command | type | [TBD: mechanism doc (4.2)] |
-| interface auto-mechanism-command | rate | [TBD: autonomy doc (7.2)] |
-| interface auto-mechanism-command | qos | [TBD: autonomy doc (7.2)] |
+| interface auto-mechanism-command | rate | 20 Hz [TBR: matches teleop's command_rate] |
+| interface auto-mechanism-command | qos | [TBD: mechanism doc (4.2)] |
+| interface autonomy-status | type | luna_interfaces/msg/AutonomyStatus [TBR: proposed in section 3] |
 
 ### `drivetrain.toml`
 
@@ -280,6 +278,18 @@ Every `[TBD]` and `[TBR]` in the docs' own text, by page and section.
 | [5. Libraries and hardware interfaces](operating-modes.md#5-libraries-and-hardware-interfaces) | [TBR: reported by other teams, not tried on our bus] |
 | [5. Libraries and hardware interfaces](operating-modes.md#5-libraries-and-hardware-interfaces) | [TBR: the point, for the electrical lead] |
 | [5. Libraries and hardware interfaces](operating-modes.md#5-libraries-and-hardware-interfaces) | [TBR: Once the grant's Mean Well RSD-30G converters replace the VRM, their output ground is tied to the computer's ground. They isolate input from output (RSD-30 datasheet, p. 2), so the sensors then share the computer's ground with no second path to the main battery's. The VRM's output must not be tied to it, since that would join the two grounds a second time.] |
+
+### [Autonomy Subsystem Design](autonomy.md)
+
+| Section | Marked |
+| --- | --- |
+| [2. Nodes](autonomy.md#2-nodes) | [TBR: autonomy open question 2] |
+| [3. Interfaces](autonomy.md#3-interfaces) | [TBR: Proposed] |
+| [4. Parameters](autonomy.md#4-parameters) | [TBR: tested in 7.5 and 7.6] |
+| [4. Parameters](autonomy.md#4-parameters) | [TBD: drivetrain doc (3.1)] |
+| [5. Libraries and hardware interfaces](autonomy.md#5-libraries-and-hardware-interfaces) | [TBD: chosen in 7.5, autonomy open question 2] |
+| [5. Libraries and hardware interfaces](autonomy.md#5-libraries-and-hardware-interfaces) | [TBR: autonomy open question 2] |
+| [5. Libraries and hardware interfaces](autonomy.md#5-libraries-and-hardware-interfaces) | [TBR: autonomy open question 2] |
 
 ### [Hardware Test Modes](hardware-test-modes.md)
 
