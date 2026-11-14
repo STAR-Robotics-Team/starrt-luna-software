@@ -262,7 +262,7 @@ In AUTO the default view carries the obstacle map and planned path because the j
 and the resulting path planning" ([§16, p. 55](../sources.md#nasa-lunabotics-guidebook-2027)), and leaves the camera off to save bandwidth (R10).
 These are defaults: the operator can change the view at runtime, such as turning the camera
 on in AUTO, and the operator station shows live link bandwidth so the cost is visible
-[TBR: chosen in the PR #14 review, 2026-10-26; the teleoperation doc (5.1) holds the details].
+([teleoperation design, section 5](teleoperation.md#5-libraries-and-hardware-interfaces)).
 
 ## 3. Interfaces
 
@@ -413,6 +413,7 @@ full load, to show the margin.
     Gazebo's simulated hardware offers them too is not checked. If it does not, the gate
     also goes between the diff drive controller and the wheel joints, as a chainable
     controller, so it can zero the joints in every test mode; 1.17 decides.]
+
 - **Motor controller settings.** Each hardware plugin sets its motor controllers' current limits,
   voltage compensation, and neutral mode from parameters at startup: brake for the drive
   motors and hatch, so they hold still when disabled, and coast for the excavator chain.

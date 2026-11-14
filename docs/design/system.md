@@ -86,9 +86,8 @@ Every node in the design docs' registries, grouped by the computer it runs on. A
 arrow is a topic, from publisher to subscriber; a dashed arrow is a service call, from
 client to server. A name not decided yet shows "(TBD)". Every node of ours that can fail
 also publishes `/diagnostics` to `mode_manager`, which the graph leaves out to stay
-readable. The docs that are not written yet
-each have a registry with what the other docs assume of them, so this graph is complete
-in shape, but most of its names and rates wait on those docs.
+readable. Every subsystem's doc is written, so the graph shows the whole design; names
+and rates still marked TBD or TBR wait on the decisions they name.
 [Interfaces](interfaces.md) lists every node and interface in full.
 
 <!-- design: graph (generated from docs/design/*.toml by scripts/design render: edit those files, not this block) -->
@@ -230,23 +229,20 @@ each system in each test mode.
 
 | System | What crosses the line | Stand-ins below it | Design doc |
 | --- | --- | --- | --- |
-| Drivetrain | 4 wheel joints, 2 per side: a velocity command in; velocity and position out, and current where the motor controller measures it | Stub hardware, fake motor controllers, Gazebo | `drivetrain.md` (3.1) |
-| Mechanism | Each mechanism joint's command and state, plus the limit switch, excavator stowed, and hatch closed signals ([mechanism design, section 5](mechanism.md#5-libraries-and-hardware-interfaces)) | Stub hardware, fake motor controllers | `mechanism.md` (4.2) |
+| Drivetrain | 4 wheel joints, 2 per side: a velocity command in; velocity and position out, and current where the motor controller measures it | Stub hardware, fake motor controllers, Gazebo | [Drivetrain](drivetrain.md#3-interfaces) |
+| Mechanism | Each mechanism joint's command and state, plus the limit switch, excavator stowed, and hatch closed signals ([mechanism design, section 5](mechanism.md#5-libraries-and-hardware-interfaces)) | Stub hardware, fake motor controllers | [Mechanism](mechanism.md#3-interfaces) |
 | Battery and power | `/power/battery` (`sensor_msgs/msg/BatteryState`, 10 Hz) and `/diagnostics` | A stub node, a fake power panel | [Operating modes](operating-modes.md#3-interfaces) |
-| LiDAR | The Unitree L2's point cloud and its built-in IMU, as Unitree's driver publishes them: by default `unilidar/cloud` in frame `unilidar_lidar` and `unilidar/imu` in frame `unilidar_imu` ([unitree_lidar_ros2 launch file](../sources.md#unitree-lidar-ros2-launch)) | A stub node, a recording, Gazebo | `sensors.md` (6.2) |
-| Dedicated IMU | One `sensor_msgs/msg/Imu`: angular velocity from the gyroscope and linear acceleration from the accelerometer, in the IMU's own frame near the center of mass. No magnetometer. | A stub node, a recording, Gazebo | `sensors.md` (6.2) |
-| Cameras | [TBD: the image and camera info topics and frames of the cameras chosen in 6.1] | A test-pattern stub, a recording, Gazebo | `sensors.md` (6.2) |
-| Gamepad | `/joy`, sent by the operator frontend from the browser's Gamepad API [TBR: chosen in the PR #14 review, 2026-10-26], with [TBD: the button and stick numbers from the gamepad's table (5.2)] | A recording | `teleoperation.md` (5.1) |
-| Radio link | The messages that cross between the operator laptop and the robot over one rosbridge connection (WebSocket over TCP): `/joy`, the heartbeat, mode requests, and telemetry [TBR: chosen in the PR #14 review, 2026-10-26] | Both sides on one computer | `teleoperation.md` (5.1) |
+| LiDAR | The Unitree L2's point cloud and its built-in IMU, as Unitree's driver publishes them: by default `unilidar/cloud` in frame `unilidar_lidar` and `unilidar/imu` in frame `unilidar_imu` ([unitree_lidar_ros2 launch file](../sources.md#unitree-lidar-ros2-launch)) | A stub node, a recording, Gazebo | [Sensors](sensors.md#3-interfaces) |
+| Dedicated IMU | One `sensor_msgs/msg/Imu`: angular velocity from the gyroscope and linear acceleration from the accelerometer, in the IMU's own frame near the center of mass. No magnetometer. | A stub node, a recording, Gazebo | [Sensors](sensors.md#3-interfaces) |
+| Cameras | [TBD: the image and camera info topics and frames of the cameras chosen in 6.1] | A test-pattern stub, a recording, Gazebo | [Sensors](sensors.md#3-interfaces) |
+| Gamepad | `/joy`, sent by the operator frontend from the browser's Gamepad API, with [TBD: the button and stick numbers from the gamepad's table (5.2)] | A recording | [Teleoperation](teleoperation.md#5-libraries-and-hardware-interfaces) |
+| Radio link | The messages that cross between the operator laptop and the robot over one rosbridge connection (WebSocket over TCP): `/joy`, the heartbeat, mode requests, and telemetry | Both sides on one computer | [Teleoperation](teleoperation.md#3-interfaces) and [Platform](platform.md#5-libraries-and-hardware-interfaces) |
 
 For the drivetrain and the mechanism, the line is the ros2_control hardware interface: the
 joints and their command and state interfaces. Their stub is ros2_control's mock hardware,
 which copies each command into its state
 ([Mock Components](../sources.md#ros2-control-mock-components)), and in Gazebo the same
 controllers run through gz_ros2_control ([gz_ros2_control](../sources.md#gz-ros2-control)).
-
-The design docs in code font are not written yet; the number after each is its
-deliverable.
 
 ### The two IMUs
 
@@ -447,8 +443,8 @@ rosbridge, teleop_node, mode manager, drive, sensors`"]
   ([GL.iNet network modes guide, section "For models with Wi-Fi"](../sources.md#glinet-network-modes)).
   So [TBD: either NASA's cable goes into one of its LAN ports, or the Beryl AX runs in
   Access Point mode and every device gets a fixed address; 5.7 decides].
-  [TBR: With rosbridge (PR #14 review, 2026-10-26), only the laptop's WebSocket connection has to reach
-  the robot; ROS 2 discovery stays on the robot.]
+  With rosbridge, only the laptop's WebSocket connection has to reach the robot, so ROS 2
+  discovery can stay on the robot [TBR: platform open question 4].
 - **Deliverable 5.7 decides the parts and the network,** by Oct 28: the access point, the
   robot's radio and antennas, the addresses, and how ROS 2 crosses the link. It also
   settles whether the team's Open-Mesh OM5P-AC radio can be used, and asks the organizers

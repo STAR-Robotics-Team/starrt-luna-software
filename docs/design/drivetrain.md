@@ -277,6 +277,7 @@ flowchart TB
   sel["command_selector"]
   mm["mode_manager"]
   loc["Localization"]
+  rm["Robot model (6.3)"]
   subgraph cm["Drivetrain controller manager (ros2_control_node)"]
     direction TB
     gate["Drive mode gate (1.17)"]
@@ -300,7 +301,7 @@ flowchart TB
   mm -.->|"/robot/mode"| gate
   gate -->|"/diagnostics"| mm
   ddc -->|"/drivetrain/odom"| loc
-  jsb -->|"/drivetrain/joint_states"| loc
+  jsb -->|"/drivetrain/joint_states"| rm
   plugin <--> adapter
   adapter <--> talons
   adapter <--> victors
@@ -312,7 +313,7 @@ flowchart TB
   classDef hw fill:#4a725926,stroke:#4a7259
   classDef hwline fill:#b9707c26,stroke:#b9707c,stroke-dasharray:4 3
   class sel,mm,gate,plugin ours
-  class ddc,jsb,loc ros
+  class ddc,jsb,loc,rm ros
   class adapter,talons,victors,pdp,motors hw
   class line hwline
   style cm fill:#8b939c14,stroke:#8b939c80

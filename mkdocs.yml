@@ -67,7 +67,11 @@ nav:
       - Subsystems:
           - System: design/system.md
           - Operating modes: design/operating-modes.md
+          - Platform: design/platform.md
+          - Drivetrain: design/drivetrain.md
+          - Mechanism: design/mechanism.md
           - Teleoperation: design/teleoperation.md
+          - Sensors: design/sensors.md
           - Autonomy: design/autonomy.md
       - Testing:
           - Testing layers: design/testing-layers.md

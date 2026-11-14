@@ -1390,7 +1390,7 @@ Other modes:
 
 ## Radio link
 
-*Carries messages between two machines.* **Hardware line:** the messages that cross between the operator laptop and the robot, over one rosbridge connection [TBR: chosen in the PR #14 review, 2026-10-26]. The full contract is in [Hardware lines](system.md#hardware-lines).
+*Carries messages between two machines.* **Hardware line:** the messages that cross between the operator laptop and the robot, over one rosbridge connection ([teleoperation design](teleoperation.md#3-interfaces)). The full contract is in [Hardware lines](system.md#hardware-lines).
 
 ### Radio link: One computer (Sim)
 

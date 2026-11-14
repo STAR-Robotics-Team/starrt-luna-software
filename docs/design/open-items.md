@@ -249,9 +249,7 @@ Every `[TBD]` and `[TBR]` in the docs' own text, by page and section.
 | Section | Marked |
 | --- | --- |
 | [Hardware lines](system.md#hardware-lines) | [TBD: the image and camera info topics and frames of the cameras chosen in 6.1] |
-| [Hardware lines](system.md#hardware-lines) | [TBR: chosen in the PR #14 review, 2026-10-26] |
 | [Hardware lines](system.md#hardware-lines) | [TBD: the button and stick numbers from the gamepad's table (5.2)] |
-| [Hardware lines](system.md#hardware-lines) | [TBR: chosen in the PR #14 review, 2026-10-26] |
 | [The two IMUs](system.md#the-two-imus) | [TBD: the sensor suite evaluation (6.1) picks it] |
 | [4. Parameters](system.md#4-parameters) | [TBD: named in deliverable 1.4, by Oct 21] |
 | [4. Parameters](system.md#4-parameters) | [TBD: QoS defaults, frame names, and parameter files, with the node graph (1.5)] |
@@ -260,7 +258,7 @@ Every `[TBD]` and `[TBR]` in the docs' own text, by page and section.
 | [5. Libraries and hardware interfaces](system.md#5-libraries-and-hardware-interfaces) | [TBD: ] |
 | [5. Libraries and hardware interfaces](system.md#5-libraries-and-hardware-interfaces) | [TBD: the parts, in 5.7] |
 | [How the operator station reaches the robot](system.md#how-the-operator-station-reaches-the-robot) | [TBD: either NASA's cable goes into one of its LAN ports, or the Beryl AX runs in Access Point mode and every device gets a fixed address; 5.7 decides] |
-| [How the operator station reaches the robot](system.md#how-the-operator-station-reaches-the-robot) | [TBR: With rosbridge (PR #14 review, 2026-10-26), only the laptop's WebSocket connection has to reach the robot; ROS 2 discovery stays on the robot.] |
+| [How the operator station reaches the robot](system.md#how-the-operator-station-reaches-the-robot) | [TBR: platform open question 4] |
 | [7. Behavior on failure](system.md#7-behavior-on-failure) | [TBD: defined in the sensors doc (6.2)] |
 | [7. Behavior on failure](system.md#7-behavior-on-failure) | [TBD: defined in the sensors doc (6.2)] |
 
@@ -282,7 +280,6 @@ Every `[TBD]` and `[TBR]` in the docs' own text, by page and section.
 | [Current limits per mode](operating-modes.md#current-limits-per-mode) | [TBD: open question 3] |
 | [Current limits per mode](operating-modes.md#current-limits-per-mode) | [TBD: open question 5] |
 | [2. Nodes](operating-modes.md#2-nodes) | [TBD: A mini PC replaces it on the rover if the Hacker Initiative grant pays for one; the Jetson then runs the bench testbed (system design, open question 7).] |
-| [What runs in each mode](operating-modes.md#what-runs-in-each-mode) | [TBR: chosen in the PR #14 review, 2026-10-26; the teleoperation doc (5.1) holds the details] |
 | [3. Interfaces](operating-modes.md#3-interfaces) | [TBR: Proposed] |
 | [3. Interfaces](operating-modes.md#3-interfaces) | [TBR: Proposed] |
 | [3. Interfaces](operating-modes.md#3-interfaces) | [TBR: Proposed] |
@@ -362,7 +359,6 @@ Every `[TBD]` and `[TBR]` in the docs' own text, by page and section.
 | [Cameras: Stub (Sim)](hardware-test-modes.md#cameras-stub-sim) | [TBD: `cameras:=stub`] |
 | [Cameras: Gazebo (Sim)](hardware-test-modes.md#cameras-gazebo-sim) | [TBD: `cameras:=gazebo`] |
 | [Cameras: Bench](hardware-test-modes.md#cameras-bench) | [TBD: `cameras:=real`] |
-| [Radio link](hardware-test-modes.md#radio-link) | [TBR: chosen in the PR #14 review, 2026-10-26] |
 
 ### [Mechanism Subsystem Design](mechanism.md)
 

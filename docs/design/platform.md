@@ -73,13 +73,6 @@ the operator frontend, so the frontend's interfaces are in the
 [teleoperation design](teleoperation.md#3-interfaces), and the recorder subscribes to
 every topic it records.
 
-<!-- design: interfaces (generated from platform.toml by scripts/design render: edit that file, not this table) -->
-
-| Name | Kind | Type | Rate | Publisher or server | Subscriber or client | QoS |
-| --- | --- | --- | --- | --- | --- | --- |
-
-<!-- /design -->
-
 ## 4. Parameters
 
 | Parameter | Where | Default | Meaning |
@@ -206,7 +199,7 @@ flowchart TB
   devc -->|"git push"| gh
   gh --> ci
   gh -->|"pull and build, or a prebuilt image (2.10)"| rc
-  op <-->|"WebSocket through the access point"| rb
+  rb <-->|"WebSocket through the access point"| op
   classDef ours fill:#4c669026,stroke:#4c6690
   classDef ros fill:#8b939c1f,stroke:#8b939c
   class devc,ci,rc,bring,nodes ours

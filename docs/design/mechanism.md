@@ -289,8 +289,7 @@ flowchart TB
   hatch["Hatch motor"]
   sensors["Stowed and hatch closed sensors"]
   sel -->|"one command topic per function"| mc
-  mm -.->|"/robot/mode"| gate
-  gate -->|"/diagnostics"| mm
+  mm <-.->|"/robot/mode down, /diagnostics up"| gate
   mc -->|"/mechanism/status"| mm
   mc -->|"/mechanism/status"| seq
   plugin <--> adapter

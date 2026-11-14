@@ -11,11 +11,11 @@ code. The software sections of the team's Lunabotics design reports are drawn fr
 | --- | --- | --- |
 | [`system.md`](system.md) | Architecture and integration: how every subsystem fits together | Draft |
 | [`operating-modes.md`](operating-modes.md) | Operating modes and power states: what is on and what may move in each mode, for the whole robot | Draft |
-| `platform.md` | Platform and dev environment | Not started |
-| `drivetrain.md` | Drivetrain | Not started |
-| `mechanism.md` | Mechanism control | Not started |
-| `teleoperation.md` | Teleoperation and operator station | Not started |
-| `sensors.md` | Sensors and robot model | Not started |
+| [`platform.md`](platform.md) | Platform and dev environment | Draft |
+| [`drivetrain.md`](drivetrain.md) | Drivetrain | Draft |
+| [`mechanism.md`](mechanism.md) | Mechanism control | Draft |
+| [`teleoperation.md`](teleoperation.md) | Teleoperation and operator station | Draft |
+| [`sensors.md`](sensors.md) | Sensors and robot model | Draft |
 | [`autonomy.md`](autonomy.md) | Autonomy | Draft |
 
 When you add a doc, link it in this table and keep its status current.
@@ -92,9 +92,9 @@ publisher's doc, in each subscriber's doc, and in the system design's node graph
 by hand in each place, the copies drift apart. So each one is written once, in the
 registry of the doc that owns it, and `scripts/design` writes every table that shows it.
 
-- **Each design doc has a registry beside it,** `docs/design/<doc>.toml`. The docs that
-  are not written yet have one too, holding what the other docs assume of them: their
-  owners confirm or change each entry in their first pull request.
+- **Each design doc has a registry beside it,** `docs/design/<doc>.toml`. A new
+  subsystem's registry can come before its doc, holding what the other docs assume of
+  it; the doc's first pull request confirms or changes each entry.
 - **A generated table sits between two markers** in the doc, such as
   `<!-- design: interfaces -->` and `<!-- /design -->`. Edit the registry, never the
   table: `scripts/design render` rewrites everything between the markers.

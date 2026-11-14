@@ -156,7 +156,7 @@ Delay budget (ms).
 | **Total** |   | **100** of 100, leaving 0 |
 | Backstop if software hangs: the motor controllers disable themselves 100 ms after the enable signal stops | Motor controllers (Electronic, not Software) | 100, not counted |
 
-- **If the mode manager itself stops,** the drivetrain and mechanism treat a `/robot/mode` older than `mode_timeout` (0.3 s) as DISABLED, so output is zero within 400 ms (drivetrain draft R3).
+- **If the mode manager itself stops,** the drivetrain and mechanism treat a `/robot/mode` older than `mode_timeout` (0.3 s) as DISABLED, so output is zero within 400 ms ([drivetrain design R3](drivetrain.md#1-purpose-and-requirements)).
 
 ### TPM-8: Stop time after link loss
 
