@@ -561,6 +561,19 @@ checked = 2026-11-14
 notes = "What the documentation leaves out: the QoS of its subscription and publishers, and that it judges a command's age by the command's own timestamp."
 
 [[source]]
+id = "ros2-controllers-forward-command-source"
+primary = true
+group = "Software references"
+title = "ros2_controllers, jazzy branch: forward_controllers_base.cpp"
+publisher = "ros-controls"
+url = "https://github.com/ros-controls/ros2_controllers/blob/jazzy/forward_command_controller/src/forward_controllers_base.cpp"
+fetch_url = "https://raw.githubusercontent.com/ros-controls/ros2_controllers/jazzy/forward_command_controller/src/forward_controllers_base.cpp"
+format = "web"
+expect = "ForwardControllersBase::update"
+checked = 2026-11-14
+notes = "Why the mechanism has a controller of its own: the stock forward command controllers write their last command on every cycle, with no timestamp and no timeout."
+
+[[source]]
 id = "esa-margin-philosophy"
 primary = true
 group = "Engineering practice"

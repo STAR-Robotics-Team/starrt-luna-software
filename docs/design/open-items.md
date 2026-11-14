@@ -59,6 +59,15 @@ by `scripts/design render`.
 | 4. How does the drive plugin learn that the battery is low, so it halves its current limits (operating modes, section 7)? Proposed: a current limit scale in RobotMode, 1.0 or 0.5, which the mode gate writes to the plugin with enable and the task mode. | 1.17 |
 | 5. What wheel_separation_multiplier makes the odometry's turns right on the arena's surface? A skid-steer robot's wheels slide sideways as it turns, so it turns as if its wheels were farther apart than they are. Calibrate by spinning in place 10 times on ground like the arena's and comparing the odometry's heading with a mark on the floor. | 3.7 |
 
+### [Mechanism Subsystem Design](mechanism.md#9-open-questions)
+
+| Question | Turgor |
+| --- | --- |
+| 1. Do the two depth actuators lift one excavator frame, so that one getting ahead of the other twists it? If so, how far apart may their positions get before the controller stops both (depth_max_mismatch)? | 4.1 |
+| 2. How does software read each depth actuator's potentiometer: through its motor controller's analog input, or another input? It decides whether depth can take position commands on the robot. | 4.3 |
+| 3. What tells software the hatch is fully open, and how far does it travel? With a sensor at each end, the hatch can take an open or close command and stop by itself; without one, it runs only while its button is held. | 4.1 |
+| 4. Which way is positive for each function, once Mechanical mounts them? Proposed in section 3: positive raises the excavator, runs the chain and the conveyor the way they run while digging, and opens the hatch. | 4.1 |
+
 ### [Teleoperation Subsystem Design](teleoperation.md)
 
 | Question | Turgor |
@@ -120,9 +129,9 @@ that uses them; each is listed here once.
 
 | Entry | Field | Value |
 | --- | --- | --- |
-| interface /mechanism/status | type | [TBD: mechanism doc (4.2)] |
-| interface /mechanism/status | rate | [TBD: mechanism doc (4.2)] |
-| interface /mechanism/status | qos | [TBD: mechanism doc (4.2)] |
+| node mechanism_mode_gate | package | `luna_modes` [TBR: 1.17 builds it], in the mechanism's controller manager |
+| interface /mechanism/status | type | luna_interfaces/msg/MechanismStatus [TBR: proposed in section 3] |
+| interface /mechanism/status | rate | 10 Hz and on change [TBR] |
 
 ### `performance-budgets.toml`
 
@@ -345,6 +354,41 @@ Every `[TBD]` and `[TBR]` in the docs' own text, by page and section.
 | [Cameras: Gazebo (Sim)](hardware-test-modes.md#cameras-gazebo-sim) | [TBD: `cameras:=gazebo`] |
 | [Cameras: Bench](hardware-test-modes.md#cameras-bench) | [TBD: `cameras:=real`] |
 | [Radio link](hardware-test-modes.md#radio-link) | [TBR: chosen in the PR #14 review, 2026-10-26] |
+
+### [Mechanism Subsystem Design](mechanism.md)
+
+| Section | Marked |
+| --- | --- |
+| [1. Purpose and requirements](mechanism.md#1-purpose-and-requirements) | [TBR: operating modes open question 3] |
+| [1. Purpose and requirements](mechanism.md#1-purpose-and-requirements) | [TBR: TPM-6's mechanism row] |
+| [2. Nodes](mechanism.md#2-nodes) | [TBR: namespace , apart from the drivetrain's, so each is enabled, and stops, on its own] |
+| [3. Interfaces](mechanism.md#3-interfaces) | [TBR: Proposed] |
+| [3. Interfaces](mechanism.md#3-interfaces) | [TBR: open question 4] |
+| [3. Interfaces](mechanism.md#3-interfaces) | [TBR: Proposed] |
+| [3. Interfaces](mechanism.md#3-interfaces) | [TBR: about 200 bytes a message] |
+| [3. Interfaces](mechanism.md#3-interfaces) | [TBR: `depth_left_joint`, `depth_right_joint`, `excavator_chain_joint`, `conveyor_joint`, and `hatch_joint`, for the robot model (6.3) and 4.4 to confirm] |
+| [4. Parameters](mechanism.md#4-parameters) | [TBR: 50] |
+| [4. Parameters](mechanism.md#4-parameters) | [TBR: 0.25] |
+| [4. Parameters](mechanism.md#4-parameters) | [TBD: tuned on the bench, 4.6] |
+| [4. Parameters](mechanism.md#4-parameters) | [TBD: open question 1] |
+| [4. Parameters](mechanism.md#4-parameters) | [TBD: 4.6] |
+| [4. Parameters](mechanism.md#4-parameters) | [TBD: 4.1] |
+| [4. Parameters](mechanism.md#4-parameters) | [TBR: 10.0] |
+| [4. Parameters](mechanism.md#4-parameters) | [TBR: EXCAVATE: depth, excavator, conveyor. DUMP: hatch, conveyor . SERVICE: all.] |
+| [4. Parameters](mechanism.md#4-parameters) | [TBD: 4.3 and the wiring] |
+| [4. Parameters](mechanism.md#4-parameters) | [TBD: Electrical's wiring] |
+| [4. Parameters](mechanism.md#4-parameters) | [TBD: read on the bench, 4.6] |
+| [4. Parameters](mechanism.md#4-parameters) | [TBD: 4.6] |
+| [5. Libraries and hardware interfaces](mechanism.md#5-libraries-and-hardware-interfaces) | [TBR: Talon SRX each, operating modes open question 5; 4.3] |
+| [5. Libraries and hardware interfaces](mechanism.md#5-libraries-and-hardware-interfaces) | [TBR: Talon SRX, operating modes open question 5; 4.3] |
+| [5. Libraries and hardware interfaces](mechanism.md#5-libraries-and-hardware-interfaces) | [TBD: 4.3] |
+| [5. Libraries and hardware interfaces](mechanism.md#5-libraries-and-hardware-interfaces) | [TBR: Brake] |
+| [5. Libraries and hardware interfaces](mechanism.md#5-libraries-and-hardware-interfaces) | [TBD: 4.3] |
+| [5. Libraries and hardware interfaces](mechanism.md#5-libraries-and-hardware-interfaces) | [TBR: returns to zero .] |
+| [5. Libraries and hardware interfaces](mechanism.md#5-libraries-and-hardware-interfaces) | [TBD: operating modes open question 4, for Mechanical and Electrical] |
+| [5. Libraries and hardware interfaces](mechanism.md#5-libraries-and-hardware-interfaces) | [TBR: a Talon SRX's limit switch input is one place to wire them, for 4.3] |
+| [7. Behavior on failure](mechanism.md#7-behavior-on-failure) | [TBR: It stops, with a WARN on `/diagnostics`; it moves again once its command returns to zero] |
+| [8. Test plan](mechanism.md#8-test-plan) | [TBR: One depth actuator on the bench (4.6): run its full stroke from a ROS command, and its reported position matches a tape measure at both ends and the middle, within 5 mm . Hold it against a stop: it stops within `stall_time` and warns on `/diagnostics`.] |
 
 ### [Teleoperation Subsystem Design](teleoperation.md)
 

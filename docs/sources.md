@@ -14,7 +14,7 @@ the doc, and cite the page.
   primary source wins.
 - **To cite a source or add one,** see [Cite sources](writing-docs.md#cite-sources).
 
-45 sources, 40 of them primary, cited 282 times. PDF page
+46 sources, 41 of them primary, cited 288 times. PDF page
 numbers are the ones a PDF viewer shows, so each link opens the PDF at the cited page. This
 page is generated from `docs/sources.toml` by `scripts/sources render`.
 
@@ -58,6 +58,7 @@ AndyMark and Chiaphua, *775 RedLine Motor Performance Test Report, am-3775a (DF-
 - **Fingerprint:** SHA-256 `edd416abca3a3c3d`, checked 2026-10-07.
 - **Used for:** Excavator motor data at 12 V. The page is a scan, so it has no text layer.
 - **Cited at:**
+    - [Mechanism Subsystem Design](design/mechanism.md): [p. 1](https://s3.amazonaws.com/docusync-files/edd416abca3a3c3d33d09a7da3e876bfe534588e878915a4b6ec049034be169c/am-3775a%20RedLine%20Performance%20Curve.PDF#page=1)
     - [Operating Modes Design](design/operating-modes.md): [p. 1](https://s3.amazonaws.com/docusync-files/edd416abca3a3c3d33d09a7da3e876bfe534588e878915a4b6ec049034be169c/am-3775a%20RedLine%20Performance%20Curve.PDF#page=1)
 
 ### `andymark-cim-curve`
@@ -209,6 +210,7 @@ AndyMark, *NeveRest Series Motor Only*. [Open the web page](https://www.andymark
 - **Checked:** 2026-10-07
 - **Used for:** Conveyor and hatch motor specifications.
 - **Cited at:**
+    - [Mechanism Subsystem Design](design/mechanism.md): [whole source](https://www.andymark.com/products/neverest-series-motor-only)
     - [Operating Modes Design](design/operating-modes.md): [whole source](https://www.andymark.com/products/neverest-series-motor-only)
 
 ### `glinet-network-modes`
@@ -265,6 +267,7 @@ Pololu, *Glideforce LACT18-500APL Industrial-Duty Linear Actuator*. [Open the we
 - **Checked:** 2026-10-07
 - **Used for:** A reseller's page, but the only published stall current and limit switch behavior; the maker's datasheet leaves them out.
 - **Cited at:**
+    - [Mechanism Subsystem Design](design/mechanism.md): [whole source](https://www.pololu.com/product/3608), [section "Using the actuator"](https://www.pololu.com/product/3608#:~:text=Using%20the%20actuator)
     - [Operating Modes Design](design/operating-modes.md): [section "Using the actuator"](https://www.pololu.com/product/3608#:~:text=Using%20the%20actuator)
 
 ## Software references
@@ -405,6 +408,7 @@ ros-controls, *ros2_control: Mock Components*. [Open the web page](https://contr
 - **Checked:** 2026-10-18
 - **Used for:** The stub hardware ros2_control provides: what GenericSystem does with commands and states.
 - **Cited at:**
+    - [Mechanism Subsystem Design](design/mechanism.md): [whole source](https://control.ros.org/jazzy/doc/ros2_control/hardware_interface/doc/mock_components_userdoc.html)
     - [Operating Modes Design](design/operating-modes.md): [whole source](https://control.ros.org/jazzy/doc/ros2_control/hardware_interface/doc/mock_components_userdoc.html)
     - [System Design](design/system.md): [whole source](https://control.ros.org/jazzy/doc/ros2_control/hardware_interface/doc/mock_components_userdoc.html)
     - [Testing Layers](design/testing-layers.md): [section "Mock Components"](https://control.ros.org/jazzy/doc/ros2_control/hardware_interface/doc/mock_components_userdoc.html#:~:text=Mock%20Components)
@@ -428,6 +432,16 @@ ros-controls, *ros2_controllers, jazzy branch: diff_drive_controller.cpp*. [Open
 - **Used for:** What the documentation leaves out: the QoS of its subscription and publishers, and that it judges a command's age by the command's own timestamp.
 - **Cited at:**
     - [Drivetrain Subsystem Design](design/drivetrain.md): [whole source](https://github.com/ros-controls/ros2_controllers/blob/jazzy/diff_drive_controller/src/diff_drive_controller.cpp)
+
+### `ros2-controllers-forward-command-source`
+
+ros-controls, *ros2_controllers, jazzy branch: forward_controllers_base.cpp*. [Open the web page](https://github.com/ros-controls/ros2_controllers/blob/jazzy/forward_command_controller/src/forward_controllers_base.cpp).
+
+- **Primary source.**
+- **Checked:** 2026-11-14
+- **Used for:** Why the mechanism has a controller of its own: the stock forward command controllers write their last command on every cycle, with no timestamp and no timeout.
+- **Cited at:**
+    - [Mechanism Subsystem Design](design/mechanism.md): [whole source](https://github.com/ros-controls/ros2_controllers/blob/jazzy/forward_command_controller/src/forward_controllers_base.cpp)
 
 ### `twist-mux-topic-handle`
 
