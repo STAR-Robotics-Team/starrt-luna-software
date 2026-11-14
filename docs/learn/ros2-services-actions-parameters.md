@@ -64,7 +64,7 @@ robot accepted.
 Open the VNC desktop (see [GUI tools](../gui-tools.md)) and start turtlesim in a terminal.
 Leave it running:
 
-```bash
+```bash title="Dev container"
 ros2 run turtlesim turtlesim_node
 ```
 
@@ -72,11 +72,11 @@ Do the steps below in a second terminal.
 
 1. List the services that exist:
 
-    ```bash
+    ```bash title="Dev container"
     ros2 service list
     ```
 
-    ```text
+    ```text title="Output"
     /clear
     /kill
     /reset
@@ -99,12 +99,12 @@ Do the steps below in a second terminal.
 2. Like a topic, every service has a type that fixes what goes back and forth. Ask for
    the type of `/spawn`, then what that type contains:
 
-    ```bash
+    ```bash title="Dev container"
     ros2 service type /spawn
     ros2 interface show turtlesim/srv/Spawn
     ```
 
-    ```text
+    ```text title="Output"
     turtlesim/srv/Spawn
     float32 x
     float32 y
@@ -120,11 +120,11 @@ Do the steps below in a second terminal.
 
 3. Call the service to add a second turtle:
 
-    ```bash
+    ```bash title="Dev container"
     ros2 service call /spawn turtlesim/srv/Spawn "{x: 2.0, y: 2.0, theta: 0.0, name: turtle2}"
     ```
 
-    ```text
+    ```text title="Output"
     waiting for service to become available...
     requester: making request: turtlesim.srv.Spawn_Request(x=2.0, y=2.0, theta=0.0, name='turtle2')
     response:
@@ -136,7 +136,7 @@ Do the steps below in a second terminal.
 
 4. Give the first turtle a thick red pen, then drive it:
 
-    ```bash
+    ```bash title="Dev container"
     ros2 service call /turtle1/set_pen turtlesim/srv/SetPen "{r: 255, g: 0, b: 0, width: 5}"
     ros2 topic pub --once /turtle1/cmd_vel geometry_msgs/msg/Twist "{linear: {x: 2.0}, angular: {z: 1.8}}"
     ```
@@ -146,7 +146,7 @@ Do the steps below in a second terminal.
 
 5. Move the turtle instantly with a teleport:
 
-    ```bash
+    ```bash title="Dev container"
     ros2 service call /turtle1/teleport_absolute turtlesim/srv/TeleportAbsolute "{x: 8.0, y: 8.0, theta: 3.14}"
     ```
 
@@ -155,7 +155,7 @@ Do the steps below in a second terminal.
     ([REP 103, section "Derived Units"](../sources.md#ros-rep-103)), and 3.14 is half a
     turn. To jump without drawing, lift the pen first:
 
-    ```bash
+    ```bash title="Dev container"
     ros2 service call /turtle1/set_pen turtlesim/srv/SetPen "{'off': 1}"
     ```
 
@@ -164,7 +164,7 @@ Do the steps below in a second terminal.
 
 6. Wipe the drawing:
 
-    ```bash
+    ```bash title="Dev container"
     ros2 service call /clear std_srvs/srv/Empty
     ```
 
@@ -179,11 +179,11 @@ the command line.
 
 1. List turtlesim's parameters:
 
-    ```bash
+    ```bash title="Dev container"
     ros2 param list
     ```
 
-    ```text
+    ```text title="Output"
     /turtlesim:
       background_b
       background_g
@@ -202,12 +202,12 @@ the command line.
 
 2. Read one, and ask what values it accepts:
 
-    ```bash
+    ```bash title="Dev container"
     ros2 param get /turtlesim background_r
     ros2 param describe /turtlesim background_r
     ```
 
-    ```text
+    ```text title="Output"
     Integer value is: 69
     Parameter name: background_r
       Type: integer
@@ -220,11 +220,11 @@ the command line.
 
 3. Change it:
 
-    ```bash
+    ```bash title="Dev container"
     ros2 param set /turtlesim background_r 150
     ```
 
-    ```text
+    ```text title="Output"
     Set parameter successful
     ```
 
@@ -233,11 +233,11 @@ the command line.
 
 4. Print every parameter the node has, in a form you can save:
 
-    ```bash
+    ```bash title="Dev container"
     ros2 param dump /turtlesim
     ```
 
-    ```text
+    ```text title="Output"
     /turtlesim:
       ros__parameters:
         background_b: 255
@@ -252,7 +252,7 @@ the command line.
 
 5. Save it to a file, while turtlesim is still running:
 
-    ```bash
+    ```bash title="Dev container"
     ros2 param dump /turtlesim > ~/turtlesim.yaml
     ```
 
@@ -262,7 +262,7 @@ the command line.
 
 6. Stop turtlesim with Ctrl+C in its terminal, and start it again with the file:
 
-    ```bash
+    ```bash title="Dev container"
     ros2 run turtlesim turtlesim_node --ros-args --params-file ~/turtlesim.yaml
     ```
 
@@ -279,12 +279,12 @@ Turtlesim has one action, which turns a turtle to face a given direction.
 
 1. List the actions and look at the one there is:
 
-    ```bash
+    ```bash title="Dev container"
     ros2 action list
     ros2 action info /turtle1/rotate_absolute
     ```
 
-    ```text
+    ```text title="Output"
     /turtle1/rotate_absolute
     Action: /turtle1/rotate_absolute
     Action clients: 0
@@ -294,11 +294,11 @@ Turtlesim has one action, which turns a turtle to face a given direction.
 
 2. See what its type contains:
 
-    ```bash
+    ```bash title="Dev container"
     ros2 interface show turtlesim/action/RotateAbsolute
     ```
 
-    ```text
+    ```text title="Output"
     # The desired heading in radians
     float32 theta
     ---
@@ -313,7 +313,7 @@ Turtlesim has one action, which turns a turtle to face a given direction.
 
 3. Send a goal and watch the feedback:
 
-    ```bash
+    ```bash title="Dev container"
     ros2 action send_goal --feedback /turtle1/rotate_absolute turtlesim/action/RotateAbsolute "{theta: 1.57}"
     ```
 
@@ -321,7 +321,7 @@ Turtlesim has one action, which turns a turtle to face a given direction.
     prints its progress. The output starts and ends like this, with many more feedback
     messages in between:
 
-    ```text
+    ```text title="Output"
     Waiting for an action server to become available...
     Sending goal:
          theta: 1.57
@@ -340,7 +340,7 @@ Turtlesim has one action, which turns a turtle to face a given direction.
 4. Cancel a goal partway through. Run the keyboard teleop in a third terminal, and keep
    that terminal selected while you press keys:
 
-    ```bash
+    ```bash title="Dev container"
     ros2 run turtlesim turtle_teleop_key
     ```
 
@@ -350,13 +350,13 @@ Turtlesim has one action, which turns a turtle to face a given direction.
     turtle to stop, then press `d` and, while it is still turning, `f`. The turtle stops
     where it is, and the turtlesim terminal prints:
 
-    ```text
+    ```text title="Output"
     [INFO] [1791864827.762315631] [turtlesim]: Rotation goal canceled
     ```
 
     Now press `v` and straight away `r`. The second goal replaces the first:
 
-    ```text
+    ```text title="Output"
     [WARN] [1791864833.041998527] [turtlesim]: Rotation goal received before a previous goal finished. Aborting previous goal
     ```
 

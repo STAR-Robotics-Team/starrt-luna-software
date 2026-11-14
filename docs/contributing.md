@@ -11,7 +11,7 @@ New to Git or pull requests? Read [Git and GitHub](learn/git-and-github.md), the
 1. Start from a deliverable assigned to you in Turgor.
 2. Branch from an up-to-date `main`, naming the branch after your workstream:
 
-    ```bash
+    ```bash title="Your terminal or the dev container"
     git switch main && git pull
     git switch -c drivetrain/cmd-vel-skeleton
     ```
@@ -20,7 +20,7 @@ New to Git or pull requests? Read [Git and GitHub](learn/git-and-github.md), the
    docs in the same pull request (see [Writing docs](writing-docs.md)).
 4. Build and test before you push, in a container terminal:
 
-    ```bash
+    ```bash title="Dev container"
     colcon build
     colcon test && colcon test-result --verbose
     ```
@@ -45,7 +45,7 @@ they work.
   letters, digits, and underscores only; no hyphens.
 - Create a package from inside `src/`:
 
-    ```bash
+    ```bash title="Dev container"
     ros2 pkg create --build-type ament_cmake --license Apache-2.0 luna_example
     ```
 
@@ -64,7 +64,7 @@ they work.
 others) on every package, and pull requests must pass them. To fix C++ formatting
 automatically:
 
-```bash
+```bash title="Dev container"
 ament_uncrustify --reformat src/<package>
 ```
 

@@ -12,6 +12,11 @@ one. GitHub accepts less, so the mistake is invisible there. On the website, the
 block falls out of the list and the steps restart at 1, or the next item joins the
 paragraph above it. See "Lists" in docs/writing-docs.md.
 
+Every shell code block says where to run it, in a title such as title="Dev container", so
+readers never have to guess whether a command goes in their own terminal, the dev container,
+or on the robot. A block without one fails the build. See "Say where a command runs" in
+docs/writing-docs.md.
+
 Text that is not settled yet is written [TBD: ...] (not decided yet) or [TBR: ...] (written
 down, not confirmed). GitHub shows it as written; the website shows it in its own color,
 with a TBD or TBR tag (docs/stylesheets/unsettled.css). See "Mark what is not settled" in
@@ -220,7 +225,47 @@ def last_updated(markdown, src_uri):
     return "\n".join(lines[:title + 1] + ["", f'<p class="last-updated">{text}</p>', ""] + lines[title + 1:])
 
 
+# Where a shell block may run (see "Say where a command runs" in docs/writing-docs.md). A
+# block that shows a file's contents is titled with the file's path instead.
+SHELLS = {"bash", "sh", "shell", "zsh", "console", "powershell", "ps1"}
+WHERE = {
+    "Your terminal", "Your terminal: Linux", "Your terminal: macOS", "Your terminal: Ubuntu in WSL",
+    "Windows PowerShell", "Dev container", "Your terminal or the dev container", "Robot computer",
+}
+FENCE = re.compile(r"^[ \t]*(`{3,}|~{3,})(.*)$")
+
+
+def check_command_titles(markdown, src_uri):
+    """Warn, which fails a strict build, about each shell block that does not say where it
+    runs. A fence inside a longer fence, such as an example in a ````markdown block, is
+    the example's text, not a block of its own."""
+    opening = None
+    for number, line in enumerate(markdown.split("\n"), 1):
+        match = FENCE.match(line)
+        if not match:
+            continue
+        fence, info = match.groups()
+        if opening:
+            if fence[0] == opening[0] and len(fence) >= len(opening) and not info.strip():
+                opening = None
+            continue
+        opening = fence
+        language = (info.split() or [""])[0].lower()
+        if language not in SHELLS:
+            continue
+        title = re.search(r'title="([^"]*)"', info)
+        where = title.group(1) if title else ""
+        if where in WHERE or re.match(r"[~/.]|[\w.-]+/", where):
+            continue
+        log.warning(
+            '%s, line %d: this %s block does not say where it runs. Give it a title, such as '
+            'title="Dev container" (see "Say where a command runs" in writing-docs.md)%s.',
+            src_uri, number, language, f', not {where!r}' if where else "",
+        )
+
+
 def on_page_markdown(markdown, page, files, **kwargs):
+    check_command_titles(markdown, page.file.src_uri)
     if page.file.src_uri == "README.md":
         page.meta["template"] = "home.html"
     if page.file.src_uri.startswith("design/") and page.file.src_uri not in NOT_DESIGN_DOCS:

@@ -40,7 +40,7 @@ true cross-compilation.
 
 Register the arm64 emulator once per boot, then build the image's `base` stage for arm64:
 
-```bash
+```bash title="Your terminal"
 docker run --privileged --rm tonistiigi/binfmt --install arm64
 docker buildx build --platform linux/arm64 --target base --network=host --load \
   -t luna-base:arm64 -f .devcontainer/Dockerfile .devcontainer

@@ -27,11 +27,11 @@ One more is worth knowing now. Design docs give each topic a rate, and
 `ros2 topic hz` measures the real one. With `hello_publisher` running (with its default
 parameters), run:
 
-```bash
+```bash title="Dev container"
 ros2 topic hz /greetings
 ```
 
-```text
+```text title="Output"
 average rate: 2.000
 	min: 0.500s max: 0.500s std dev: 0.00016s window: 3
 ```
@@ -59,7 +59,7 @@ tool can collect them from every node on the robot: **rqt_console**. It is one o
 
 1. Start rqt_console:
 
-    ```bash
+    ```bash title="Dev container"
     ros2 run rqt_console rqt_console
     ```
 
@@ -69,7 +69,7 @@ tool can collect them from every node on the robot: **rqt_console**. It is one o
 
 2. In a second terminal, start turtlesim:
 
-    ```bash
+    ```bash title="Dev container"
     ros2 run turtlesim turtlesim_node
     ```
 
@@ -79,7 +79,7 @@ tool can collect them from every node on the robot: **rqt_console**. It is one o
 3. In a third terminal, drive the turtle into the right-hand wall, sending a command every
    second:
 
-    ```bash
+    ```bash title="Dev container"
     ros2 topic pub --rate 1 /turtle1/cmd_vel geometry_msgs/msg/Twist "{linear: {x: 2.0}}"
     ```
 
@@ -87,7 +87,7 @@ tool can collect them from every node on the robot: **rqt_console**. It is one o
     terminal and in rqt_console, where each message shows its severity, `Warn`, and the
     node that sent it:
 
-    ```text
+    ```text title="Output"
     [WARN] [1791869628.862169082] [turtlesim]: Oh no! I hit the wall! (Clamping from [x=11.120889, y=5.544445])
     ```
 
@@ -101,7 +101,7 @@ tool can collect them from every node on the robot: **rqt_console**. It is one o
 
 4. Restart turtlesim so it prints only warnings and worse: stop it with Ctrl+C, then
 
-    ```bash
+    ```bash title="Dev container"
     ros2 run turtlesim turtlesim_node --ros-args --log-level WARN
     ```
 
@@ -132,18 +132,18 @@ flowchart TB
 
 1. Start turtlesim, and the keyboard teleop in a second terminal:
 
-    ```bash
+    ```bash title="Dev container"
     ros2 run turtlesim turtlesim_node
     ```
 
-    ```bash
+    ```bash title="Dev container"
     ros2 run turtlesim turtle_teleop_key
     ```
 
 2. In a third terminal, go to your home folder and start recording the turtle's driving
    commands:
 
-    ```bash
+    ```bash title="Dev container"
     cd ~
     ros2 bag record -o turtle_drive --topics /turtle1/cmd_vel
     ```
@@ -154,7 +154,7 @@ flowchart TB
     pick a new name each time. The recorder prints a few lines, and after a few seconds
     it has found the topic:
 
-    ```text
+    ```text title="Output"
     [INFO] [1791869708.324589591] [rosbag2_recorder]: Subscribed to topic '/turtle1/cmd_vel'
     [INFO] [1791869708.324628518] [rosbag2_recorder]: All requested topics are subscribed. Stopping discovery...
     [INFO] [1791869708.324634202] [rosbag2_recorder]: Topics discovery stopped.
@@ -165,11 +165,11 @@ flowchart TB
 
 4. Stop the recorder with Ctrl+C, and look at what it saved:
 
-    ```bash
+    ```bash title="Dev container"
     ros2 bag info turtle_drive
     ```
 
-    ```text
+    ```text title="Output"
     Files:             turtle_drive_0.mcap
     Bag size:          6.9 KiB
     Storage id:        mcap
@@ -189,7 +189,7 @@ flowchart TB
 5. Quit the teleop with `q`, stop turtlesim with Ctrl+C, and start a fresh turtlesim, so
    the turtle is back in the middle with a clean screen. Then play the bag:
 
-    ```bash
+    ```bash title="Dev container"
     ros2 bag play --delay 5 turtle_drive
     ```
 
@@ -223,17 +223,17 @@ these, in order:
    with "best effort" reliability, which may drop messages, and listen with "reliable",
    which insists on every one:
 
-    ```bash
+    ```bash title="Dev container"
     ros2 topic pub --qos-reliability best_effort /qos_test std_msgs/msg/String "{data: hello}"
     ```
 
-    ```bash
+    ```bash title="Dev container"
     ros2 topic echo --qos-reliability reliable /qos_test
     ```
 
     The listener prints nothing but this warning:
 
-    ```text
+    ```text title="Output"
     [WARN] [1791863971.113011243] [_ros2cli_6890]: New publisher discovered on topic '/qos_test', offering incompatible QoS. No messages will be received from it. Last incompatible policy: RELIABILITY
     ```
 
@@ -249,13 +249,13 @@ these, in order:
 
 `ros2 doctor` checks your ROS installation and network setup:
 
-```bash
+```bash title="Dev container"
 ros2 doctor
 ```
 
 It may print many lines like this first:
 
-```text
+```text title="Output"
 /opt/ros/jazzy/lib/python3.12/site-packages/ros2doctor/api/package.py: 122: UserWarning: launch has been updated to a new version. local: 3.4.11 < latest: 3.4.12
 ```
 
@@ -264,7 +264,7 @@ ones in the dev container's image, and the team's own packages show up as
 `Cannot find the latest versions` because they are not released anywhere. What matters is
 the last line:
 
-```text
+```text title="Output"
 All 5 checks passed
 ```
 

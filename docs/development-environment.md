@@ -83,7 +83,7 @@ unaffected.
 `scripts/dev` is built on the [Dev Containers CLI](https://github.com/devcontainers/cli),
 which you can also use directly:
 
-```bash
+```bash title="Your terminal"
 devcontainer up --workspace-folder .
 devcontainer exec --workspace-folder . bash
 ```
@@ -102,7 +102,7 @@ On Ubuntu 24.04 you can install ROS 2 directly instead of using the dev containe
 2. Add these lines to your `~/.bashrc`, so every terminal loads ROS and matches the dev
    container's settings:
 
-    ```bash
+    ```bash title="~/.bashrc"
     source /opt/ros/jazzy/setup.bash
     export ROS_AUTOMATIC_DISCOVERY_RANGE=LOCALHOST
     export COLCON_DEFAULTS_FILE=<path to your clone>/.devcontainer/colcon-defaults.yaml
@@ -111,13 +111,13 @@ On Ubuntu 24.04 you can install ROS 2 directly instead of using the dev containe
 3. Open a new terminal and install the workspace's dependencies. If rosdep asks you to run
    `sudo rosdep init`, run it once and try again.
 
-    ```bash
+    ```bash title="Your terminal"
     scripts/install_deps.sh
     ```
 
 4. Build, then load the workspace in each new terminal:
 
-    ```bash
+    ```bash title="Your terminal"
     colcon build
     source install/setup.bash
     ```
@@ -148,14 +148,14 @@ settings, and `install/` in links back to your source files. The two environment
 your clone at different paths (`/ws` inside the container), so whichever builds second
 fails with:
 
-```text
+```text title="Output"
 CMake Error: The current CMakeCache.txt directory /ws/build/... is different than the
 directory ... where CMakeCache.txt was created
 ```
 
 When you switch between them, delete the build output first. The next build recreates it.
 
-```bash
+```bash title="Your terminal or the dev container"
 rm -rf build install log
 ```
 

@@ -103,6 +103,7 @@ theme:
   custom_dir: overrides
   features:
     - content.code.copy
+    - content.tabs.link
     - content.action.edit
     - navigation.tabs
     - navigation.sections
@@ -133,6 +134,10 @@ markdown_extensions:
       permalink: true
   - pymdownx.highlight
   - pymdownx.inlinehilite
+  # Tabs that switch a step between Linux, macOS, and Windows; with content.tabs.link,
+  # picking one picks it on every page.
+  - pymdownx.tabbed:
+      alternate_style: true
   - pymdownx.superfences:
       custom_fences:
         - name: mermaid

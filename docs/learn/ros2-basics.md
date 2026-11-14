@@ -57,7 +57,7 @@ you can see them side by side.
 
 1. In the first terminal, start the talker:
 
-    ```bash
+    ```bash title="Dev container"
     ros2 run demo_nodes_cpp talker
     ```
 
@@ -65,7 +65,7 @@ you can see them side by side.
 
 2. In the second terminal, start the listener:
 
-    ```bash
+    ```bash title="Dev container"
     ros2 run demo_nodes_cpp listener
     ```
 
@@ -74,22 +74,22 @@ you can see them side by side.
 
 3. In the third terminal, look around. Ask which nodes are running:
 
-    ```bash
+    ```bash title="Dev container"
     ros2 node list
     ```
 
-    ```text
+    ```text title="Output"
     /listener
     /talker
     ```
 
     Which topics exist:
 
-    ```bash
+    ```bash title="Dev container"
     ros2 topic list
     ```
 
-    ```text
+    ```text title="Output"
     /chatter
     /parameter_events
     /rosout
@@ -104,11 +104,11 @@ you can see them side by side.
 
 4. Ask about the `/chatter` topic:
 
-    ```bash
+    ```bash title="Dev container"
     ros2 topic info /chatter
     ```
 
-    ```text
+    ```text title="Output"
     Type: std_msgs/msg/String
     Publisher count: 1
     Subscription count: 1
@@ -119,13 +119,13 @@ you can see them side by side.
 
 5. See what that message type contains:
 
-    ```bash
+    ```bash title="Dev container"
     ros2 interface show std_msgs/msg/String
     ```
 
     After a few comment lines starting with `#`, it ends with:
 
-    ```text
+    ```text title="Output"
     string data
     ```
 
@@ -133,11 +133,11 @@ you can see them side by side.
 
 6. Listen in on the topic yourself:
 
-    ```bash
+    ```bash title="Dev container"
     ros2 topic echo /chatter
     ```
 
-    ```text
+    ```text title="Output"
     data: 'Hello World: 10'
     ---
     data: 'Hello World: 11'
@@ -148,7 +148,7 @@ you can see them side by side.
 
 7. Publish your own message from the command line:
 
-    ```bash
+    ```bash title="Dev container"
     ros2 topic pub --once /chatter std_msgs/msg/String "{data: hi from the command line}"
     ```
 
@@ -164,17 +164,17 @@ turtlesim is a tiny simulated robot that ROS uses for teaching. Open the VNC des
 your browser at <http://localhost:6080/vnc.html?autoconnect=true&resize=remote> (see
 [GUI tools](../gui-tools.md)), then start turtlesim in a terminal:
 
-```bash
+```bash title="Dev container"
 ros2 run turtlesim turtlesim_node
 ```
 
 A window with a turtle appears on the desktop. In a second terminal, see its topics:
 
-```bash
+```bash title="Dev container"
 ros2 topic list
 ```
 
-```text
+```text title="Output"
 /parameter_events
 /rosout
 /turtle1/cmd_vel
@@ -184,11 +184,11 @@ ros2 topic list
 
 The turtle listens for driving commands on `/turtle1/cmd_vel`. Check its type:
 
-```bash
+```bash title="Dev container"
 ros2 topic info /turtle1/cmd_vel
 ```
 
-```text
+```text title="Output"
 Type: geometry_msgs/msg/Twist
 Publisher count: 0
 Subscription count: 1
@@ -198,7 +198,7 @@ Subscription count: 1
 `linear` velocity (forward and back) and an `angular` velocity (turning). It is exactly the
 message our rover's drivetrain will listen to on `/cmd_vel`. Send the turtle one:
 
-```bash
+```bash title="Dev container"
 ros2 topic pub --once /turtle1/cmd_vel geometry_msgs/msg/Twist "{linear: {x: 2.0}, angular: {z: 1.8}}"
 ```
 
@@ -206,7 +206,7 @@ The turtle drives forward while turning, drawing a curve. Change the numbers and
 again. To drive it with your keyboard instead, run this in a terminal and use the arrow
 keys while that terminal is selected:
 
-```bash
+```bash title="Dev container"
 ros2 run turtlesim turtle_teleop_key
 ```
 
@@ -236,7 +236,7 @@ the workspace creates three more folders next to `src/`:
 
 **colcon** is the tool that builds every package in the workspace:
 
-```bash
+```bash title="Dev container"
 colcon build
 ```
 

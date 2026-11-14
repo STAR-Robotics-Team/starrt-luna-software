@@ -34,18 +34,22 @@ Terminal**) is where you will run most commands.
 The terminal shows a **prompt** and waits for you. It usually looks something like this,
 showing your username, your computer's name, and the folder you are in:
 
-```text
+```text title="Your terminal"
 ada@laptop:~$
 ```
 
 On macOS it ends with `%` instead of `$`.
 
 To run a command, type it after the prompt and press Enter. In these docs, commands are
-shown in boxes like the one below. Type only the command, not the prompt.
+shown in boxes like the one below. Type only the command, not the prompt. The bar above
+each box says where to type it: **Your terminal** is a terminal on your own computer, and
+**Dev container** is a terminal inside the dev container, which
+[Containers and the dev container](containers.md) introduces. A box titled **Output** shows
+what a command prints, so there is nothing to type.
 
 Try these three, one at a time:
 
-```bash
+```bash title="Your terminal"
 pwd
 ls
 echo Hello, robot
@@ -81,7 +85,7 @@ Two more shortcuts: `.` means "this folder", and `..` means "the folder above th
 
 ### Try it: make a folder and a file
 
-```bash
+```bash title="Your terminal"
 cd ~
 mkdir practice
 cd practice
@@ -111,7 +115,7 @@ the command line has no recycle bin, so deleted files are gone for good.
 Most commands take extra words that change what they do. Take this one from
 [Everyday workflow](../everyday-workflow.md):
 
-```bash
+```bash title="Dev container"
 colcon build --packages-select luna_drivetrain
 ```
 
@@ -139,7 +143,7 @@ Most commands explain their own options if you add `--help`, for example `ls --h
 A **script** is a file of commands saved so they can be run again. To run one, type its
 path. For example, from the top folder of our repository:
 
-```bash
+```bash title="Your terminal"
 scripts/dev help
 ```
 
@@ -152,13 +156,13 @@ appears on screen while you type it; that is normal, so type it and press Enter.
 An **environment variable** is a named setting that the shell hands to every program it
 runs. `$` in front of a name reads one:
 
-```bash
+```bash title="Your terminal"
 echo $HOME
 ```
 
 `export` sets one, but only for the terminal you type it in:
 
-```bash
+```bash title="Your terminal"
 export GREETING=hello
 echo $GREETING
 ```

@@ -13,6 +13,16 @@ The **dev container** is a ready-made Linux environment with ROS 2 Jazzy and eve
 robot code needs. It runs in Docker, so it works the same on Windows, macOS, and Linux.
 [Containers and the dev container](learn/containers.md) explains how it works.
 
+**Where each command runs.** The bar above every command says where to type it:
+
+- **Your terminal** is a terminal on your own computer: on Windows, the Ubuntu terminal
+  that WSL installs (step 1), and on macOS and Linux, the Terminal app.
+- **Dev container** is a terminal inside the dev container (step 3).
+- **Output** is what a command prints, not something to type.
+
+Where the steps differ by operating system, tabs show each one. Pick yours once, and every
+page remembers it.
+
 ## 1. Install the tools
 
 You need Git, Docker, and an editor. These steps use the typical setup, VS Code with its
@@ -22,28 +32,46 @@ work; see
 
 **Docker:**
 
-- **Windows:** Docker runs on WSL 2, so first run `wsl --install` in an administrator
-  PowerShell. It also installs Ubuntu, which you will use as your terminal. Then install
-  [Docker Desktop](https://docs.docker.com/desktop/setup/install/windows-install/).
-- **macOS:** install
-  [Docker Desktop](https://docs.docker.com/desktop/setup/install/mac-install/). Apple
-  Silicon Macs run the container natively.
-- **Linux:** install [Docker Engine](https://docs.docker.com/engine/install/) and add
-  yourself to the `docker` group.
+=== "Linux"
+
+    Install [Docker Engine](https://docs.docker.com/engine/install/), then add yourself to
+    the `docker` group, so you can run Docker without `sudo`, and log out and back in:
+
+    ```bash title="Your terminal: Linux"
+    sudo usermod -aG docker $USER
+    ```
+
+=== "macOS"
+
+    Install [Docker Desktop](https://docs.docker.com/desktop/setup/install/mac-install/).
+    Apple Silicon Macs run the container natively.
+
+=== "Windows"
+
+    Docker runs on WSL 2, Windows's built-in Linux. Open PowerShell as administrator:
+    right-click the Start button, then choose **Terminal (Admin)**, or **Windows PowerShell
+    (Admin)** on Windows 10. Install WSL:
+
+    ```powershell title="Windows PowerShell"
+    wsl --install
+    ```
+
+    Restart when it asks. It also installs Ubuntu: from now on, **your terminal** means
+    the Ubuntu app, for this step and every later one. Then install
+    [Docker Desktop](https://docs.docker.com/desktop/setup/install/windows-install/).
 
 **VS Code:** install [VS Code](https://code.visualstudio.com/) and its
 [Dev Containers extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers).
 
-**Git:** run `git --version` in a terminal to check you have it, and set it up as
-described in [Git and GitHub](learn/git-and-github.md#set-up-git-once). On Windows, use the
-Ubuntu (WSL) terminal for this and every later step.
+**Git:** run `git --version` in your terminal to check you have it, and set it up as
+described in [Git and GitHub](learn/git-and-github.md#set-up-git-once).
 
 ## 2. Clone the repository
 
-In a terminal, go to the folder where you keep projects (your home folder is fine), then
-download the repository and go into it:
+In your terminal, go to the folder where you keep projects (your home folder is fine),
+then download the repository and go into it:
 
-```bash
+```bash title="Your terminal"
 git clone https://github.com/STAR-Robotics-Team/starrt-luna-software.git
 cd starrt-luna-software
 ```
@@ -60,7 +88,7 @@ are much faster there.
 1. Start Docker. On macOS and Windows, open Docker Desktop.
 2. Open the repository in VS Code:
 
-    ```bash
+    ```bash title="Your terminal"
     code .
     ```
 
@@ -87,7 +115,7 @@ explains this, with an exercise to see it for yourself.
 
 In the container terminal:
 
-```bash
+```bash title="Dev container"
 colcon build
 colcon test && colcon test-result --verbose
 ```
@@ -104,11 +132,11 @@ Open a new terminal after building, so it picks up what you built.
 
 Run the talker and listener demo, each in its own terminal:
 
-```bash
+```bash title="Dev container"
 ros2 run demo_nodes_cpp talker
 ```
 
-```bash
+```bash title="Dev container"
 ros2 run demo_nodes_cpp listener
 ```
 
@@ -122,7 +150,7 @@ that runs inside the container. Open it in your browser at
 <http://localhost:6080/vnc.html?autoconnect=true&resize=remote>, then start RViz in a
 container terminal:
 
-```bash
+```bash title="Dev container"
 rviz2
 ```
 
