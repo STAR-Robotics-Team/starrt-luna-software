@@ -1,7 +1,9 @@
-# Registry for the sensors and robot model design (sensors.md, deliverable 6.2, in PR #15).
-# These rows follow the hardware lines in the system design. They are the contract the
-# other docs build against until the sensors doc confirms or changes them. See
+# Registry for the sensors and robot model design (sensors.md, deliverable 6.2). See
 # "Registries" in README.md, then run scripts/design render.
+#
+# Each sensor is a named instance of its kind, with its own frame, topics, and stub
+# (system design, Adding a sensor). The dedicated IMU and the cameras wait on the sensor
+# suite evaluation (6.1), so their rows hold what the other docs assume of them.
 
 [[node]]
 id = "lidar_driver"
@@ -9,20 +11,22 @@ name = "Unitree L2 driver"
 package = "`unitree_lidar_ros2`"
 runs_on = "Robot computer"
 element = "SW.2.1"
-does = "Publishes the L2's point cloud and its built-in IMU, with Unitree's default names and frames"
+does = "Reads the L2 over Ethernet and publishes its point cloud and its built-in IMU, with Unitree's default names and frames"
 
 [[node.publishes]]
 name = "unilidar/cloud"
+carries = "The L2's 3D point cloud"
 type = "sensor_msgs/msg/PointCloud2"
-rate = "[TBD: sensors doc (6.2)]"
-qos = "[TBD: sensors doc (6.2)]"
+rate = "About 12 Hz [TBR: 18 scans a cloud, measured on the bench (6.6)]"
+qos = "reliable, volatile, depth 10, as the driver publishes it"
 note = "In frame unilidar_lidar, as Unitree's launch file names it (system design, Hardware lines)."
 
 [[node.publishes]]
 name = "unilidar/imu"
+carries = "The L2's built-in gyroscope and accelerometer"
 type = "sensor_msgs/msg/Imu"
-rate = "[TBD: sensors doc (6.2)]"
-qos = "[TBD: sensors doc (6.2)]"
+rate = "500 Hz [TBR: the L2's reporting rate, measured on the bench (6.6)]"
+qos = "reliable, volatile, depth 10, as the driver publishes it"
 note = "In frame unilidar_imu, fixed to the LiDAR (system design, The two IMUs)."
 
 [[node]]
@@ -36,9 +40,10 @@ publishes_shared = ["/diagnostics"]
 
 [[node.publishes]]
 name = "imu/data_raw"
+carries = "The dedicated IMU's gyroscope and accelerometer"
 type = "sensor_msgs/msg/Imu"
-rate = "[TBD: sensors doc (6.2)]"
-qos = "[TBD: sensors doc (6.2)]"
+rate = "100 Hz [TBR: the stub's rate (6.9), until 6.1 picks the part]"
+qos = "reliable, volatile, depth 10 [TBR: until the driver from 6.1 is known]"
 note = "The main IMU, near the center of mass, following REP 145's names (system design, The two IMUs)."
 
 [[node]]
@@ -52,8 +57,47 @@ publishes_shared = ["/diagnostics"]
 
 [[node.publishes]]
 id = "camera-image"
-name = "[TBD: camera image topics, sensors doc (6.2)]"
-type = "sensor_msgs/msg/CompressedImage [TBR: sensors doc (6.2)]"
-rate = "[TBD: sensors doc (6.2)]"
-qos = "[TBD: sensors doc (6.2)]"
+name = "[TBD: the driving camera's topic, once 6.1 picks the camera]"
+carries = "The driving camera's compressed image"
+type = "sensor_msgs/msg/CompressedImage [TBR]"
+rate = "[TBD: the camera's rate; the operator view takes 5 Hz]"
+qos = "[TBD: the driver's QoS]"
+note = "Proposed name: camera/front/image_raw/compressed, for a camera instance named front (section 3)."
 
+[[node]]
+id = "robot_model"
+name = "`robot_state_publisher` and `joint_state_publisher`"
+package = "`robot_state_publisher`, `joint_state_publisher`; the model in `luna_description` (6.3)"
+runs_on = "Robot computer"
+element = "SW.2.1"
+does = "joint_state_publisher merges the drivetrain's and the mechanism's joint states into joint_states, and robot_state_publisher publishes the robot model and the transforms of every link it describes"
+subscribes = ["/drivetrain/joint_states", "/mechanism/joint_states"]
+
+# ----------------------------------------------------------------------------------------
+# Open questions (section 9). Who answers each one, and by when, is in Turgor. Which
+# dedicated IMU and cameras the robot gets is the system design's question 2 (6.1).
+# ----------------------------------------------------------------------------------------
+
+[[question]]
+number = 1
+status = "open"
+turgor = ["6.1"]
+text = "How is the L2 mounted, so it sees the ground ahead? Its field of view is a hemisphere above it, 90° tall, or 96° in negative angle mode ([L2 manual, p. 17](../sources.md#unitree-l2-manual)), so mounted level it sees little of the ground where the rocks and craters are. Tilted forward, or upside down? For Mechanical, with the mount's height."
+
+[[question]]
+number = 2
+status = "open"
+turgor = ["5.6"]
+text = "If the Jetson's own Wi-Fi proves too weak for the robot's radio (5.6), a wired radio needs a second Ethernet port beside the L2's: a USB Ethernet adapter, or a small switch the two share?"
+
+[[question]]
+number = 3
+status = "open"
+turgor = ["6.5"]
+text = "Which parts of the robot itself does the L2 see, such as the excavator or the bin, and how are they cut out of the cloud: a box around the robot in base_link, or the driver's range_min?"
+
+[[question]]
+number = 4
+status = "open"
+turgor = ["6.6"]
+text = "The L2 driver stamps each cloud with the computer's time when it arrives (use_system_timestamp is true). Is that within TPM-5's 10 ms timestamp mismatch of the IMUs' stamps? Measure on the bench, and if not, use the L2's own time."

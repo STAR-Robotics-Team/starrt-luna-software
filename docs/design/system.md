@@ -64,19 +64,19 @@ design doc. The Turgor column gives the deliverable that writes that doc.
 | SW | Robot software | Controls and monitors the rover, by remote control and on its own | Robot computer, operator laptop, radio link | [System Design](system.md) | 1.20 |
 | SW.1 | Robot control software | Moves actuators only as the current mode allows | Motor controllers and power distribution panel (PDP), over CAN | [Operating Modes Design](operating-modes.md) | 1.19 |
 | SW.1.1 | Mode manager | Owns the robot's state and task mode; disables the robot on link loss, a fault, or a command | None directly; it hears about CAN devices through SW.1.2 to SW.1.4 | [Operating Modes Design](operating-modes.md) | 1.19 |
-| SW.1.2 | Drivetrain control | Sends drive motor commands and per-mode current limits; computes wheel odometry [TBD: which node, system open question 9] | Drive motor controllers; wheel and track geometry | `drivetrain.md`, not written yet (3.1) | 3.1 |
-| SW.1.3 | Mechanism control | Sends mechanism commands and per-mode limits; reports whether the excavator is stowed and the hatch is closed | Mechanism motor controllers, stowed and hatch sensors, limit switches | `mechanism.md`, not written yet (4.2) | 4.2 |
+| SW.1.2 | Drivetrain control | Turns velocity commands into wheel speeds within the mode's limits, sends them and per-mode current limits to the drive motor controllers, and computes wheel odometry | Drive motor controllers; wheel and track geometry | [Drivetrain Subsystem Design](drivetrain.md) | 3.1 |
+| SW.1.3 | Mechanism control | Sends mechanism commands and per-mode limits; reports whether the excavator is stowed and the hatch is closed | Mechanism motor controllers, stowed and hatch sensors, limit switches | [Mechanism Subsystem Design](mechanism.md) | 4.2 |
 | SW.1.4 | Power telemetry | Reports battery voltage, each channel's current, and energy used, decoded from the PDP's CAN frames | PDP (CAN ID 0, firmware 1.40 or later) | [Operating Modes Design](operating-modes.md) | 1.19 |
-| SW.1.5 | Command selection | Passes on drive and mechanism commands from the active control source, TELEOP or AUTO, and drops the other source's [TBR: proposed in the PDR; whether it is a node of its own, and which doc designs it, wait on teleop open question 3] | None outside Software | [System Design](system.md) | None |
+| SW.1.5 | Command selection | Passes on drive and mechanism commands from the control source /robot/mode names, TELEOP or AUTO, and drops the other source's | None outside Software | [System Design](system.md) | None |
 | SW.2 | Perception and autonomy software | Sees the arena and runs the mission cycle hands-free | Sensors | [Autonomy Subsystem Design](autonomy.md) | 7.2 |
-| SW.2.1 | Sensor interface and robot model | Publishes each sensor's data in its own frame, plus the robot's geometry | LiDAR, IMUs, cameras; Mechanical's CAD | `sensors.md`, not written yet (6.2) | 6.2 |
+| SW.2.1 | Sensor interface and robot model | Publishes each sensor's data in its own frame, plus the robot's geometry | LiDAR, IMUs, cameras; Mechanical's CAD | [Sensors and Robot Model Design](sensors.md) | 6.2 |
 | SW.2.2 | Localization and mapping | Finds position and heading from a random start and builds the obstacle map, using only onboard sensors | Start-zone markers, if used | [Autonomy Subsystem Design](autonomy.md) | 7.2 |
 | SW.2.3 | Path planning and following | Plans a path around obstacles to the target zone and follows it | None outside Software | [Autonomy Subsystem Design](autonomy.md) | 7.2 |
 | SW.2.4 | Task sequencer | Runs dig, travel, dump, travel in AUTO, through the mode manager | None outside Software | [Autonomy Subsystem Design](autonomy.md) | 7.2 |
-| SW.3 | Operator station software | Gives Mission Control control of the robot and a view of it, from a browser on any member's laptop | Operator laptop, gamepad, NASA's network switch | `teleoperation.md`, not written yet (5.1) | 5.1 |
-| SW.3.1 | Operator frontend | Reads the gamepad, sends /joy, the heartbeat, and mode requests over rosbridge, and shows the operator views and live link bandwidth | Gamepad (Xbox Model 1914, USB-C cable); operator laptop [TBR: an HTTPS page served by the robot, or a desktop app, teleoperation doc (5.1)] | `teleoperation.md`, not written yet (5.1) | 5.1 |
-| SW.3.2 | Teleop mapping | Turns /joy into drive and mechanism commands on the robot computer, zeroes them when the hold button is released, and drops stale input | None outside Software | `teleoperation.md`, not written yet (5.1) | 5.1 |
-| SW.4 | Bringup, link and logging | Starts all robot software at power-on, runs the rosbridge server that decides which topics cross the radio link, and records every run | Robot computer, robot radio, access point | `platform.md`, not written yet (2.11) | 2.11 |
+| SW.3 | Operator station software | Gives Mission Control control of the robot and a view of it, from a browser on any member's laptop | Operator laptop, gamepad, NASA's network switch | [Teleoperation Subsystem Design](teleoperation.md) | 5.1 |
+| SW.3.1 | Operator frontend | Reads the gamepad, sends /joy, the heartbeat, and mode requests over rosbridge, and shows the operator views and live link bandwidth | Gamepad (Xbox Model 1914, USB-C cable); operator laptop [TBR: an HTTPS page served by the robot, or a desktop app, teleoperation doc (5.1)] | [Teleoperation Subsystem Design](teleoperation.md) | 5.1 |
+| SW.3.2 | Teleop mapping | Turns /joy into drive and mechanism commands on the robot computer, zeroes them when the hold button is released, and drops stale input | None outside Software | [Teleoperation Subsystem Design](teleoperation.md) | 5.1 |
+| SW.4 | Bringup, link and logging | Starts all robot software at power-on, runs the rosbridge server that decides which topics cross the radio link, and records every run | Robot computer, robot radio, access point | [Platform Design](platform.md) | 2.11 |
 
 <!-- /design -->
 
@@ -86,9 +86,8 @@ Every node in the design docs' registries, grouped by the computer it runs on. A
 arrow is a topic, from publisher to subscriber; a dashed arrow is a service call, from
 client to server. A name not decided yet shows "(TBD)". Every node of ours that can fail
 also publishes `/diagnostics` to `mode_manager`, which the graph leaves out to stay
-readable. The docs that are not written yet
-each have a registry with what the other docs assume of them, so this graph is complete
-in shape, but most of its names and rates wait on those docs.
+readable. Every subsystem's doc is written, so the graph shows the whole design; names
+and rates still marked TBD or TBR wait on the decisions they name.
 [Interfaces](interfaces.md) lists every node and interface in full.
 
 <!-- design: graph (generated from docs/design/*.toml by scripts/design render: edit those files, not this block) -->
@@ -97,13 +96,18 @@ in shape, but most of its names and rates wait on those docs.
 flowchart LR
   subgraph g0["Robot computer"]
     nmode_manager["mode_manager"]
-    ndrivetrain["Drivetrain node"]
-    nmechanism["Mechanism node"]
+    ndrive_mode_gate["Drive mode gate"]
+    ndrivetrain["diff_drive_controller"]
+    ndrive_joint_states["joint_state_broadcaster (drivetrain)"]
+    nmechanism_mode_gate["Mechanism mode gate"]
+    nmechanism_joint_states["joint_state_broadcaster (mechanism)"]
+    nmechanism["mechanism_controller"]
     npower_panel["Power panel reading node"]
-    ncommand_selection["Command selection node"]
+    ncommand_selection["command_selector"]
     ncamera_driver["Camera driver"]
     nimu_driver["Dedicated IMU driver"]
     nlidar_driver["Unitree L2 driver"]
+    nrobot_model["robot_state_publisher and joint_state_publisher"]
     nlocalization["Localization and mapping"]
     nplanner["Path planning and following"]
     ntask_sequencer["Task sequencer"]
@@ -115,12 +119,12 @@ flowchart LR
     noperator_frontend["Operator frontend"]
   end
   ncommand_selection -->|"/cmd_vel"| ndrivetrain
-  ncommand_selection -->|"mechanism command topic (TBD)"| nmechanism
+  ncommand_selection -->|"/mechanism/#lt;function#gt;/command"| nmechanism
   nmode_manager -->|"/robot/mode"| ncommand_selection
   nmode_manager -->|"/robot/mode"| nplanner
   nmode_manager -->|"/robot/mode"| ntask_sequencer
-  nmode_manager -->|"/robot/mode"| ndrivetrain
-  nmode_manager -->|"/robot/mode"| nmechanism
+  nmode_manager -->|"/robot/mode"| ndrive_mode_gate
+  nmode_manager -->|"/robot/mode"| nmechanism_mode_gate
   nmode_manager -->|"/robot/mode"| noperator_frontend
   nmode_manager -->|"/robot/mode"| nteleop_node
   noperator_frontend -.->|"/robot/request_mode"| nmode_manager
@@ -128,24 +132,30 @@ flowchart LR
   ntask_sequencer -.->|"/robot/request_task"| nmode_manager
   npower_panel -->|"/power/battery"| nmode_manager
   npower_panel -->|"/power/battery"| noperator_frontend
-  nlocalization -->|"obstacle map topic (TBD)"| nplanner
-  nlocalization -->|"obstacle map topic (TBD)"| noperator_frontend
-  nplanner -->|"planned path topic (TBD)"| noperator_frontend
-  nplanner -->|"AUTO drive command topic (TBD)"| ncommand_selection
-  ntask_sequencer -->|"AUTO mechanism command topic (TBD)"| ncommand_selection
-  ndrivetrain -->|"/drivetrain/joint_states"| nlocalization
-  ndrivetrain -->|"wheel odometry topic (TBD)"| nlocalization
+  nlocalization -->|"/autonomy/odometry"| nplanner
+  nlocalization -->|"/autonomy/odometry"| ntask_sequencer
+  nlocalization -->|"/autonomy/obstacle_map"| nplanner
+  nlocalization -->|"/autonomy/obstacle_map"| noperator_frontend
+  nplanner -->|"/autonomy/plan"| noperator_frontend
+  nplanner -->|"/auto/cmd_vel"| ncommand_selection
+  ntask_sequencer -.->|"/autonomy/navigate"| nplanner
+  ntask_sequencer -->|"/auto/mechanism/#lt;function#gt;/command"| ncommand_selection
+  ntask_sequencer -->|"/autonomy/status"| noperator_frontend
+  ndrivetrain -->|"/drivetrain/odom"| nlocalization
+  ndrive_joint_states -->|"/drivetrain/joint_states"| nlocalization
+  ndrive_joint_states -->|"/drivetrain/joint_states"| nrobot_model
   nmechanism -->|"/mechanism/status"| nmode_manager
   nmechanism -->|"/mechanism/status"| ntask_sequencer
   nmechanism -->|"/mechanism/status"| noperator_frontend
+  nmechanism_joint_states -->|"/mechanism/joint_states"| nrobot_model
   nlidar_driver -->|"unilidar/cloud"| nlocalization
   nlidar_driver -->|"unilidar/imu"| nlocalization
   nimu_driver -->|"imu/data_raw"| nlocalization
-  ncamera_driver -->|"camera image topics (TBD)"| noperator_frontend
+  ncamera_driver -->|"the driving camera's topic (TBD)"| noperator_frontend
   noperator_frontend -->|"/joy"| nteleop_node
   noperator_frontend -->|"/operator/heartbeat"| nmode_manager
   nteleop_node -->|"/teleop/cmd_vel"| ncommand_selection
-  nteleop_node -->|"teleop's mechanism command topics (TBD)"| ncommand_selection
+  nteleop_node -->|"/teleop/mechanism/#lt;function#gt;/command"| ncommand_selection
 ```
 
 <!-- /design -->
@@ -155,35 +165,60 @@ flowchart LR
 Each subsystem's design doc owns the topics, services, and actions its nodes publish or
 serve, in its registry ([Registries](README.md#registries)), and
 [Interfaces](interfaces.md) lists them all. This doc owns the contracts at the hardware,
-and the interfaces that belong to no subsystem yet.
+and the interfaces that belong to no one subsystem.
 
 ### Between subsystems
 
-The command selection the PDR proposes (SW.1.5) has no design doc yet, and every node of
-ours that can fail publishes `/diagnostics`, so both are defined here.
+Command selection (SW.1.5) stands between every command source and every actuator, so no
+one subsystem owns it, and every node of ours that can fail publishes `/diagnostics`; both
+are defined here.
 
 <!-- design: nodes (generated from system.toml by scripts/design render: edit that file, not this table) -->
 
 | Node | Package | Runs on | Element | What it does |
 | --- | --- | --- | --- | --- |
-| Command selection node | [TBD: teleop open question 3] | Robot computer | SW.1.5 Command selection | Passes on the drive and mechanism commands of the active control source, as /robot/mode names it, and drops the other source's |
+| `command_selector` | `luna_modes` | Robot computer | SW.1.5 Command selection | Forwards, unchanged, the drive and mechanism commands of the control source /robot/mode names, and drops the other source's. It never falls back to the other source, forwards nothing unless the robot is ENABLED, and sends one zero command on each output when the source changes. |
 
 <!-- /design -->
 
 <!-- design: interfaces (generated from system.toml by scripts/design render: edit that file, not this table) -->
 
-| Name | Kind | Type | Rate | Publisher or server | Subscriber or client | QoS |
-| --- | --- | --- | --- | --- | --- | --- |
-| `/cmd_vel` | topic | geometry_msgs/msg/TwistStamped [TBR: the drivetrain draft (PR #17) uses Twist; Turgor 3.1 and 5.3 and the teleop draft use TwistStamped] | 20 Hz [TBR: drivetrain draft, PR #17] | Command selection node | Drivetrain node | best effort, depth 1 [TBR: drivetrain draft, PR #17] |
-| [TBD: mechanism command topic, teleop open question 3] | topic | [TBD: in the mechanism doc (4.2)] | [TBD: in the mechanism doc (4.2)] | Command selection node | Mechanism node | [TBD: in the mechanism doc (4.2)] |
-| `/diagnostics` | topic | `diagnostic_msgs/msg/DiagnosticArray` | 1 Hz and on change | Drivetrain node, Mechanism node, Camera driver, Dedicated IMU driver, Localization and mapping, Path planning and following, Task sequencer | `mode_manager` | reliable, depth 10 |
-| `/robot/mode` | topic | `luna_interfaces/msg/RobotMode` | 10 Hz and on change | `mode_manager` | Drivetrain node, Mechanism node, Command selection node, Path planning and following, Task sequencer, Operator frontend, `teleop_node` | reliable, transient local, depth 1 |
-| [TBD: AUTO drive command topic, teleop open question 3] | topic | geometry_msgs/msg/TwistStamped [TBR: matches /cmd_vel] | [TBD: autonomy doc (7.2)] | Path planning and following | Command selection node | [TBD: autonomy doc (7.2)] |
-| [TBD: AUTO mechanism command topic, teleop open question 3] | topic | [TBD: mechanism doc (4.2)] | [TBD: autonomy doc (7.2)] | Task sequencer | Command selection node | [TBD: autonomy doc (7.2)] |
-| `/teleop/cmd_vel` | topic | geometry_msgs/msg/TwistStamped [TBR: teleop draft, PR #14] | `command_rate`, 20 Hz [TBR: teleop draft, PR #14] | `teleop_node` | Command selection node | best effort, volatile, depth 1 [TBR: teleop draft, PR #14] |
-| [TBD: teleop's mechanism command topics, teleop open questions 3 and 5] | topic | [TBD: mechanism doc (4.2)] | `command_rate`, 20 Hz [TBR: teleop draft, PR #14, for the mechanism doc (4.2) to confirm] | `teleop_node` | Command selection node | [TBD: teleoperation doc (5.1)] |
+| Name | What it carries | Kind | Type | Rate | Publisher or server | Subscriber or client | QoS |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| `/cmd_vel` | The active control source's drive command: forward speed and turn rate | topic | `geometry_msgs/msg/TwistStamped` | The active source's rate: `command_rate`, 20 Hz | `command_selector` | `diff_drive_controller` | reliable, volatile, depth 1 |
+| `/mechanism/<function>/command` | The active control source's command for one mechanism function | topic | luna_interfaces/msg/ActuatorCommand [TBR: proposed in the mechanism doc (4.2)] | The active source's rate: `command_rate`, 20 Hz | `command_selector` | `mechanism_controller` | reliable, volatile, depth 1 |
+| `/diagnostics` | Each node's health, OK, WARN, or ERROR, with a reason | topic | `diagnostic_msgs/msg/DiagnosticArray` | 1 Hz and on change | Drive mode gate, Mechanism mode gate, Camera driver, Dedicated IMU driver, Localization and mapping, Path planning and following, Task sequencer | `mode_manager` | reliable, depth 10 |
+| `/robot/mode` | The robot state, the control source, the task mode, and why | topic | `luna_interfaces/msg/RobotMode` | 10 Hz and on change | `mode_manager` | Drive mode gate, Mechanism mode gate, `command_selector`, Path planning and following, Task sequencer, Operator frontend, `teleop_node` | reliable, transient local, depth 1 |
+| `/auto/cmd_vel` | Autonomy's drive command, for command_selector | topic | `geometry_msgs/msg/TwistStamped` | `command_rate`, 20 Hz | Path planning and following | `command_selector` | best effort, volatile, depth 1 |
+| `/auto/mechanism/<function>/command` | Autonomy's command for one mechanism function, for command_selector | topic | luna_interfaces/msg/ActuatorCommand [TBR: proposed in the mechanism doc (4.2)] | 20 Hz [TBR: matches teleop's command_rate] | Task sequencer | `command_selector` | best effort, volatile, depth 1 |
+| `/teleop/cmd_vel` | Teleop's drive command, for command_selector | topic | `geometry_msgs/msg/TwistStamped` | `command_rate`, 20 Hz [TBR] | `teleop_node` | `command_selector` | best effort, volatile, depth 1 |
+| `/teleop/mechanism/<function>/command` | Teleop's command for one mechanism function, for command_selector | topic | luna_interfaces/msg/ActuatorCommand [TBR: proposed in the mechanism doc (4.2)] | `command_rate`, 20 Hz [TBR] | `teleop_node` | `command_selector` | best effort, volatile, depth 1 |
 
 <!-- /design -->
+
+### Command selection
+
+Two control sources send commands. `teleop_node` turns the gamepad into `/teleop/cmd_vel`
+and teleop's mechanism commands, and autonomy sends `/auto/cmd_vel` and its own mechanism
+commands. The drivetrain and the mechanism each listen to one topic per command, so
+`command_selector` stands between them and follows `/robot/mode`:
+
+- **It forwards only the source `/robot/mode` names,** TELEOP or AUTO, and only while the
+  robot is ENABLED. The other source's commands are dropped.
+- **It never falls back to the other source.** When the active source goes quiet, nothing
+  passes, and each actuator stops on its own once its commands go stale
+  ([Conventions](#4-parameters)).
+- **It forwards each command unchanged,** with its original timestamp, so each actuator can
+  tell an old command from a new one.
+- **When the source changes,** including to none, it sends one zero command on each output,
+  so the new source starts from rest.
+
+It is a node of our own rather than twist_mux, a common package that also chooses between
+velocity sources. twist_mux passes on the highest-priority input whose last message is
+younger than that input's timeout, timed from when it arrived, so when that input goes
+quiet it falls back to the next one ([twist_mux's topic handle](../sources.md#twist-mux-topic-handle)).
+Our rule is the reverse. twist_mux also carries only velocity commands, so the mechanism's
+commands would need code of our own anyway.
 
 ### Hardware lines
 
@@ -194,17 +229,20 @@ each system in each test mode.
 
 | System | What crosses the line | Stand-ins below it | Design doc |
 | --- | --- | --- | --- |
-| Drivetrain | 4 wheel joints, 2 per side: a velocity command in; velocity and position out, and current where the motor controller measures it | Stub hardware, fake motor controllers, Gazebo | `drivetrain.md` (3.1) |
-| Mechanism | Each mechanism joint's command and state, plus [TBD: the limit switch and stowed signals, which the mechanism doc defines (4.2)] | Stub hardware, fake motor controllers | `mechanism.md` (4.2) |
+| Drivetrain | 4 wheel joints, 2 per side: a velocity command in; velocity and position out, and current where the motor controller measures it | Stub hardware, fake motor controllers, Gazebo | [Drivetrain](drivetrain.md#3-interfaces) |
+| Mechanism | Each mechanism joint's command and state, plus the limit switch, excavator stowed, and hatch closed signals ([mechanism design, section 5](mechanism.md#5-libraries-and-hardware-interfaces)) | Stub hardware, fake motor controllers | [Mechanism](mechanism.md#3-interfaces) |
 | Battery and power | `/power/battery` (`sensor_msgs/msg/BatteryState`, 10 Hz) and `/diagnostics` | A stub node, a fake power panel | [Operating modes](operating-modes.md#3-interfaces) |
-| LiDAR | The Unitree L2's point cloud and its built-in IMU, as Unitree's driver publishes them: by default `unilidar/cloud` in frame `unilidar_lidar` and `unilidar/imu` in frame `unilidar_imu` ([unitree_lidar_ros2 launch file](../sources.md#unitree-lidar-ros2-launch)) | A stub node, a recording, Gazebo | `sensors.md` (6.2) |
-| Dedicated IMU | One `sensor_msgs/msg/Imu`: angular velocity from the gyroscope and linear acceleration from the accelerometer, in the IMU's own frame near the center of mass. No magnetometer. | A stub node, a recording, Gazebo | `sensors.md` (6.2) |
-| Cameras | [TBD: the image and camera info topics and frames of the cameras chosen in 6.1] | A test-pattern stub, a recording, Gazebo | `sensors.md` (6.2) |
-| Gamepad | `/joy`, sent by the operator frontend from the browser's Gamepad API [TBR: chosen in the PR #14 review, 2026-10-26], with [TBD: the button and stick numbers from the gamepad's table (5.2)] | A recording | `teleoperation.md` (5.1) |
-| Radio link | The messages that cross between the operator laptop and the robot over one rosbridge connection (WebSocket over TCP): `/joy`, the heartbeat, mode requests, and telemetry [TBR: chosen in the PR #14 review, 2026-10-26] | Both sides on one computer | `teleoperation.md` (5.1) |
+| LiDAR | The Unitree L2's point cloud and its built-in IMU, as Unitree's driver publishes them: by default `unilidar/cloud` in frame `unilidar_lidar` and `unilidar/imu` in frame `unilidar_imu` ([unitree_lidar_ros2 launch file](../sources.md#unitree-lidar-ros2-launch)) | A stub node, a recording, Gazebo | [Sensors](sensors.md#3-interfaces) |
+| Dedicated IMU | One `sensor_msgs/msg/Imu`: angular velocity from the gyroscope and linear acceleration from the accelerometer, in the IMU's own frame near the center of mass. No magnetometer. | A stub node, a recording, Gazebo | [Sensors](sensors.md#3-interfaces) |
+| Cameras | [TBD: the image and camera info topics and frames of the cameras chosen in 6.1] | A test-pattern stub, a recording, Gazebo | [Sensors](sensors.md#3-interfaces) |
+| Gamepad | `/joy`, sent by the operator frontend from the browser's Gamepad API, with [TBD: the button and stick numbers from the gamepad's table (5.2)] | A recording | [Teleoperation](teleoperation.md#5-libraries-and-hardware-interfaces) |
+| Radio link | The messages that cross between the operator laptop and the robot over one rosbridge connection (WebSocket over TCP): `/joy`, the heartbeat, mode requests, and telemetry | Both sides on one computer | [Teleoperation](teleoperation.md#3-interfaces) and [Platform](platform.md#5-libraries-and-hardware-interfaces) |
 
-The design docs in code font are not written yet; the number after each is its
-deliverable.
+For the drivetrain and the mechanism, the line is the ros2_control hardware interface: the
+joints and their command and state interfaces. Their stub is ros2_control's mock hardware,
+which copies each command into its state
+([Mock Components](../sources.md#ros2-control-mock-components)), and in Gazebo the same
+controllers run through gz_ros2_control ([gz_ros2_control](../sources.md#gz-ros2-control)).
 
 ### The two IMUs
 
@@ -251,8 +289,22 @@ stub, recording, and Gazebo modes, as [Testing layers](testing-layers.md) descri
 
 - **Launch arguments** that pick stand-ins or real hardware, one for the whole robot and
   one per system: [TBD: named in deliverable 1.4, by Oct 21].
-- **Conventions** for topic names, QoS, frames, and parameter files: [TBD: written with
-  the node graph, by Oct 28].
+- **Conventions:**
+    - **A command carries the time of the input it came from,** in `header.stamp`:
+      `teleop_node` stamps each command with the time of the `/joy` message it came from,
+      and autonomy with the time it computed the command. Nothing downstream stamps it
+      again, so `command_selector` forwards it unchanged.
+    - **Every actuator stops on its own when its commands go stale.** The drivetrain
+      zeroes its output once its last command is older than `cmd_vel_timeout`
+      ([drivetrain design](drivetrain.md#4-parameters)), the mechanism zeroes a function
+      once its last command is older than `command_timeout`
+      ([mechanism design](mechanism.md#4-parameters)), and both stop once `/robot/mode` is
+      older than `mode_timeout` ([operating modes](operating-modes.md#4-parameters)).
+    - **A topic's name starts with the subsystem that publishes it,** such as
+      `/drivetrain/odom`, `/mechanism/status`, or `/autonomy/plan`, and the two command
+      sources use `/teleop/` and `/auto/`. Sensor drivers keep their makers' names
+      ([Hardware lines](#hardware-lines)).
+    - [TBD: QoS defaults, frame names, and parameter files, with the node graph (1.5)]
 
 ## 5. Libraries and hardware interfaces
 
@@ -291,7 +343,8 @@ operator frontend in a browser, any OS (5.1)`"]
 on the corner shelf (5.7)`"]
     subgraph robot["Robot"]
       direction TB
-      radio["`**Robot radio** (5.7)`"] --- jetson["`**Jetson Orin Nano**
+      radio["`**Robot radio**
+the Jetson's own Wi-Fi for now (5.7)`"] --- jetson["`**Jetson Orin Nano**
 every robot node, including teleop_node and rosbridge (5.1)`"]
       jetson ---|USB| can
       subgraph can["CAN bus, 1 Mbit/s"]
@@ -302,18 +355,21 @@ can0`"]
 drive (3.2) and mechanism (4.3), each driving its motor or actuator`"]
         pdp["`**Power distribution panel**
 battery voltage and currents`"]
-        canable ~~~ ctrl ~~~ pdp
+        canable ---|CAN| ctrl
+        ctrl ---|CAN| pdp
+        pdp -->|power, each channel's current measured| ctrl
       end
-      jetson --- sensors
       subgraph sensors["Sensors (6.1)"]
         direction TB
         lidar["`**Unitree L2 LiDAR**
-with its built-in IMU; Ethernet on the bench (6.6)`"]
+with its built-in IMU`"]
         imu["`**Dedicated IMU**
 near the center of mass`"]
         cams["`**Cameras**`"]
-        lidar ~~~ imu ~~~ cams
       end
+      jetson ---|Ethernet| lidar
+      jetson ---|USB or serial, 6.1| imu
+      jetson ---|USB| cams
     end
   end
   sw ---|NASA's cable| ap
@@ -331,9 +387,21 @@ near the center of mass`"]
   style sensors fill:#8b939c14,stroke:#8b939c80
 ```
 
-Blue boxes run our code, gray is NASA's, and green is the team's hardware. A number names
-the deliverable that picks that part. Lines are physical connections; the dotted one is
-radio.
+```mermaid
+flowchart LR
+  key["`**Key**`"] ~~~ k1["Runs our code"] ~~~ k2["NASA's equipment"] ~~~ k3["Team hardware"]
+  classDef label fill:none,stroke:none
+  classDef ours fill:#4c669026,stroke:#4c6690
+  classDef ros fill:#8b939c1f,stroke:#8b939c
+  classDef hw fill:#4a725926,stroke:#4a7259
+  class key label
+  class k1 ours
+  class k2 ros
+  class k3 hw
+```
+
+A number names the deliverable that picks that part. Lines are physical connections; the
+dotted one is radio.
 
 ### How the operator station reaches the robot
 
@@ -391,8 +459,8 @@ rosbridge, teleop_node, mode manager, drive, sensors`"]
   ([GL.iNet network modes guide, section "For models with Wi-Fi"](../sources.md#glinet-network-modes)).
   So [TBD: either NASA's cable goes into one of its LAN ports, or the Beryl AX runs in
   Access Point mode and every device gets a fixed address; 5.7 decides].
-  [TBR: With rosbridge (PR #14 review, 2026-10-26), only the laptop's WebSocket connection has to reach
-  the robot; ROS 2 discovery stays on the robot.]
+  With rosbridge, only the laptop's WebSocket connection has to reach the robot, so ROS 2
+  discovery can stay on the robot [TBR: platform open question 4].
 - **Deliverable 5.7 decides the parts and the network,** by Oct 28: the access point, the
   robot's radio and antennas, the addresses, and how ROS 2 crosses the link. It also
   settles whether the team's Open-Mesh OM5P-AC radio can be used, and asks the organizers
@@ -431,8 +499,8 @@ rosbridge, teleop_node, mode manager, drive, sensors`"]
 | 5. How do stand-ins swap in for hardware, system by system, and what are the launch arguments called? | Open | 1.4 |
 | 6. May the robot use 5 GHz during runs? The guidebook's §14.1.17 and §14.4 disagree ([Rules the robot must follow](../competition/robot-rules.md#communications)). Ask the organizers. Asked through 5.7; [TBD: no answer yet as of 2026-11-04]. | Open | 5.7 |
 | 7. Does a mini PC replace the Jetson on the rover? The team's Hacker Initiative grant application budgets one, an ASRock 4X4 BOX-AI340 with 32 GB of memory, for its faster CPU and hardware video encoding, plus an isolated CANable 2.0 Pro clone. The Jetson would then run the bench testbed. [TBD: decided by the grant, announced by Dec 21, 2026.] If it does, this doc's Jetson references become the mini PC, and on its standard Ubuntu kernel the CANable needs no driver build ([CAN bus](../can-bus.md#what-you-need)). | Open | 1.16 |
-| 8. Should the robot's radio be the robot computer's own Wi-Fi? The computer runs on its own battery, so a main-battery sag in a stall could not drop the link, while a separate radio on the main battery reboots if the pack falls below its converter's 9 V minimum ([operating modes, section 7](operating-modes.md#7-behavior-on-failure)). It must still meet the radio rules ([Rules the robot must follow](../competition/robot-rules.md#communications)). | Open | 5.7 |
-| 9. Which node publishes wheel odometry, and on which topic? The drivetrain draft (PR #17) has one drivetrain_node that publishes joint states only; Turgor 3.3 and 3.5 plan ros2_control, whose diff drive controller publishes odometry. Localization (7.5) and the position error budget depend on it. | Open | 3.1 |
+| 8. Should the robot's radio be the robot computer's own Wi-Fi? The computer runs on its own battery, so a main-battery sag in a stall could not drop the link, while a separate radio on the main battery reboots if the pack falls below its converter's 9 V minimum ([operating modes, section 7](operating-modes.md#7-behavior-on-failure)). It must still meet the radio rules ([Rules the robot must follow](../competition/robot-rules.md#communications)). [TBR: Yes for now. The Jetson's one Ethernet port goes to the LiDAR ([sensors design](sensors.md)), so the radio is the Jetson's own Wi-Fi until the 5.6 bench test measures its dropouts. A wired radio would then need a second Ethernet port, such as a USB adapter.] | Open | 5.7 |
+| 9. The drivetrain's diff drive controller publishes wheel odometry on /drivetrain/odom ([drivetrain design](drivetrain.md)), with its own odom to base_link transform turned off, because localization publishes that transform ([autonomy design](autonomy.md)). | Decided 2026-11-14 | 3.1 |
 
 <!-- /design -->
 

@@ -13,14 +13,25 @@ line; this page draws each system in each mode.
 - **Each box's first line says whose code it is,** with the deliverable that builds it,
   such as "Ours · C++ · 3.5". The colors say the same:
 
-    | Color | What it is |
-    | --- | --- |
-    | Blue | Our code |
-    | Gray | ROS or vendor code |
-    | Sand | A stand-in for hardware |
-    | Green | Hardware |
-    | Rose, dashed | The hardware line |
-    | Gray, dashed | No hardware in this mode |
+    ```mermaid
+    flowchart LR
+      key["`**Key**`"] ~~~ k1["Our code"] ~~~ k2["ROS or vendor code"] ~~~ k3["A stand-in for hardware"]
+      key2[" "] ~~~ k4["Hardware"] ~~~ k5["The hardware line"] ~~~ k6["No hardware in this mode"]
+      classDef label fill:none,stroke:none
+      classDef ours fill:#4c669026,stroke:#4c6690
+      classDef ros fill:#8b939c1f,stroke:#8b939c
+      classDef stand fill:#b0844526,stroke:#b08445
+      classDef hw fill:#4a725926,stroke:#4a7259
+      classDef hwline fill:#b9707c26,stroke:#b9707c,stroke-dasharray:4 3
+      classDef ghost fill:none,stroke:#8b939c,stroke-dasharray:4 4,color:#8b939c
+      class key,key2 label
+      class k1 ours
+      class k2 ros
+      class k3 stand
+      class k4 hw
+      class k5 hwline
+      class k6 ghost
+    ```
 
 - **A titled box around several boxes is one running program,** such as
   `ros2_control_node`.
@@ -71,10 +82,13 @@ flowchart TB
 **Keyboard teleop or a test script**
 Sends velocity commands`"]
   b2["`*Ours · 1.8, 1.17*
-**Mode manager and mode gate**
-Passes commands on only when ENABLED`"]
+**Mode manager and command selector**
+Publish /robot/mode, and pass on only the commands of the source it names`"]
   subgraph grp4["ros2_control_node"]
     direction TB
+    bgate["`*Ours · C++ · 1.17*
+**Mode gate**
+Writes enable and task from /robot/mode; enable 0 if it goes stale`"]
     b3["`*ROS code · a ros2_control controller, our settings*
 **diff_drive_controller**
 Turns velocity commands into left and right wheel speeds, each sent to both wheels on that side`"]
@@ -83,6 +97,7 @@ Turns velocity commands into left and right wheel speeds, each sent to both whee
 **mock_components/GenericSystem**
 Replaces the drive plugin. Copies each command into the state.`"]
     b3 <--> line5
+    bgate --> line5
     line5 <--> b6
   end
   none7["No hardware"]
@@ -96,7 +111,7 @@ Replaces the drive plugin. Copies each command into the state.`"]
   classDef hwline fill:#b9707c26,stroke:#b9707c,stroke-dasharray:4 3
   classDef ghost fill:none,stroke:#8b939c,stroke-dasharray:4 4,color:#8b939c
   class b1,b3 ros
-  class b2 ours
+  class b2,bgate ours
   class line5 hwline
   class b6 stand
   class none7 ghost
@@ -122,10 +137,13 @@ flowchart TB
 **Keyboard teleop or a test script**
 Sends velocity commands`"]
   b2["`*Ours · 1.8, 1.17*
-**Mode manager and mode gate**
-Passes commands on only when ENABLED`"]
+**Mode manager and command selector**
+Publish /robot/mode, and pass on only the commands of the source it names`"]
   subgraph grp4["ros2_control_node"]
     direction TB
+    bgate["`*Ours · C++ · 1.17*
+**Mode gate**
+Writes enable and task from /robot/mode; enable 0 if it goes stale`"]
     b3["`*ROS code · a ros2_control controller, our settings*
 **diff_drive_controller**
 Turns velocity commands into left and right wheel speeds, each sent to both wheels on that side`"]
@@ -137,6 +155,7 @@ Sends each side's speed to its Talon; each Victor follows its Talon. Feeds the e
 **Fake motor controllers**
 A test version of the motor controller interface: same methods, but it records every call and returns scripted feedback and faults.`"]
     b3 <--> line5
+    bgate --> line5
     line5 <--> b6
     b6 <--> b7
   end
@@ -151,7 +170,7 @@ A test version of the motor controller interface: same methods, but it records e
   classDef hwline fill:#b9707c26,stroke:#b9707c,stroke-dasharray:4 3
   classDef ghost fill:none,stroke:#8b939c,stroke-dasharray:4 4,color:#8b939c
   class b1,b3 ros
-  class b2,b6 ours
+  class b2,b6,bgate ours
   class line5 hwline
   class b7 stand
   class none8 ghost
@@ -179,10 +198,13 @@ flowchart TB
 **Keyboard teleop or a test script**
 Sends velocity commands`"]
   b2["`*Ours · 1.8, 1.17*
-**Mode manager and mode gate**
-Passes commands on only when ENABLED`"]
+**Mode manager and command selector**
+Publish /robot/mode, and pass on only the commands of the source it names`"]
   subgraph grp4["Gazebo process"]
     direction TB
+    bgate["`*Ours · C++ · 1.17*
+**Mode gate**
+Writes enable and task from /robot/mode; enable 0 if it goes stale`"]
     b3["`*ROS code · a ros2_control controller, our settings*
 **diff_drive_controller**
 Turns velocity commands into left and right wheel speeds, each sent to both wheels on that side`"]
@@ -194,6 +216,7 @@ Replaces the drive plugin. Applies each wheel command to a simulated joint.`"]
 **Gazebo physics and arena**
 Replaces the motors and the floor: mass, friction, wheel slip, rocks`"]
     b3 <--> line5
+    bgate --> line5
     line5 <--> b6
     b6 <--> b7
   end
@@ -206,7 +229,7 @@ Replaces the motors and the floor: mass, friction, wheel slip, rocks`"]
   classDef hwline fill:#b9707c26,stroke:#b9707c,stroke-dasharray:4 3
   classDef ghost fill:none,stroke:#8b939c,stroke-dasharray:4 4,color:#8b939c
   class b1,b3 ros
-  class b2 ours
+  class b2,bgate ours
   class line5 hwline
   class b6,b7 stand
   style grp4 fill:#8b939c14,stroke:#8b939c80
@@ -233,10 +256,13 @@ flowchart TB
 **Gamepad or a test script**
 Sends velocity commands`"]
   b2["`*Ours · 1.8, 1.17*
-**Mode manager and mode gate**
-Passes commands on only when ENABLED`"]
+**Mode manager and command selector**
+Publish /robot/mode, and pass on only the commands of the source it names`"]
   subgraph grp4["ros2_control_node"]
     direction TB
+    bgate["`*Ours · C++ · 1.17*
+**Mode gate**
+Writes enable and task from /robot/mode; enable 0 if it goes stale`"]
     b3["`*ROS code · a ros2_control controller, our settings*
 **diff_drive_controller**
 Turns velocity commands into left and right wheel speeds, each sent to both wheels on that side`"]
@@ -251,6 +277,7 @@ The only code that calls Phoenix 5: output, current limit, feed the enable`"]
 **Phoenix 5 library**
 Builds and reads the CAN frames`"]
     b3 <--> line5
+    bgate --> line5
     line5 <--> b6
     b6 <--> b7
     b7 <--> b8
@@ -272,7 +299,7 @@ At least 1 Talon SRX and 1 CIM; all 4 motor controllers and CIMs if they are fre
   classDef hwline fill:#b9707c26,stroke:#b9707c,stroke-dasharray:4 3
   classDef ghost fill:none,stroke:#8b939c,stroke-dasharray:4 4,color:#8b939c
   class b1,b3,b8 ros
-  class b2,b6,b7 ours
+  class b2,b6,b7,bgate ours
   class line5 hwline
   class b9,b10 hw
   style grp4 fill:#8b939c14,stroke:#8b939c80
@@ -299,10 +326,13 @@ flowchart TB
 **Gamepad or a test script**
 Sends velocity commands`"]
   b2["`*Ours · 1.8, 1.17*
-**Mode manager and mode gate**
-Passes commands on only when ENABLED`"]
+**Mode manager and command selector**
+Publish /robot/mode, and pass on only the commands of the source it names`"]
   subgraph grp4["ros2_control_node"]
     direction TB
+    bgate["`*Ours · C++ · 1.17*
+**Mode gate**
+Writes enable and task from /robot/mode; enable 0 if it goes stale`"]
     b3["`*ROS code · a ros2_control controller, our settings*
 **diff_drive_controller**
 Turns velocity commands into left and right wheel speeds, each sent to both wheels on that side`"]
@@ -317,6 +347,7 @@ The only code that calls Phoenix 5: output, current limit, feed the enable`"]
 **Phoenix 5 library**
 Builds and reads the CAN frames`"]
     b3 <--> line5
+    bgate --> line5
     line5 <--> b6
     b6 <--> b7
     b7 <--> b8
@@ -338,7 +369,7 @@ Plugged into the Jetson on the drive base`"]
   classDef hwline fill:#b9707c26,stroke:#b9707c,stroke-dasharray:4 3
   classDef ghost fill:none,stroke:#8b939c,stroke-dasharray:4 4,color:#8b939c
   class b1,b3,b8 ros
-  class b2,b6,b7 ours
+  class b2,b6,b7,bgate ours
   class line5 hwline
   class b9,b10 hw
   style grp4 fill:#8b939c14,stroke:#8b939c80
@@ -369,18 +400,22 @@ flowchart TB
 **Gamepad mapping or a test script**
 Sends mechanism commands`"]
   b2["`*Ours · 1.8, 1.17*
-**Mode manager and mode gate**
-Passes commands on only when ENABLED`"]
+**Mode manager and command selector**
+Publish /robot/mode, and pass on only the commands of the source it names`"]
   subgraph grp4["ros2_control_node"]
     direction TB
-    b3["`*ROS code · ros2_control controllers, our settings*
-**A ros2_control controller per joint (4.2)**
-Position for the depth actuators; speed for the chain and conveyor`"]
+    bgate["`*Ours · C++ · 1.17*
+**Mode gate**
+Writes enable and task from /robot/mode; enable 0 if it goes stale`"]
+    b3["`*Ours · C++ · 4.4*
+**mechanism_controller**
+One stamped command per function, zeroed when it goes stale; both depth actuators move together`"]
     line5["`**Hardware line:** joints + signals`"]
     b6["`*ROS code · stand-in*
 **mock_components/GenericSystem**
 Replaces the mechanism plugin. A test flips the limit and stowed signals.`"]
     b3 <--> line5
+    bgate --> line5
     line5 <--> b6
   end
   none7["No hardware"]
@@ -393,8 +428,8 @@ Replaces the mechanism plugin. A test flips the limit and stowed signals.`"]
   classDef hw fill:#4a725926,stroke:#4a7259
   classDef hwline fill:#b9707c26,stroke:#b9707c,stroke-dasharray:4 3
   classDef ghost fill:none,stroke:#8b939c,stroke-dasharray:4 4,color:#8b939c
-  class b1,b3 ros
-  class b2 ours
+  class b1 ros
+  class b2,b3,bgate ours
   class line5 hwline
   class b6 stand
   class none7 ghost
@@ -420,13 +455,16 @@ flowchart TB
 **Gamepad mapping or a test script**
 Sends mechanism commands`"]
   b2["`*Ours · 1.8, 1.17*
-**Mode manager and mode gate**
-Passes commands on only when ENABLED`"]
+**Mode manager and command selector**
+Publish /robot/mode, and pass on only the commands of the source it names`"]
   subgraph grp4["ros2_control_node"]
     direction TB
-    b3["`*ROS code · ros2_control controllers, our settings*
-**A ros2_control controller per joint (4.2)**
-Position for the depth actuators; speed for the chain and conveyor`"]
+    bgate["`*Ours · C++ · 1.17*
+**Mode gate**
+Writes enable and task from /robot/mode; enable 0 if it goes stale`"]
+    b3["`*Ours · C++ · 4.4*
+**mechanism_controller**
+One stamped command per function, zeroed when it goes stale; both depth actuators move together`"]
     line5["`**Hardware line:** joints + signals`"]
     b6["`*Ours · C++ · 4.5*
 **Mechanism hardware plugin**
@@ -435,6 +473,7 @@ Each joint to its motor controller; reads the limit switches and potentiometers`
 **Fake motor controllers**
 A test version of the motor controller interface: same methods, but it records every call and returns scripted feedback and faults.`"]
     b3 <--> line5
+    bgate --> line5
     line5 <--> b6
     b6 <--> b7
   end
@@ -448,8 +487,8 @@ A test version of the motor controller interface: same methods, but it records e
   classDef hw fill:#4a725926,stroke:#4a7259
   classDef hwline fill:#b9707c26,stroke:#b9707c,stroke-dasharray:4 3
   classDef ghost fill:none,stroke:#8b939c,stroke-dasharray:4 4,color:#8b939c
-  class b1,b3 ros
-  class b2,b6 ours
+  class b1 ros
+  class b2,b6,b3,bgate ours
   class line5 hwline
   class b7 stand
   class none8 ghost
@@ -477,13 +516,16 @@ flowchart TB
 **Gamepad mapping or a test script**
 Sends mechanism commands`"]
   b2["`*Ours · 1.8, 1.17*
-**Mode manager and mode gate**
-Passes commands on only when ENABLED`"]
+**Mode manager and command selector**
+Publish /robot/mode, and pass on only the commands of the source it names`"]
   subgraph grp4["ros2_control_node"]
     direction TB
-    b3["`*ROS code · ros2_control controllers, our settings*
-**A ros2_control controller per joint (4.2)**
-Position for the depth actuators; speed for the chain and conveyor`"]
+    bgate["`*Ours · C++ · 1.17*
+**Mode gate**
+Writes enable and task from /robot/mode; enable 0 if it goes stale`"]
+    b3["`*Ours · C++ · 4.4*
+**mechanism_controller**
+One stamped command per function, zeroed when it goes stale; both depth actuators move together`"]
     line5["`**Hardware line:** joints + signals`"]
     b6["`*Ours · C++ · 4.5*
 **Mechanism hardware plugin**
@@ -495,6 +537,7 @@ CTRE's class again if 4.3 picks the drivetrain's motor controller family`"]
 **The motor controllers' library (4.3)**
 Phoenix 5 if 4.3 picks CTRE`"]
     b3 <--> line5
+    bgate --> line5
     line5 <--> b6
     b6 <--> b7
     b7 <--> b8
@@ -515,8 +558,8 @@ Mechanism station on the testbed, through the E-stop`"]
   classDef hw fill:#4a725926,stroke:#4a7259
   classDef hwline fill:#b9707c26,stroke:#b9707c,stroke-dasharray:4 3
   classDef ghost fill:none,stroke:#8b939c,stroke-dasharray:4 4,color:#8b939c
-  class b1,b3,b8 ros
-  class b2,b6,b7 ours
+  class b1,b8 ros
+  class b2,b6,b7,b3,bgate ours
   class line5 hwline
   class b9,b10 hw
   style grp4 fill:#8b939c14,stroke:#8b939c80
@@ -1358,7 +1401,7 @@ Other modes:
 
 ## Radio link
 
-*Carries messages between two machines.* **Hardware line:** the messages that cross between the operator laptop and the robot, over one rosbridge connection [TBR: chosen in the PR #14 review, 2026-10-26]. The full contract is in [Hardware lines](system.md#hardware-lines).
+*Carries messages between two machines.* **Hardware line:** the messages that cross between the operator laptop and the robot, over one rosbridge connection ([teleoperation design](teleoperation.md#3-interfaces)). The full contract is in [Hardware lines](system.md#hardware-lines).
 
 ### Radio link: One computer (Sim)
 

@@ -27,7 +27,11 @@ export ROS_AUTOMATIC_DISCOVERY_RANGE=SUBNET
 export ROS_DOMAIN_ID=<agreed id>
 ```
 
-Both machines need to be on the same network.
+Both machines need to be on the same network. `SUBNET` has no subnet setting of its own: it
+reaches every node multicast can reach, on every network your computer is on
+([Improved Dynamic Discovery](sources.md#ros2-jazzy-discovery)). The robot's own settings,
+which keep discovery on its Wi-Fi, are in the
+[platform design](design/platform.md#5-libraries-and-hardware-interfaces).
 
 ## macOS and Windows
 

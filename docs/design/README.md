@@ -11,11 +11,11 @@ code. The software sections of the team's Lunabotics design reports are drawn fr
 | --- | --- | --- |
 | [`system.md`](system.md) | Architecture and integration: how every subsystem fits together | Draft |
 | [`operating-modes.md`](operating-modes.md) | Operating modes and power states: what is on and what may move in each mode, for the whole robot | Draft |
-| `platform.md` | Platform and dev environment | Not started |
-| `drivetrain.md` | Drivetrain | Not started |
-| `mechanism.md` | Mechanism control | Not started |
-| `teleoperation.md` | Teleoperation and operator station | Not started |
-| `sensors.md` | Sensors and robot model | Not started |
+| [`platform.md`](platform.md) | Platform and dev environment | Draft |
+| [`drivetrain.md`](drivetrain.md) | Drivetrain | Draft |
+| [`mechanism.md`](mechanism.md) | Mechanism control | Draft |
+| [`teleoperation.md`](teleoperation.md) | Teleoperation and operator station | Draft |
+| [`sensors.md`](sensors.md) | Sensors and robot model | Draft |
 | [`autonomy.md`](autonomy.md) | Autonomy | Draft |
 
 When you add a doc, link it in this table and keep its status current.
@@ -92,9 +92,9 @@ publisher's doc, in each subscriber's doc, and in the system design's node graph
 by hand in each place, the copies drift apart. So each one is written once, in the
 registry of the doc that owns it, and `scripts/design` writes every table that shows it.
 
-- **Each design doc has a registry beside it,** `docs/design/<doc>.toml`. The docs that
-  are not written yet have one too, holding what the other docs assume of them: their
-  owners confirm or change each entry in their first pull request.
+- **Each design doc has a registry beside it,** `docs/design/<doc>.toml`. A new
+  subsystem's registry can come before its doc, holding what the other docs assume of
+  it; the doc's first pull request confirms or changes each entry.
 - **A generated table sits between two markers** in the doc, such as
   `<!-- design: interfaces -->` and `<!-- /design -->`. Edit the registry, never the
   table: `scripts/design render` rewrites everything between the markers.
@@ -177,24 +177,28 @@ text = "Which access point and robot radio?"
 | `[[node]]` | `calls` | No | IDs of the services it calls and the actions it sends goals to |
 | `[[node]]` | `publishes_shared` | No | IDs of the shared topics it publishes, such as `/diagnostics` |
 | `[[node.publishes]]` | `name` | Yes | Its name, or a marker while it has none |
+| `[[node.publishes]]` | `carries` | Yes | What it carries, in a few words, shown beside its name in every interface table |
 | `[[node.publishes]]` | `type` | Yes | Its message, service, or action type |
 | `[[node.publishes]]` | `rate` | Yes | How often it is published, or `On demand` |
 | `[[node.publishes]]` | `qos` | Yes | Its QoS |
 | `[[node.publishes]]` | `id` | No | The key other nodes use for it when its name is a marker; otherwise its name |
 | `[[node.publishes]]` | `note` | No | A sentence shown under the table on the Interfaces page |
 | `[[node.serves]]` | `name` | Yes | Its name, or a marker while it has none |
+| `[[node.serves]]` | `carries` | Yes | What it carries, in a few words, shown beside its name in every interface table |
 | `[[node.serves]]` | `type` | Yes | Its message, service, or action type |
 | `[[node.serves]]` | `rate` | Yes | How often it is published, or `On demand` |
 | `[[node.serves]]` | `qos` | Yes | Its QoS |
 | `[[node.serves]]` | `id` | No | The key other nodes use for it when its name is a marker; otherwise its name |
 | `[[node.serves]]` | `note` | No | A sentence shown under the table on the Interfaces page |
 | `[[node.serves_actions]]` | `name` | Yes | Its name, or a marker while it has none |
+| `[[node.serves_actions]]` | `carries` | Yes | What it carries, in a few words, shown beside its name in every interface table |
 | `[[node.serves_actions]]` | `type` | Yes | Its message, service, or action type |
 | `[[node.serves_actions]]` | `rate` | Yes | How often it is published, or `On demand` |
 | `[[node.serves_actions]]` | `qos` | Yes | Its QoS |
 | `[[node.serves_actions]]` | `id` | No | The key other nodes use for it when its name is a marker; otherwise its name |
 | `[[node.serves_actions]]` | `note` | No | A sentence shown under the table on the Interfaces page |
 | `[[shared]]` | `name` | Yes | Its name, or a marker while it has none |
+| `[[shared]]` | `carries` | Yes | What it carries, in a few words, shown beside its name in every interface table |
 | `[[shared]]` | `type` | Yes | Its message, service, or action type |
 | `[[shared]]` | `rate` | Yes | How often it is published, or `On demand` |
 | `[[shared]]` | `qos` | Yes | Its QoS |
