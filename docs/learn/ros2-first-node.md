@@ -16,7 +16,7 @@ The team's code lives in `/ws/src`, and everything in it is part of the robot: b
 the workspace builds it with the robot's code, and Git offers it for your next commit. So
 practice in a separate workspace, `~/tutorial_ws`, in the container's home folder:
 
-```bash
+```bash title="Dev container"
 mkdir -p ~/tutorial_ws/src
 cd ~/tutorial_ws/src
 ```
@@ -30,11 +30,11 @@ for practice, and this page tells you how to make it again in a few minutes.
 
 `ros2 pkg create` makes a package folder with the files every package needs:
 
-```bash
+```bash title="Dev container"
 ros2 pkg create hello_ros --build-type ament_cmake --license Apache-2.0 --dependencies rclcpp std_msgs
 ```
 
-```text
+```text title="Output"
 going to create a new package
 package name: hello_ros
 destination directory: /home/ubuntu/tutorial_ws/src
@@ -96,13 +96,13 @@ then Enter, and quit with Ctrl+X.
 
 Create `~/tutorial_ws/src/hello_ros/src/hello_publisher.cpp`:
 
-```bash
+```bash title="Dev container"
 code ~/tutorial_ws/src/hello_ros/src/hello_publisher.cpp
 ```
 
 Copy this into it, and save:
 
-```cpp
+```cpp title="~/tutorial_ws/src/hello_ros/src/hello_publisher.cpp"
 #include <chrono>
 #include <memory>
 #include <string>
@@ -197,7 +197,7 @@ together, and `::` joins the parts of a name, the way `/` joins folders in a pat
 
 Create `~/tutorial_ws/src/hello_ros/src/hello_subscriber.cpp` the same way, with:
 
-```cpp
+```cpp title="~/tutorial_ws/src/hello_ros/src/hello_subscriber.cpp"
 #include <memory>
 
 #include "rclcpp/rclcpp.hpp"
@@ -243,7 +243,7 @@ ROS does not have to copy it.
 Open `~/tutorial_ws/src/hello_ros/CMakeLists.txt`. Below the line
 `find_package(std_msgs REQUIRED)`, add:
 
-```cmake
+```cmake title="~/tutorial_ws/src/hello_ros/CMakeLists.txt"
 add_executable(hello_publisher src/hello_publisher.cpp)
 target_link_libraries(hello_publisher rclcpp::rclcpp ${std_msgs_TARGETS})
 
@@ -266,7 +266,7 @@ team's packages, such as `src/luna_drivetrain`, use `target_link_libraries`.
 
 You do not need to change `package.xml`: `--dependencies` already added these lines to it.
 
-```xml
+```xml title="~/tutorial_ws/src/hello_ros/package.xml"
   <depend>rclcpp</depend>
   <depend>std_msgs</depend>
 ```
@@ -279,12 +279,12 @@ packages during the build. Every dependency goes in both.
 
 1. Build the practice workspace:
 
-    ```bash
+    ```bash title="Dev container"
     cd ~/tutorial_ws
     colcon build
     ```
 
-    ```text
+    ```text title="Output"
     Starting >>> hello_ros
     Finished <<< hello_ros [18.1s]
 
@@ -297,12 +297,12 @@ packages during the build. Every dependency goes in both.
 
 2. Open a new terminal, load the practice workspace, and start the publisher:
 
-    ```bash
+    ```bash title="Dev container"
     source ~/tutorial_ws/install/setup.bash
     ros2 run hello_ros hello_publisher
     ```
 
-    ```text
+    ```text title="Output"
     [INFO] [1791869036.748654030] [hello_publisher]: Publishing: 'Hello, rover! 0'
     [INFO] [1791869037.248708161] [hello_publisher]: Publishing: 'Hello, rover! 1'
     [INFO] [1791869037.748633561] [hello_publisher]: Publishing: 'Hello, rover! 2'
@@ -313,12 +313,12 @@ packages during the build. Every dependency goes in both.
 
 3. Open another terminal and start the subscriber the same way:
 
-    ```bash
+    ```bash title="Dev container"
     source ~/tutorial_ws/install/setup.bash
     ros2 run hello_ros hello_subscriber
     ```
 
-    ```text
+    ```text title="Output"
     [INFO] [1791869041.248913969] [hello_subscriber]: I heard: 'Hello, rover! 9'
     [INFO] [1791869041.748860597] [hello_subscriber]: I heard: 'Hello, rover! 10'
     ```
@@ -335,12 +335,12 @@ overlay first, then in each underlay.
 
 In a third terminal, use the tools from [ROS 2 basics](ros2-basics.md) on your own nodes:
 
-```bash
+```bash title="Dev container"
 ros2 node list
 ros2 topic info /greetings
 ```
 
-```text
+```text title="Output"
 /hello_publisher
 /hello_subscriber
 Type: std_msgs/msg/String
@@ -351,11 +351,11 @@ Subscription count: 1
 If a list is missing a node, or a count looks too low, run the command again: as in
 [ROS 2 basics](ros2-basics.md), it can take a moment for the tools to find everything.
 
-```bash
+```bash title="Dev container"
 ros2 topic echo /greetings
 ```
 
-```text
+```text title="Output"
 data: Hello, rover! 30
 ---
 data: Hello, rover! 31
@@ -371,7 +371,7 @@ arrows in the top-left corner:
 
 Stop both nodes with Ctrl+C. Each one prints a last line as it shuts down:
 
-```text
+```text title="Output"
 [INFO] [1791869074.570325167] [rclcpp]: signal_handler(SIGINT/SIGTERM)
 ```
 
@@ -381,7 +381,7 @@ C++ is checked as it is built, so most mistakes show up in `colcon build` instea
 the robot is running. Try one on purpose: in `hello_publisher.cpp`, find the line that
 publishes the message, change `publish` to `publsh`, save, and build again.
 
-```text
+```text title="Output"
 Starting >>> hello_ros
 --- stderr: hello_ros
 /home/ubuntu/tutorial_ws/src/hello_ros/src/hello_publisher.cpp: In member function ‘void HelloPublisher::publish_greeting()’:

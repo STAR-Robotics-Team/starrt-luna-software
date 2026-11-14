@@ -11,7 +11,7 @@ terminal or your computer's own terminal, from the top folder of your clone.
 
 ## 1. Start from the latest `main`
 
-```bash
+```bash title="Your terminal or the dev container"
 git switch main
 git pull
 ```
@@ -24,7 +24,7 @@ you cloned.
 Name it after what you are changing. For docs, start the name with `docs/`; for robot
 code, start it with your workstream, such as `drivetrain/`:
 
-```bash
+```bash title="Your terminal or the dev container"
 git switch -c docs/clarify-getting-started
 ```
 
@@ -39,7 +39,7 @@ preview.
 
 ## 4. Check what you changed
 
-```bash
+```bash title="Your terminal or the dev container"
 git status
 git diff
 ```
@@ -49,7 +49,7 @@ there is nothing there you did not mean to change.
 
 ## 5. Commit
 
-```bash
+```bash title="Your terminal or the dev container"
 git add docs/getting-started.md
 git commit -m "Explain where to find the VS Code terminal"
 ```
@@ -59,13 +59,13 @@ Name the files you changed after `git add`. Write a message that finishes the se
 
 ## 6. Push
 
-```bash
+```bash title="Your terminal or the dev container"
 git push -u origin docs/clarify-getting-started
 ```
 
 GitHub answers with a link to open a pull request, something like:
 
-```text
+```text title="Output"
 remote: Create a pull request for 'docs/clarify-getting-started' on GitHub by visiting:
 remote:      https://github.com/STAR-Robotics-Team/starrt-luna-software/pull/new/docs/clarify-getting-started
 ```
@@ -87,7 +87,7 @@ A teammate reviews your pull request and may leave comments or ask for changes. 
 normal, and it is how everyone learns. To update your pull request, make the changes on
 the same branch, commit, and push again:
 
-```bash
+```bash title="Your terminal or the dev container"
 git add docs/getting-started.md
 git commit -m "Shorten the terminal explanation"
 git push
@@ -100,7 +100,7 @@ The pull request updates by itself; there is no need to open a new one.
 Once a reviewer approves, the pull request is merged into `main`, and your change is part
 of the robot's software. Then catch your computer up and delete the finished branch:
 
-```bash
+```bash title="Your terminal or the dev container"
 git switch main
 git pull
 git branch -d docs/clarify-getting-started

@@ -21,7 +21,7 @@ where JetPack 5's kernel included them [TBR: read from the kernel configurations
 ships for JetPack 5 and 6, not yet checked on our Jetson]. To check, run `modinfo gs_usb`
 on the Jetson. If it prints `Module gs_usb not found`, build the driver once:
 
-```bash
+```bash title="Robot computer"
 scripts/jetson_gs_usb.sh
 ```
 
@@ -37,7 +37,7 @@ With the CANable plugged in, bring up `can0` at 1 Mbit/s, the bitrate the motor
 controllers use ([Talon SRX User's Guide, p. 5](sources.md#ctre-talon-srx-guide)), then
 watch the traffic on the bus:
 
-```bash
+```bash title="Dev container"
 scripts/can_up.sh
 candump can0
 ```
@@ -50,7 +50,7 @@ candump can0
 `motor_test` spins the left drive motors at 10% output until you press Ctrl+C. **Lift the
 wheels off the ground first.**
 
-```bash
+```bash title="Dev container"
 ros2 run luna_drivetrain motor_test
 ```
 
@@ -62,7 +62,7 @@ program only enables them 100 ms at a time.
 `scripts/vcan_up.sh` creates a virtual CAN bus. Nothing listens on it, but `candump` shows
 every frame your code sends, which is enough to check that the code works.
 
-```bash
+```bash title="Dev container"
 scripts/vcan_up.sh can0
 candump can0
 ```

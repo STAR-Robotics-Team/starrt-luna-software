@@ -65,7 +65,7 @@ over, but nobody has tried them with our dev container yet.
 
 1. Install XQuartz:
 
-    ```bash
+    ```bash title="Your terminal: macOS"
     brew install --cask xquartz
     ```
 
@@ -74,7 +74,7 @@ over, but nobody has tried them with our dev container yet.
 3. In a Mac terminal, allow connections from the container. The `xhost` lines reset
    whenever XQuartz restarts, so run them again each time:
 
-    ```bash
+    ```bash title="Your terminal: macOS"
     defaults write org.xquartz.X11 nolisten_tcp -bool false
     xhost +localhost
     xhost + 127.0.0.1
@@ -82,7 +82,7 @@ over, but nobody has tried them with our dev container yet.
 
 4. In the container terminal, point programs at XQuartz before starting them:
 
-    ```bash
+    ```bash title="Dev container"
     export DISPLAY=host.docker.internal:0 QT_X11_NO_MITSHM=1
     ```
 

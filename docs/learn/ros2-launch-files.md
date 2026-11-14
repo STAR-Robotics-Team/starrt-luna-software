@@ -33,7 +33,7 @@ Replace everything in `~/tutorial_ws/src/hello_ros/src/hello_publisher.cpp` with
 version. The changes are the two `declare_parameter` lines, the `rate_hz` lines that set
 up the timer, and the `get_parameter("message")` call that builds the text:
 
-```cpp
+```cpp title="~/tutorial_ws/src/hello_ros/src/hello_publisher.cpp"
 #include <chrono>
 #include <memory>
 #include <string>
@@ -96,12 +96,12 @@ int main(int argc, char * argv[])
 
 Build, from the practice workspace:
 
-```bash
+```bash title="Dev container"
 cd ~/tutorial_ws
 colcon build
 ```
 
-```text
+```text title="Output"
 Starting >>> hello_ros
 Finished <<< hello_ros [6.26s]
 Summary: 1 package finished [6.39s]
@@ -111,22 +111,22 @@ Summary: 1 package finished [6.39s]
 
 1. Run the publisher as before. It uses the defaults, so it behaves exactly as it did:
 
-    ```bash
+    ```bash title="Dev container"
     ros2 run hello_ros hello_publisher
     ```
 
-    ```text
+    ```text title="Output"
     [INFO] [1791869281.546617188] [hello_publisher]: Publishing: 'Hello, rover! 0'
     [INFO] [1791869282.046610905] [hello_publisher]: Publishing: 'Hello, rover! 1'
     ```
 
 2. Stop it with Ctrl+C, and start it again with both parameters set:
 
-    ```bash
+    ```bash title="Dev container"
     ros2 run hello_ros hello_publisher --ros-args -p message:="Hi from the command line" -p rate_hz:=5.0
     ```
 
-    ```text
+    ```text title="Output"
     [INFO] [1791869285.614811271] [hello_publisher]: Publishing: 'Hi from the command line 0'
     [INFO] [1791869285.814791876] [hello_publisher]: Publishing: 'Hi from the command line 1'
     [INFO] [1791869286.014817109] [hello_publisher]: Publishing: 'Hi from the command line 2'
@@ -137,11 +137,11 @@ Summary: 1 package finished [6.39s]
 
 3. Stop it, and try `rate_hz:=5`, without the `.0`:
 
-    ```bash
+    ```bash title="Dev container"
     ros2 run hello_ros hello_publisher --ros-args -p rate_hz:=5
     ```
 
-    ```text
+    ```text title="Output"
     terminate called after throwing an instance of 'rclcpp::exceptions::InvalidParameterTypeException'
       what():  parameter 'rate_hz' has invalid type: Wrong parameter type, parameter {rate_hz} is of type {double}, setting it to {integer} is not allowed.
     [ros2run]: Aborted
@@ -154,12 +154,12 @@ Summary: 1 package finished [6.39s]
 
 Start the publisher with its defaults, then in a second terminal:
 
-```bash
+```bash title="Dev container"
 ros2 param list /hello_publisher
 ros2 param set /hello_publisher message "Changed while running"
 ```
 
-```text
+```text title="Output"
   message
   qos_overrides./parameter_events.publisher.depth
   qos_overrides./parameter_events.publisher.durability
@@ -184,12 +184,12 @@ Stop the publisher with Ctrl+C.
 Make a `config` folder in the package, and create
 `~/tutorial_ws/src/hello_ros/config/hello_params.yaml` in it:
 
-```bash
+```bash title="Dev container"
 mkdir ~/tutorial_ws/src/hello_ros/config
 code ~/tutorial_ws/src/hello_ros/config/hello_params.yaml
 ```
 
-```yaml
+```yaml title="~/tutorial_ws/src/hello_ros/config/hello_params.yaml"
 hello_publisher:
   ros__parameters:
     message: "Hello from a parameter file!"
@@ -203,11 +203,11 @@ what belongs to what, so keep them exactly as shown.
 
 Start the publisher with the file:
 
-```bash
+```bash title="Dev container"
 ros2 run hello_ros hello_publisher --ros-args --params-file ~/tutorial_ws/src/hello_ros/config/hello_params.yaml
 ```
 
-```text
+```text title="Output"
 [INFO] [1791869331.025176374] [hello_publisher]: Publishing: 'Hello from a parameter file! 0'
 [INFO] [1791869332.025165325] [hello_publisher]: Publishing: 'Hello from a parameter file! 1'
 [INFO] [1791869333.025169294] [hello_publisher]: Publishing: 'Hello from a parameter file! 2'
@@ -230,12 +230,12 @@ flowchart TB
 
 1. Make a `launch` folder and create `hello.launch.py` in it:
 
-    ```bash
+    ```bash title="Dev container"
     mkdir ~/tutorial_ws/src/hello_ros/launch
     code ~/tutorial_ws/src/hello_ros/launch/hello.launch.py
     ```
 
-    ```python
+    ```python title="~/tutorial_ws/src/hello_ros/launch/hello.launch.py"
     import os
 
     from ament_index_python.packages import get_package_share_directory
@@ -270,14 +270,14 @@ flowchart TB
    `get_package_share_directory` can find them. In `CMakeLists.txt`, below the
    `install(TARGETS ...)` lines from the first page, add:
 
-    ```cmake
+    ```cmake title="~/tutorial_ws/src/hello_ros/CMakeLists.txt"
     install(DIRECTORY launch config
       DESTINATION share/${PROJECT_NAME})
     ```
 
 3. In `package.xml`, below the `<depend>std_msgs</depend>` line, add:
 
-    ```xml
+    ```xml title="~/tutorial_ws/src/hello_ros/package.xml"
       <exec_depend>ros2launch</exec_depend>
     ```
 
@@ -286,12 +286,12 @@ flowchart TB
 
 4. Build, then launch:
 
-    ```bash
+    ```bash title="Dev container"
     colcon build
     ros2 launch hello_ros hello.launch.py
     ```
 
-    ```text
+    ```text title="Output"
     [INFO] [launch]: All log files can be found below /home/ubuntu/.ros/log/2026-10-13-05-29-22-792603-my-laptop-16768
     [INFO] [launch]: Default logging verbosity is set to INFO
     [INFO] [hello_publisher-1]: process started with pid [16772]
@@ -307,7 +307,7 @@ flowchart TB
 
 5. Press Ctrl+C once. The launch stops every node it started:
 
-    ```text
+    ```text title="Output"
     [WARNING] [launch]: user interrupted with ctrl-c (SIGINT)
     [hello_subscriber-2] [INFO] [1791869367.618401061] [rclcpp]: signal_handler(SIGINT/SIGTERM)
     [hello_publisher-1] [INFO] [1791869367.618692138] [rclcpp]: signal_handler(SIGINT/SIGTERM)
@@ -324,11 +324,11 @@ show all three, and much more that launch files can do.
 Edit `hello_params.yaml` to say `message: "Edited without rebuilding!"` and
 `rate_hz: 4.0`, save, and launch again, without running `colcon build`:
 
-```bash
+```bash title="Dev container"
 ros2 launch hello_ros hello.launch.py
 ```
 
-```text
+```text title="Output"
 [hello_publisher-1] [INFO] [1791869376.993123590] [hello_publisher]: Publishing: 'Edited without rebuilding! 0'
 [hello_publisher-1] [INFO] [1791869377.243045237] [hello_publisher]: Publishing: 'Edited without rebuilding! 1'
 ```
@@ -348,18 +348,18 @@ Your subscriber listens on `/greetings`; remap it to listen to the demo talker o
 
 1. In one terminal, start the talker:
 
-    ```bash
+    ```bash title="Dev container"
     ros2 run demo_nodes_cpp talker
     ```
 
 2. In another (with the practice workspace sourced), start your subscriber with a
    remapping:
 
-    ```bash
+    ```bash title="Dev container"
     ros2 run hello_ros hello_subscriber --ros-args -r greetings:=chatter
     ```
 
-    ```text
+    ```text title="Output"
     [INFO] [1791869397.468418592] [hello_subscriber]: I heard: 'Hello World: 3'
     [INFO] [1791869398.468336461] [hello_subscriber]: I heard: 'Hello World: 4'
     ```
@@ -369,7 +369,7 @@ Your subscriber listens on `/greetings`; remap it to listen to the demo talker o
 3. Stop both, and do the same in a launch file. Create
    `~/tutorial_ws/src/hello_ros/launch/chatter.launch.py`:
 
-    ```python
+    ```python title="~/tutorial_ws/src/hello_ros/launch/chatter.launch.py"
     from launch import LaunchDescription
     from launch_ros.actions import Node
 
@@ -387,11 +387,11 @@ Your subscriber listens on `/greetings`; remap it to listen to the demo talker o
 
 4. Launch it:
 
-    ```bash
+    ```bash title="Dev container"
     ros2 launch hello_ros chatter.launch.py
     ```
 
-    ```text
+    ```text title="Output"
     file 'chatter.launch.py' was not found in the share directory of package 'hello_ros' which is at '/home/ubuntu/tutorial_ws/install/hello_ros/share/hello_ros'
     ```
 

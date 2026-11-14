@@ -31,14 +31,14 @@ background, because containers need Linux underneath. You do not have to manage 
 
 With Docker installed and running (see [Getting started](../getting-started.md)), run:
 
-```bash
+```bash title="Your terminal"
 docker run hello-world
 ```
 
 The first time, Docker downloads the `hello-world` image, so you see a few download lines,
 then:
 
-```text
+```text title="Output"
 Hello from Docker!
 This message shows that your installation appears to be working correctly.
 ```
@@ -105,7 +105,7 @@ the container is rebuilt. Keep your work in the repository.
 Do this once your dev container is running ([Getting started](../getting-started.md)
 step 3). In a VS Code terminal, which runs inside the container, create a file in `/ws`:
 
-```bash
+```bash title="Dev container"
 echo "Hello from inside the container" > /ws/hello.txt
 ```
 
@@ -113,11 +113,11 @@ Now look at your clone from outside the container: the file `hello.txt` is there
 Code's file list and in your computer's own file browser. Open it in VS Code, add a line,
 and save. Back in the container terminal:
 
-```bash
+```bash title="Dev container"
 cat /ws/hello.txt
 ```
 
-```text
+```text title="Output"
 Hello from inside the container
 Hello back from outside
 ```
@@ -125,7 +125,7 @@ Hello back from outside
 (The second line is whatever you added.) One file, seen from two places. Delete it when
 you are done, from either side:
 
-```bash
+```bash title="Dev container"
 rm /ws/hello.txt
 ```
 
@@ -134,7 +134,7 @@ rm /ws/hello.txt
 Because the container has its own operating system, it matters which terminal you type in.
 A terminal inside the dev container has a prompt like this, ending in `/ws`:
 
-```text
+```text title="Dev container"
 ubuntu@laptop:/ws$
 ```
 

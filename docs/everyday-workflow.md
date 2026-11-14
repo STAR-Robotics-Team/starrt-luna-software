@@ -19,14 +19,14 @@ if you use a native ROS install. There are two ways to get a dev container termi
 2. **Build** with colcon. Building everything works, but building only the package you
    changed is faster:
 
-    ```bash
+    ```bash title="Dev container"
     colcon build
     colcon build --packages-select luna_drivetrain
     ```
 
 3. **Run** a node with `ros2 run <package> <executable>`:
 
-    ```bash
+    ```bash title="Dev container"
     ros2 run luna_drivetrain motor_test
     ```
 
@@ -35,7 +35,7 @@ if you use a native ROS install. There are two ways to get a dev container termi
 
 4. **Test** before you push. Pull requests must pass these:
 
-    ```bash
+    ```bash title="Dev container"
     colcon test && colcon test-result --verbose
     ```
 
@@ -62,28 +62,43 @@ compiles your code, inside that environment, whenever the code changes.
 any editor without opening VS Code. It reads the same `.devcontainer/` configuration and
 starts the container if it is not running.
 
-```bash
+```bash title="Your terminal"
 scripts/dev build
 scripts/dev run ros2 run demo_nodes_cpp talker
 ```
 
-On Windows, run it in your Ubuntu (WSL) terminal.
+On Windows, your terminal is Ubuntu (WSL).
 
 ### Set it up once
 
 `scripts/dev` uses the Dev Containers CLI. Install it with its standalone installer, which
 does not need Node.js:
 
-```bash
+```bash title="Your terminal"
 curl -fsSL https://raw.githubusercontent.com/devcontainers/cli/main/scripts/install.sh | sh
 ```
 
-Then add this line to your shell's startup file, `~/.bashrc` on Linux and WSL or
-`~/.zshrc` on macOS, and open a new terminal:
+Then add this line to your shell's startup file, and open a new terminal:
 
-```bash
-export PATH="$HOME/.devcontainers/bin:$PATH"
-```
+=== "Linux"
+
+    ```bash title="~/.bashrc"
+    export PATH="$HOME/.devcontainers/bin:$PATH"
+    ```
+
+=== "macOS"
+
+    ```bash title="~/.zshrc"
+    export PATH="$HOME/.devcontainers/bin:$PATH"
+    ```
+
+=== "Windows"
+
+    In Ubuntu (WSL):
+
+    ```bash title="~/.bashrc"
+    export PATH="$HOME/.devcontainers/bin:$PATH"
+    ```
 
 Without the CLI, `scripts/dev` falls back to running it through `npx`, which needs
 Node.js and makes each command about 3 seconds slower.
@@ -109,7 +124,7 @@ Ctrl+C stops a program started with `run`, as it would in a container terminal.
 `scripts/dev` uses the default VNC configuration. For the native windows configuration
 (Linux only; see [GUI tools](gui-tools.md)), put `--native` before the command:
 
-```bash
+```bash title="Your terminal: Linux"
 scripts/dev --native build
 ```
 
@@ -130,7 +145,7 @@ The container keeps running in the background, along with its VNC desktop, until
 stopped. VS Code stops it when you close the window. If you started it with `scripts/dev`,
 stop it with:
 
-```bash
+```bash title="Your terminal"
 scripts/dev stop
 ```
 
@@ -141,7 +156,7 @@ Starting it again takes a few seconds; your code and build output are untouched.
 If a build fails in a way that makes no sense, or you switched between the dev container
 and a native install, delete the build output and build again:
 
-```bash
+```bash title="Dev container"
 rm -rf build install log
 colcon build
 ```

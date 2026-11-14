@@ -22,7 +22,7 @@ Run this in each terminal, on both machines, with the same domain ID. A domain I
 number from 0 to 101 that keeps separate groups of nodes apart, so agree on one with the
 people you are working with:
 
-```bash
+```bash title="Dev container"
 export ROS_AUTOMATIC_DISCOVERY_RANGE=SUBNET
 export ROS_DOMAIN_ID=<agreed id>
 ```

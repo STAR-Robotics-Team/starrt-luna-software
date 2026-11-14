@@ -1,7 +1,9 @@
 # Writing docs
 
-How to add or change a page in these docs. The docs are written to read well on GitHub
-and to publish as the documentation website without changes, so they follow a few rules.
+How to add or change a page in these docs. The docs publish as the documentation website,
+which is the version to read and to check your changes against. They still read well on
+GitHub, except that the operating system tabs show there as plain text (see
+[Say where a command runs](#say-where-a-command-runs)).
 
 ## Write for the right reader
 
@@ -76,7 +78,8 @@ stands apart from settled text. GitHub shows the brackets as written.
 - **Write for someone new.** Use short sentences and plain words, and explain a term the
   first time you use it.
 - **Show commands in fenced code blocks** with a language, such as `bash`, so readers can
-  copy them. Say where to run them: a container terminal, or your own terminal.
+  copy them, and a title that says where they run
+  ([Say where a command runs](#say-where-a-command-runs)).
 - **Say what success looks like,** such as the output a command prints.
 - **Use tables** for comparisons and reference lists.
 - **Draw diagrams in Mermaid,** in a fenced `mermaid` code block. For pictures, see
@@ -97,7 +100,7 @@ this, and GitHub shows lists written this way correctly too:
 ````markdown
 1. In the first terminal, start the talker:
 
-    ```bash
+    ```bash title="Dev container"
     ros2 run demo_nodes_cpp talker
     ```
 
@@ -108,6 +111,57 @@ this, and GitHub shows lists written this way correctly too:
 
 If a list breaks either rule, `scripts/docs build` and the pull request check fail and
 name the paragraph to fix.
+
+## Say where a command runs
+
+Readers should never have to guess where a command goes: their own terminal, the dev
+container, or the robot, and on which operating system. So every shell code block has a
+title, which the website shows as a bar above it:
+
+````markdown
+```bash title="Dev container"
+colcon build
+```
+````
+
+The title is one of these:
+
+| Title | Where the reader types it |
+| --- | --- |
+| `Your terminal` | A terminal on their own computer: on Windows, Ubuntu in WSL; on macOS and Linux, the Terminal app |
+| `Your terminal: Linux`, `Your terminal: macOS`, `Your terminal: Ubuntu in WSL` | The same, for a step that runs on only one operating system |
+| `Windows PowerShell` | PowerShell on Windows, only for installing WSL |
+| `Dev container` | A terminal inside the dev container: `scripts/dev shell`, or VS Code's terminal once it has reopened in the container |
+| `Your terminal or the dev container` | Either, such as `git`, since both see the same files |
+| `Robot computer` | A terminal on the robot computer itself, outside any container |
+
+- **A block that shows a file's contents** is titled with the file's path instead, such as
+  `title="~/.bashrc"`.
+- **A block that shows what a command prints** is titled `Output`, so nobody types it.
+- **The website build fails** on a shell block (`bash`, `sh`, `console`, or `powershell`)
+  without one of these titles, and names the page and line.
+
+**When a step differs by operating system,** put each version in a tab. Tabs with the same
+names stay in step across the site, so a reader who picks Windows once sees Windows on every
+page. Use the names `Linux`, `macOS`, and `Windows`, in that order, and indent each tab's
+content 4 spaces:
+
+````markdown
+=== "Linux"
+
+    ```bash title="~/.bashrc"
+    export PATH="$HOME/.devcontainers/bin:$PATH"
+    ```
+
+=== "macOS"
+
+    ```bash title="~/.zshrc"
+    export PATH="$HOME/.devcontainers/bin:$PATH"
+    ```
+````
+
+GitHub shows a tab's name as a plain `=== "Linux"` line, with its content as code, so a page
+with tabs reads best on the website.
 
 ## Images
 
@@ -218,7 +272,7 @@ The docs are published as a website, built from `docs/` by MkDocs with the Mater
 (configured in `mkdocs.yml`). To see your changes exactly as the website will show them,
 run this from the top folder of the repository, on your own computer:
 
-```bash
+```bash title="Your terminal"
 scripts/docs serve
 ```
 

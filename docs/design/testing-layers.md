@@ -120,7 +120,7 @@ at once, and each system's own argument overrides it. The arguments' names are
 [TBD: chosen in deliverable 1.4]; with the names these pages use as an example, that bench
 run would start like this:
 
-```bash
+```bash title="Dev container"
 ros2 launch luna_bringup robot.launch.py backend:=stub drivetrain:=real
 ```
 

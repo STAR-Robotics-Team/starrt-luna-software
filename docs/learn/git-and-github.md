@@ -55,7 +55,7 @@ flowchart LR
 2. **Tell Git who you are.** Every commit records a name and email. Use the email of your
    GitHub account:
 
-    ```bash
+    ```bash title="Your terminal"
     git config --global user.name "Ada Lovelace"
     git config --global user.email "ada@example.com"
     ```
@@ -67,7 +67,7 @@ flowchart LR
    [GitHub CLI](https://cli.github.com/): install it (`sudo apt install gh` on Ubuntu or
    WSL; on macOS, follow the instructions on its website), then run:
 
-    ```bash
+    ```bash title="Your terminal"
     gh auth login
     ```
 
@@ -85,12 +85,12 @@ whatever you changed.
 
 ### Get a copy: `git clone`
 
-```bash
+```bash title="Your terminal"
 git clone https://github.com/STAR-Robotics-Team/starrt-luna-software.git
 cd starrt-luna-software
 ```
 
-```text
+```text title="Output"
 Cloning into 'starrt-luna-software'...
 ```
 
@@ -101,7 +101,7 @@ into a new folder named after it.
 
 `git status` is the command to run whenever you are unsure what is going on:
 
-```text
+```text title="Output"
 On branch main
 Your branch is up to date with 'origin/main'.
 
@@ -115,11 +115,11 @@ You are on `main`, your copy matches GitHub's, and you have not changed anything
 Never work directly on `main`. Make a branch, named after your workstream and what you are
 doing:
 
-```bash
+```bash title="Your terminal"
 git switch -c docs/fix-typo
 ```
 
-```text
+```text title="Output"
 Switched to a new branch 'docs/fix-typo'
 ```
 
@@ -127,7 +127,7 @@ Switched to a new branch 'docs/fix-typo'
 
 Edit a file in your editor and save it. Now `git status` lists the file as modified:
 
-```text
+```text title="Output"
 On branch docs/fix-typo
 Changes not staged for commit:
   (use "git add <file>..." to update what will be committed)
@@ -138,7 +138,7 @@ Changes not staged for commit:
 `git diff` shows exactly what changed. Lines starting with `+` were added, and lines
 starting with `-` were removed. For example, adding a line to a file shows:
 
-```text
+```text title="Output"
 @@ -1 +1,2 @@
  # Demo
 +More text.
@@ -149,12 +149,12 @@ starting with `-` were removed. For example, adding a line to a file shows:
 Committing takes two steps. `git add` picks which changes go into the next snapshot (this
 is called **staging**), and `git commit` saves the snapshot with a message:
 
-```bash
+```bash title="Your terminal"
 git add README.md
 git commit -m "Fix a typo in the README"
 ```
 
-```text
+```text title="Output"
 [docs/fix-typo c9717af] Fix a typo in the README
  1 file changed, 1 insertion(+)
 ```
@@ -165,7 +165,7 @@ messages that finish the sentence "This commit will...": "Fix a typo in the READ
 
 ### Share it: `git push`
 
-```bash
+```bash title="Your terminal"
 git push -u origin docs/fix-typo
 ```
 
@@ -176,11 +176,11 @@ from there.
 
 ### See the history: `git log`
 
-```bash
+```bash title="Your terminal"
 git log --oneline
 ```
 
-```text
+```text title="Output"
 c9717af Fix a typo in the README
 2edd17f First commit
 ```
@@ -190,12 +190,12 @@ c9717af Fix a typo in the README
 Other people's work reaches `main` all the time. Before you start something new, switch
 to `main` and pull:
 
-```bash
+```bash title="Your terminal"
 git switch main
 git pull
 ```
 
-```text
+```text title="Output"
 Switched to branch 'main'
 Your branch is up to date with 'origin/main'.
 Already up to date.

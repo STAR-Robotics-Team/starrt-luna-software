@@ -75,11 +75,11 @@ center and 0.2 m up, tilted 0.4 radians down. These numbers are only for practic
 
 1. In one terminal, publish where the robot is in `odom`:
 
-    ```bash
+    ```bash title="Dev container"
     ros2 run tf2_ros static_transform_publisher --x 2.0 --y 1.0 --yaw 0.5 --frame-id odom --child-frame-id base_link
     ```
 
-    ```text
+    ```text title="Output"
     [INFO] [1791870077.319681349] [static_transform_publisher_JRuGU1C8kHU7HnLg]: Spinning until stopped - publishing transform
     translation: ('2.000000', '1.000000', '0.000000')
     rotation: ('0.000000', '0.000000', '0.247404', '0.968912')
@@ -95,11 +95,11 @@ center and 0.2 m up, tilted 0.4 radians down. These numbers are only for practic
 
 2. In a second terminal, publish where the camera is on the robot:
 
-    ```bash
+    ```bash title="Dev container"
     ros2 run tf2_ros static_transform_publisher --x 0.3 --z 0.2 --pitch 0.4 --frame-id base_link --child-frame-id camera_link
     ```
 
-    ```text
+    ```text title="Output"
     [INFO] [1791870080.468678885] [static_transform_publisher_Pid5jvKX2cVDF0yK]: Spinning until stopped - publishing transform
     translation: ('0.300000', '0.000000', '0.200000')
     rotation: ('0.000000', '0.198669', '0.000000', '0.980067')
@@ -114,11 +114,11 @@ Leave both running for the rest of this page.
 
 1. In a third terminal, ask where the camera is relative to the robot's center:
 
-    ```bash
+    ```bash title="Dev container"
     ros2 run tf2_ros tf2_echo base_link camera_link
     ```
 
-    ```text
+    ```text title="Output"
     [INFO] [1791870083.675873406] [tf2_echo]: Waiting for transform base_link ->  camera_link: Invalid frame ID "base_link" passed to canTransform argument target_frame - frame does not exist
     At time 0.0
     - Translation: [0.300, 0.000, 0.200]
@@ -139,11 +139,11 @@ Leave both running for the rest of this page.
 
 2. Now ask where the camera is in `odom`, a question nobody published an answer to:
 
-    ```bash
+    ```bash title="Dev container"
     ros2 run tf2_ros tf2_echo odom camera_link
     ```
 
-    ```text
+    ```text title="Output"
     - Translation: [2.263, 1.144, 0.200]
     - Rotation: in Quaternion (xyzw) [-0.049, 0.192, 0.242, 0.950]
     - Rotation: in RPY (radian) [0.000, 0.400, 0.500]
@@ -158,14 +158,14 @@ Leave both running for the rest of this page.
 3. List the whole tree. Run this from your home folder, because it saves files in the
    folder it runs in:
 
-    ```bash
+    ```bash title="Dev container"
     cd ~
     ros2 run tf2_tools view_frames
     ```
 
     It listens for five seconds, then prints each frame and its parent (trimmed here):
 
-    ```text
+    ```text title="Output"
     [INFO] [1791870094.716301018] [view_frames]: Listening to tf data for 5.0 seconds...
     [INFO] [1791870099.733725316] [view_frames]: Generating graph...
     [INFO] [1791870099.739366107] [view_frames]: Result:tf2_msgs.srv.FrameGraph_Response(frame_yaml="base_link: \n  parent: 'odom'\n  broadcaster: 'default_authority'\n ...")
@@ -183,7 +183,7 @@ planned paths. With both transform publishers still running:
 
 1. Start RViz in a terminal:
 
-    ```bash
+    ```bash title="Dev container"
     rviz2
     ```
 
@@ -231,14 +231,14 @@ use a demo in which one turtle follows another, and show how to publish and use
 transforms from your own C++ code. The demo is not installed in the dev container. To
 try it, install it:
 
-```bash
+```bash title="Dev container"
 sudo apt update && sudo apt install -y ros-jazzy-turtle-tf2-py
 ```
 
 Then start the demo, and drive the first turtle with `ros2 run turtlesim turtle_teleop_key`
 in another terminal; the second turtle chases it:
 
-```bash
+```bash title="Dev container"
 ros2 launch turtle_tf2_py turtle_tf2_demo.launch.py
 ```
 
