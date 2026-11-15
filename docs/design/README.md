@@ -7,23 +7,27 @@ code. The software sections of the team's Lunabotics design reports are drawn fr
 
 ## The docs
 
-| Doc | Subsystem | Status |
+<!-- design: docs (generated from docs/design/*.toml by scripts/design render: edit those files, not this block) -->
+
+| Doc | What it covers | Status |
 | --- | --- | --- |
-| [`system.md`](system.md) | Architecture and integration: how every subsystem fits together | Draft |
-| [`operating-modes.md`](operating-modes.md) | Operating modes and power states: what is on and what may move in each mode, for the whole robot | Draft |
-| [`platform.md`](platform.md) | Platform and dev environment | Draft |
-| [`drivetrain.md`](drivetrain.md) | Drivetrain | Draft |
-| [`mechanism.md`](mechanism.md) | Mechanism control | Draft |
-| [`teleoperation.md`](teleoperation.md) | Teleoperation and operator station | Draft |
-| [`sensors.md`](sensors.md) | Sensors and robot model | Draft |
-| [`autonomy.md`](autonomy.md) | Autonomy | Draft |
+| [`system.md`](system.md) | Architecture and integration: how every subsystem fits together | Approved |
+| [`operating-modes.md`](operating-modes.md) | Operating modes and power states: what is on and what may move in each mode, for the whole robot | Approved |
+| [`platform.md`](platform.md) | Platform and dev environment | In progress |
+| [`drivetrain.md`](drivetrain.md) | Drivetrain | Approved |
+| [`mechanism.md`](mechanism.md) | Mechanism control | Approved |
+| [`teleoperation.md`](teleoperation.md) | Teleoperation and operator station | In progress |
+| [`sensors.md`](sensors.md) | Sensors and robot model | Approved |
+| [`autonomy.md`](autonomy.md) | Autonomy | Approved |
+| [`testing-layers.md`](testing-layers.md) | Testing layers: how each component is tested, from stand-ins on a laptop up to the rover | Approved |
 
-When you add a doc, link it in this table and keep its status current.
+<!-- /design -->
 
-Two more pages apply to every subsystem: [Testing layers](testing-layers.md) defines how
-each component is tested, from stand-ins on a laptop up to the rover, and
-[Hardware test modes](hardware-test-modes.md) draws every hardware system in each test
-mode.
+Each row comes from the `[doc]` table in that doc's [registry](#registries), in the
+website's sidebar order.
+
+[Hardware test modes](hardware-test-modes.md) applies to every subsystem too: it draws
+every hardware system in each test mode.
 
 Four pages are generated from the docs' [registries](#registries):
 
@@ -40,26 +44,31 @@ Four pages are generated from the docs' [registries](#registries):
 ## Start a design doc
 
 1. Copy [the template](template.md) to `docs/design/<subsystem>.md`, using the file name
-   from the table above.
-2. Fill in the header: the owner's GitHub username, status `Draft`, and today's date. On
-   the website, a table under the header lists the owner and everyone who commits to the
-   doc or reviews or comments on a pull request that changes it, with their names and
-   roles, generated from the git and GitHub history.
-3. Put your nodes, interfaces, and open questions in the doc's
-   [registry](#registries), `docs/design/<subsystem>.toml`, and run
+   its elements give in the [system design](system.md#software-elements).
+2. In the doc's [registry](#registries), `docs/design/<subsystem>.toml`, write its `[doc]`
+   table: the owner's GitHub username, status `Draft`, today's date, and what the doc
+   covers, in a few words. The doc's header and its row in the table above are generated
+   from it. On the website, a table under the header lists the owner and everyone who
+   commits to the doc or reviews or comments on a pull request that changes it, with
+   their names and roles, generated from the git and GitHub history.
+3. Put your nodes, interfaces, and open questions in the same registry, and run
    `scripts/design render`. If the registry already exists, it holds what the other docs
    assume your subsystem provides: confirm or change each entry.
 4. Fill in every section. Write "None" rather than deleting a section, so readers know it
    was considered.
 5. Delete every quote block in the template that starts with **Delete this**.
 6. Add the doc to the `Subsystems` group of the `Design` section in the `nav` list in
-   `mkdocs.yml`, in the same order as the table above, so it appears on the website.
+   `mkdocs.yml`, so it appears on the website. The table above follows the same order,
+   and `scripts/design check` fails until the doc is there.
 7. Open a pull request. Design docs get the same review as code, plus the software lead's.
 
 ## Status
 
 Design docs are written and reviewed before the code, so a doc moves through these
-statuses, shown in its header:
+statuses. A doc's status is in the `[doc]` table of its registry, and shows in its header
+and in the table of docs above.
+
+<!-- design: statuses (generated from scripts/design by scripts/design render: edit the script, not this table) -->
 
 | Status | Meaning |
 | --- | --- |
@@ -69,10 +78,13 @@ statuses, shown in its header:
 | `Current` | The code matches the doc. |
 | `Superseded` | Replaced by another doc, which it links to. |
 
+<!-- /design -->
+
 Change the status in the same pull request that makes it true: the review that approves
 the doc, the first code pull request, and the one that finishes the code.
 
-Update the "Last reviewed" date whenever you check the doc against the code.
+Update `last_reviewed` in the `[doc]` table whenever you approve the doc or check it
+against the code.
 
 ## Interfaces are contracts
 
@@ -147,6 +159,7 @@ text = "Which access point and robot radio?"
 
 | Entry | Where it goes | What it is |
 | --- | --- | --- |
+| `[doc]` | Each design doc's registry, as one `[doc]` table | The doc itself. Its header and its row in the table of design docs are generated from it. |
 | `[[element]]` | `system.toml` | A software element from the PDR's system hierarchy |
 | `[[node]]` | Each doc's registry | A node the doc designs |
 | `[[node.publishes]]` | Under its `[[node]]` | A topic the node publishes. No other node publishes it. |
@@ -160,6 +173,11 @@ text = "Which access point and robot radio?"
 
 | Entry | Field | Required | What it holds |
 | --- | --- | --- | --- |
+| `[doc]` | `owner` | Yes | The owner's GitHub username |
+| `[doc]` | `status` | Yes | One of the statuses under [Status](#status) |
+| `[doc]` | `last_reviewed` | Yes | The date the doc was last approved or checked against the code, such as 2026-11-15 |
+| `[doc]` | `covers` | Yes | What the doc designs, in a few words, shown in the table of design docs |
+| `[doc]` | `superseded_by` | No | The file name of the doc that replaces it, such as `drivetrain.md`; required when its status is `Superseded` |
 | `[[element]]` | `id` | Yes | Its ID in the hierarchy, such as `SW.1.2` |
 | `[[element]]` | `name` | Yes | Its name |
 | `[[element]]` | `function` | Yes | What it does, in one sentence |
@@ -270,6 +288,9 @@ A doc shows its registry's content in these blocks, each between its marker and
 | `<!-- design: interfaces -->` | None | The topics, services, and actions this doc's nodes define, then the ones they use from other docs |
 | `<!-- design: questions -->` | None | This doc's open and decided questions |
 | `<!-- design: budgets -->` | None | Every budget row in `performance-budgets.toml` that names one of this doc's elements |
+| `<!-- design: header -->` | None | This doc's owner, status, and last reviewed date, from the `[doc]` table in its registry |
+| `<!-- design: docs -->` | None | Every design doc with a `[doc]` table, with what it covers and its status, in the website's sidebar order |
+| `<!-- design: statuses -->` | None | What each design doc status means |
 | `<!-- design: elements -->` | None | Every software element |
 | `<!-- design: graph -->` | None | A diagram of every node, with an arrow for each topic and call |
 | `<!-- design: fields -->` | None | This reference of registry fields |

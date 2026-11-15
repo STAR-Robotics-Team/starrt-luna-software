@@ -1,8 +1,12 @@
 # Teleoperation Subsystem Design
 
+<!-- design: header (generated from teleoperation.toml by scripts/design render: edit that file, not this table) -->
+
 | Owner | Status | Last reviewed |
 | --- | --- | --- |
-| ja-zoe | Draft | 2026-11-14 |
+| ja-zoe | In progress | 2026-11-15 |
+
+<!-- /design -->
 
 This doc designs the operator station and the code that turns the gamepad into robot
 commands: SW.3 in the [system design](system.md). The operator frontend runs in a browser
@@ -47,7 +51,7 @@ This doc's share of each technical performance measure, from the
 | [TPM-6](performance-budgets.md#tpm-6-average-link-bandwidth-over-a-run) | SW.3.1 | /joy, the heartbeat, and mode requests (laptop to robot) | 50 kbit/s in TELEOP (default view), 50 kbit/s in AUTO (default view) |
 | [TPM-6](performance-budgets.md#tpm-6-average-link-bandwidth-over-a-run) | SW.3.2 | Nothing: it runs on the robot | 0 kbit/s in TELEOP (default view), 0 kbit/s in AUTO (default view) |
 | [TPM-8](performance-budgets.md#tpm-8-stop-time-after-link-loss) | SW.3.1 | Send a heartbeat every 100 ms, which sets how soon a loss can be seen | 100 (the period), not counted |
-| [TPM-11](performance-budgets.md#tpm-11-robot-computer-processor-load-averaged-over-a-run) | SW.3.2 | Teleop mapping | [TBD: autonomy doc v1 (7.8)]; expected to be small |
+| [TPM-11](performance-budgets.md#tpm-11-robot-computer-processor-load-averaged-over-a-run) | SW.3.2 | Teleop mapping | ≤1 % |
 
 <!-- /design -->
 
@@ -88,11 +92,11 @@ TCP; the QoS in the table is on the robot's side.
 | `/robot/mode` | The robot state, the control source, the task mode, and why | topic | `luna_interfaces/msg/RobotMode` | 10 Hz and on change | `mode_manager` | Drive mode gate, Mechanism mode gate, `command_selector`, Path planning and following, Task sequencer, Operator frontend, `teleop_node` | reliable, transient local, depth 1 |
 | `/robot/request_mode` | The operator's request to enable, disable, or clear a fault, with the source and task mode | service | `luna_interfaces/srv/RequestMode` | On demand | `mode_manager` | Operator frontend, `teleop_node` | default |
 | `/power/battery` | The battery voltage, each PDP channel's current, and the energy used | topic | `sensor_msgs/msg/BatteryState` | 10 Hz | Power panel reading node | `mode_manager`, Operator frontend | best effort, depth 1 |
+| `/mechanism/status` | Whether the excavator is stowed and the hatch closed, the depth, and each function's output, current, and faults | topic | luna_interfaces/msg/MechanismStatus [TBR: proposed in section 3] | 10 Hz and on change [TBR] | `mechanism_controller` | `mode_manager`, Task sequencer, Operator frontend | reliable, transient local, depth 1 |
+| [TBD: the driving camera's topic, once 6.1 picks the camera] | The driving camera's compressed image | topic | sensor_msgs/msg/CompressedImage [TBR] | [TBD: the camera's rate; the operator view takes 5 Hz] | Camera driver | Operator frontend | [TBD: the driver's QoS] |
 | `/autonomy/obstacle_map` | The 5 cm grid of mapped rocks and craters | topic | `nav_msgs/msg/OccupancyGrid` | `map_publish_rate`, 2 Hz [TBR: autonomy open question 2] | Localization and mapping | Path planning and following, Operator frontend | reliable, transient local, depth 1 |
 | `/autonomy/plan` | The path the planner is following | topic | `nav_msgs/msg/Path` | On each replan, at most 1 Hz | Path planning and following | Operator frontend | reliable, volatile, depth 1 |
 | `/autonomy/status` | The cycle step, the cycle count, and why the sequencer stopped | topic | luna_interfaces/msg/AutonomyStatus [TBR: proposed in section 3] | 1 Hz and on change | Task sequencer | Operator frontend | reliable, transient local, depth 1 |
-| `/mechanism/status` | Whether the excavator is stowed and the hatch closed, the depth, and each function's output, current, and faults | topic | luna_interfaces/msg/MechanismStatus [TBR: proposed in section 3] | 10 Hz and on change [TBR] | `mechanism_controller` | `mode_manager`, Task sequencer, Operator frontend | reliable, transient local, depth 1 |
-| [TBD: the driving camera's topic, once 6.1 picks the camera] | The driving camera's compressed image | topic | sensor_msgs/msg/CompressedImage [TBR] | [TBD: the camera's rate; the operator view takes 5 Hz] | Camera driver | Operator frontend | [TBD: the driver's QoS] |
 
 <!-- /design -->
 
@@ -335,4 +339,4 @@ operating modes doc still lists driving while digging and the conveyor in DUMP a
 
 ## Handoff
 
-Not yet written: this doc is a draft.
+Not yet written: filled in at the end of each semester.

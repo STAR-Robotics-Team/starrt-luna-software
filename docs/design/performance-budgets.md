@@ -209,16 +209,19 @@ Allocation by phase (Wh).
 
 Allocation (% of all CPU cores).
 
-| Element | Elements | Allocation (%) |
-| --- | --- | --- |
-| Localization and mapping | SW.2.2 | [TBD: autonomy doc v1 (7.8)]; expected to be the largest share |
-| Path planning and following | SW.2.3 | [TBD: autonomy doc v1 (7.8)] |
-| Sensor drivers, including camera compression | SW.2.1 | [TBD: autonomy doc v1 (7.8)] |
-| Task sequencer | SW.2.4 | [TBD: autonomy doc v1 (7.8)] |
-| Robot control | SW.1.1 to SW.1.5 | [TBD: autonomy doc v1 (7.8)] |
-| Teleop mapping | SW.3.2 | [TBD: autonomy doc v1 (7.8)]; expected to be small |
-| Bringup, link (rosbridge), and logging | SW.4 | [TBD: autonomy doc v1 (7.8)] |
+| Part | Elements | Allocation (%) | Basis |
+| --- | --- | --- | --- |
+| Localization and mapping | SW.2.2 | ≤25 | LiDAR-inertial odometry matches every L2 cloud against its map: the heaviest steady work on the robot [TBR: measured on the Jetson in 7.5] |
+| Path planning and following | SW.2.3 | ≤18 | Nav2's costmaps mark obstacles from every cloud, and its planner and controller run beside them [TBR: measured on the Jetson in 7.5] |
+| Sensor drivers, including camera compression | SW.2.1 | ≤8 | The L2 driver unpacks every point, and each camera image is compressed to JPEG, which the Jetson's JPEG engine (NVJPG) can take off the processor; it has no video encoder ([Jetson power modes](../sources.md#nvidia-jetson-power-r36-5)) [TBR: the cameras, 6.1] |
+| Task sequencer | SW.2.4 | ≤2 | A state machine that decides a few times a second [TBR: measured on the Jetson at Bench] |
+| Robot control | SW.1.1 to SW.1.5 | ≤5 | The two controller managers' control loops and their CAN traffic, the mode manager, and `command_selector` [TBR: measured on the Jetson at Bench] |
+| Teleop mapping | SW.3.2 | ≤1 | Turns each `/joy` message into a command [TBR: measured on the Jetson at Bench] |
+| Bringup, link (rosbridge), and logging | SW.4 | ≤6 | rosbridge turns each topic the operator view subscribes to into JSON, and the recorder writes every L2 cloud to storage [TBR: measured on the Jetson at Bench] |
+| **Total** |   | **65** of 70, leaving 5 |   |
 
+- **Each share is an allocation to design against, not a measurement.** What the total leaves is held back for what the first measurements find.
+- **Shares are in % of all 6 CPU cores,** which the Orin Nano runs in its 15 W and 25 W power modes; its 7 W mode turns two off ([Jetson power modes](../sources.md#nvidia-jetson-power-r36-5)).
 - **The computer may change.** The robot computer is the Jetson Orin Nano today. It becomes an ASRock 4X4 BOX-AI340 mini PC if the Hacker Initiative grant pays for one (system open question 7). That would change every share.
 
 ### TPM-12: Restart time

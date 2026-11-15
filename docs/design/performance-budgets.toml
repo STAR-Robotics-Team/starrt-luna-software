@@ -532,49 +532,65 @@ better = "lower"
 threshold_value = 85
 goal_value = 70
 budget = "Allocation (% of all CPU cores)"
-part = "Element"
+part = "Part"
 allocation = "Allocation (%)"
 budget_unit = "%"
 limit = 70
 notes = [
+  "**Each share is an allocation to design against, not a measurement.** What the total leaves is held back for what the first measurements find.",
+  "**Shares are in % of all 6 CPU cores,** which the Orin Nano runs in its 15 W and 25 W power modes; its 7 W mode turns two off ([Jetson power modes](../sources.md#nvidia-jetson-power-r36-5)).",
   "**The computer may change.** The robot computer is the Jetson Orin Nano today. It becomes an ASRock 4X4 BOX-AI340 mini PC if the Hacker Initiative grant pays for one (system open question 7). That would change every share.",
 ]
 
 [[tpm.row]]
 part = "Localization and mapping"
 elements = ["SW.2.2"]
-value = "[TBD: autonomy doc v1 (7.8)]; expected to be the largest share"
+value = "≤25"
+amount = 25
+basis = "LiDAR-inertial odometry matches every L2 cloud against its map: the heaviest steady work on the robot [TBR: measured on the Jetson in 7.5]"
 
 [[tpm.row]]
 part = "Path planning and following"
 elements = ["SW.2.3"]
-value = "[TBD: autonomy doc v1 (7.8)]"
+value = "≤18"
+amount = 18
+basis = "Nav2's costmaps mark obstacles from every cloud, and its planner and controller run beside them [TBR: measured on the Jetson in 7.5]"
 
 [[tpm.row]]
 part = "Sensor drivers, including camera compression"
 elements = ["SW.2.1"]
-value = "[TBD: autonomy doc v1 (7.8)]"
+value = "≤8"
+amount = 8
+basis = "The L2 driver unpacks every point, and each camera image is compressed to JPEG, which the Jetson's JPEG engine (NVJPG) can take off the processor; it has no video encoder ([Jetson power modes](../sources.md#nvidia-jetson-power-r36-5)) [TBR: the cameras, 6.1]"
 
 [[tpm.row]]
 part = "Task sequencer"
 elements = ["SW.2.4"]
-value = "[TBD: autonomy doc v1 (7.8)]"
+value = "≤2"
+amount = 2
+basis = "A state machine that decides a few times a second [TBR: measured on the Jetson at Bench]"
 
 [[tpm.row]]
 part = "Robot control"
 elements = ["SW.1.1", "SW.1.2", "SW.1.3", "SW.1.4", "SW.1.5"]
 role = "SW.1.1 to SW.1.5"
-value = "[TBD: autonomy doc v1 (7.8)]"
+value = "≤5"
+amount = 5
+basis = "The two controller managers' control loops and their CAN traffic, the mode manager, and `command_selector` [TBR: measured on the Jetson at Bench]"
 
 [[tpm.row]]
 part = "Teleop mapping"
 elements = ["SW.3.2"]
-value = "[TBD: autonomy doc v1 (7.8)]; expected to be small"
+value = "≤1"
+amount = 1
+basis = "Turns each `/joy` message into a command [TBR: measured on the Jetson at Bench]"
 
 [[tpm.row]]
 part = "Bringup, link (rosbridge), and logging"
 elements = ["SW.4"]
-value = "[TBD: autonomy doc v1 (7.8)]"
+value = "≤6"
+amount = 6
+basis = "rosbridge turns each topic the operator view subscribes to into JSON, and the recorder writes every L2 cloud to storage [TBR: measured on the Jetson at Bench]"
 
 [[tpm]]
 id = "TPM-12"

@@ -1,8 +1,12 @@
 # Mechanism Subsystem Design
 
+<!-- design: header (generated from mechanism.toml by scripts/design render: edit that file, not this table) -->
+
 | Owner | Status | Last reviewed |
 | --- | --- | --- |
-| ja-zoe | Draft | 2026-11-14 |
+| ja-zoe | Approved | 2026-11-15 |
+
+<!-- /design -->
 
 This doc designs the code that runs the excavation and deposition mechanism: SW.1.3 in the
 [system design](system.md). Four functions move on their own: the depth actuators that
@@ -66,7 +70,7 @@ This doc's share of each technical performance measure, from the
 | [TPM-9](performance-budgets.md#tpm-9-peak-current-in-the-worst-task-mode) | SW.1.3 | Hatch (off in EXCAVATE) | 0 A |
 | [TPM-10](performance-budgets.md#tpm-10-energy-used-per-autonomous-cycle) | SW.1.3 | Excavate (SW.1.3 (limits, and how it digs)) | [TBD: baseline] |
 | [TPM-10](performance-budgets.md#tpm-10-energy-used-per-autonomous-cycle) | SW.1.3 | Dump | [TBD: baseline] |
-| [TPM-11](performance-budgets.md#tpm-11-robot-computer-processor-load-averaged-over-a-run) | SW.1.3 | Robot control (SW.1.1 to SW.1.5) | [TBD: autonomy doc v1 (7.8)] |
+| [TPM-11](performance-budgets.md#tpm-11-robot-computer-processor-load-averaged-over-a-run) | SW.1.3 | Robot control (SW.1.1 to SW.1.5) | ≤5 % |
 
 <!-- /design -->
 
@@ -399,4 +403,4 @@ sequencer knows the bin is full is autonomy's question 5, which may add a field 
 
 ## Handoff
 
-Not yet written: this doc is a draft.
+Not yet written: filled in at the end of each semester.

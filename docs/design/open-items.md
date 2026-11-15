@@ -38,15 +38,14 @@ by `scripts/design render`.
 | 9. Should `link_timeout` be longer in AUTO, to ride through Wi-Fi dropouts? Measure dropouts in the pits first. | 5.6 |
 | 10. Does anything deploy after the run starts (stowed envelope 150 × 75 × 75 cm, §13.3, p. 42)? If so, add a DEPLOY step. For Mechanical. | 4.1 |
 
-### [Autonomy Subsystem Design](autonomy.md#9-open-questions)
+### [Platform Design](platform.md#9-open-questions)
 
 | Question | Turgor |
 | --- | --- |
-| 2. Which LiDAR-inertial odometry package runs on the Unitree L2, and does it, with Nav2, fit the Jetson inside the TPM-11 budget? Until it is chosen, every rate and package marked with this question is a proposal. | 7.5 |
-| 3. How are craters, which sit below the ground, found in the point cloud: cells below the local ground height by more than crater_min_depth, or cells the LiDAR cannot see? Test both on a recording of a dug hole. | 7.5 |
-| 4. Find the start position and heading from the LiDAR alone, or add markers on the arena frame beside the starting zone? Markers are allowed there, but count toward the robot's mass (guidebook §13.7, p. 43). | 7.5 |
-| 5. How does the task sequencer know the bin is full: a reading on /mechanism/status (motor current, a load cell, a level sensor) or a fixed dig time? For the mechanism doc. | 4.2 |
-| 6. May the robot drive to the berm target's published position (guidebook §11.2, pp. 34-35), or does that count as prior knowledge of the arena, which §16.3 forbids for travel? Ask in the FAQ. If it may not, the robot must find the construction zone from what it sees. | None |
+| 1. Does the robot computer run ROS 2 in the dev container's image, or natively? On the Jetson, JetPack 6's Ubuntu 22.04 has no Jazzy for arm64, so the container is proposed (section 5); a mini PC (system open question 7) could run either. | 2.9 |
+| 2. How does code reach the robot: pull a commit and build on the robot computer, or install a prebuilt arm64 image? | 2.10 |
+| 3. Where do recordings live on the robot, how do they come off it after a run, and how long are they kept? The system design's conventions say where recordings live for good (1.5). | 2.10 |
+| 4. Should the robot's ROS 2 discovery stay on the robot computer (ROS_AUTOMATIC_DISCOVERY_RANGE set to LOCALHOST), since the operator laptop reaches it only through rosbridge? Discovery traffic would then never cross the Wi-Fi, and a teammate debugging from a laptop would use rosbridge or ssh instead. | 5.6 |
 
 ### [Drivetrain Subsystem Design](drivetrain.md#9-open-questions)
 
@@ -67,14 +66,12 @@ by `scripts/design render`.
 | 3. What tells software the hatch is fully open, and how far does it travel? With a sensor at each end, the hatch can take an open or close command and stop by itself; without one, it runs only while its button is held. | 4.1 |
 | 4. Which way is positive for each function, once Mechanical mounts them? Proposed in section 3: positive raises the excavator, runs the chain and the conveyor the way they run while digging, and opens the hatch. | 4.1 |
 
-### [Platform Design](platform.md#9-open-questions)
+### [Teleoperation Subsystem Design](teleoperation.md#9-open-questions)
 
 | Question | Turgor |
 | --- | --- |
-| 1. Does the robot computer run ROS 2 in the dev container's image, or natively? On the Jetson, JetPack 6's Ubuntu 22.04 has no Jazzy for arm64, so the container is proposed (section 5); a mini PC (system open question 7) could run either. | 2.9 |
-| 2. How does code reach the robot: pull a commit and build on the robot computer, or install a prebuilt arm64 image? | 2.10 |
-| 3. Where do recordings live on the robot, how do they come off it after a run, and how long are they kept? The system design's conventions say where recordings live for good (1.5). | 2.10 |
-| 4. Should the robot's ROS 2 discovery stay on the robot computer (ROS_AUTOMATIC_DISCOVERY_RANGE set to LOCALHOST), since the operator laptop reaches it only through rosbridge? Discovery traffic would then never cross the Wi-Fi, and a teammate debugging from a laptop would use rosbridge or ssh instead. | 5.6 |
+| 4. What final network settings and frontend delivery will be used: HTTPS and secure WebSockets served from the robot computer, or a packaged desktop app? | 5.7 |
+| 6. How does the robot judge the age of a command whose stamp starts on the laptop? The frontend stamps /joy, so a stale command after a Wi-Fi stall is caught only if the laptop's clock agrees with the robot's. Proposed: the frontend measures the offset with rosapi's get_time service, part of the rosbridge suite, from round trips, and stamps /joy in the robot's time; an operator laptop's own clock cannot be relied on to be set. | 5.4 |
 
 ### [Sensors and Robot Model Design](sensors.md#9-open-questions)
 
@@ -85,12 +82,15 @@ by `scripts/design render`.
 | 3. Which parts of the robot itself does the L2 see, such as the excavator or the bin, and how are they cut out of the cloud: a box around the robot in base_link, or the driver's range_min? | 6.5 |
 | 4. The L2 driver stamps each cloud with the computer's time when it arrives (use_system_timestamp is true). Is that within TPM-5's 10 ms timestamp mismatch of the IMUs' stamps? Measure on the bench, and if not, use the L2's own time. | 6.6 |
 
-### [Teleoperation Subsystem Design](teleoperation.md#9-open-questions)
+### [Autonomy Subsystem Design](autonomy.md#9-open-questions)
 
 | Question | Turgor |
 | --- | --- |
-| 4. What final network settings and frontend delivery will be used: HTTPS and secure WebSockets served from the robot computer, or a packaged desktop app? | 5.7 |
-| 6. How does the robot judge the age of a command whose stamp starts on the laptop? The frontend stamps /joy, so a stale command after a Wi-Fi stall is caught only if the laptop's clock agrees with the robot's. Proposed: the frontend measures the offset with rosapi's get_time service, part of the rosbridge suite, from round trips, and stamps /joy in the robot's time; an operator laptop's own clock cannot be relied on to be set. | 5.4 |
+| 2. Which LiDAR-inertial odometry package runs on the Unitree L2, and does it, with Nav2, fit the Jetson inside the TPM-11 budget? Until it is chosen, every rate and package marked with this question is a proposal. | 7.5 |
+| 3. How are craters, which sit below the ground, found in the point cloud: cells below the local ground height by more than crater_min_depth, or cells the LiDAR cannot see? Test both on a recording of a dug hole. | 7.5 |
+| 4. Find the start position and heading from the LiDAR alone, or add markers on the arena frame beside the starting zone? Markers are allowed there, but count toward the robot's mass (guidebook §13.7, p. 43). | 7.5 |
+| 5. How does the task sequencer know the bin is full: a reading on /mechanism/status (motor current, a load cell, a level sensor) or a fixed dig time? For the mechanism doc. | 4.2 |
+| 6. May the robot drive to the berm target's published position (guidebook §11.2, pp. 34-35), or does that count as prior knowledge of the arena, which §16.3 forbids for travel? Ask in the FAQ. If it may not, the robot must find the construction zone from what it sees. | None |
 
 ### [Testing Layers](testing-layers.md#open-questions)
 
@@ -118,18 +118,11 @@ that uses them; each is listed here once.
 | node mode_manager | package | `luna_modes` [TBR: proposed name] |
 | node power_panel | package | [TBD: operating modes v1 (1.19)] |
 
-### `autonomy.toml`
+### `platform.toml`
 
 | Entry | Field | Value |
 | --- | --- | --- |
-| node localization | package | `luna_autonomy` [TBR: autonomy open question 2] |
-| node planner | package | `luna_autonomy`, with Nav2 [TBR: autonomy open question 2] |
-| interface robot-pose | rate | 50 Hz [TBR: autonomy open question 2] |
-| interface obstacle-map | rate | `map_publish_rate`, 2 Hz [TBR: autonomy open question 2] |
-| interface navigate | type | nav2_msgs/action/NavigateToPose [TBR: autonomy open question 2] |
-| interface auto-mechanism-command | type | luna_interfaces/msg/ActuatorCommand [TBR: proposed in the mechanism doc (4.2)] |
-| interface auto-mechanism-command | rate | 20 Hz [TBR: matches teleop's command_rate] |
-| interface autonomy-status | type | luna_interfaces/msg/AutonomyStatus [TBR: proposed in section 3] |
+| node recorder | does | Records every run to the robot computer's storage: every topic except raw images, from DISABLED on [TBR: 2.10] |
 
 ### `drivetrain.toml`
 
@@ -144,6 +137,44 @@ that uses them; each is listed here once.
 | node mechanism_mode_gate | package | `luna_modes` [TBR: 1.17 builds it], in the mechanism's controller manager |
 | interface /mechanism/status | type | luna_interfaces/msg/MechanismStatus [TBR: proposed in section 3] |
 | interface /mechanism/status | rate | 10 Hz and on change [TBR] |
+
+### `teleoperation.toml`
+
+| Entry | Field | Value |
+| --- | --- | --- |
+| interface /joy | rate | `autorepeat_rate`, 20 Hz, and on change [TBR] |
+| interface /joy | qos | [TBD: as rosbridge publishes it, 5.4] |
+| interface /teleop/cmd_vel | rate | `command_rate`, 20 Hz [TBR] |
+| interface teleop-mechanism-command | type | luna_interfaces/msg/ActuatorCommand [TBR: proposed in the mechanism doc (4.2)] |
+| interface teleop-mechanism-command | rate | `command_rate`, 20 Hz [TBR] |
+
+### `sensors.toml`
+
+| Entry | Field | Value |
+| --- | --- | --- |
+| node imu_driver | package | [TBD: the IMU, sensor suite evaluation (6.1)] |
+| node camera_driver | package | [TBD: the cameras, sensor suite evaluation (6.1)] |
+| interface unilidar/cloud | rate | About 12 Hz [TBR: 18 scans a cloud, measured on the bench (6.6)] |
+| interface unilidar/imu | rate | 500 Hz [TBR: the L2's reporting rate, measured on the bench (6.6)] |
+| interface imu/data_raw | rate | 100 Hz [TBR: the stub's rate (6.9), until 6.1 picks the part] |
+| interface imu/data_raw | qos | reliable, volatile, depth 10 [TBR: until the driver from 6.1 is known] |
+| interface camera-image | name | [TBD: the driving camera's topic, once 6.1 picks the camera] |
+| interface camera-image | type | sensor_msgs/msg/CompressedImage [TBR] |
+| interface camera-image | rate | [TBD: the camera's rate; the operator view takes 5 Hz] |
+| interface camera-image | qos | [TBD: the driver's QoS] |
+
+### `autonomy.toml`
+
+| Entry | Field | Value |
+| --- | --- | --- |
+| node localization | package | `luna_autonomy` [TBR: autonomy open question 2] |
+| node planner | package | `luna_autonomy`, with Nav2 [TBR: autonomy open question 2] |
+| interface robot-pose | rate | 50 Hz [TBR: autonomy open question 2] |
+| interface obstacle-map | rate | `map_publish_rate`, 2 Hz [TBR: autonomy open question 2] |
+| interface navigate | type | nav2_msgs/action/NavigateToPose [TBR: autonomy open question 2] |
+| interface auto-mechanism-command | type | luna_interfaces/msg/ActuatorCommand [TBR: proposed in the mechanism doc (4.2)] |
+| interface auto-mechanism-command | rate | 20 Hz [TBR: matches teleop's command_rate] |
+| interface autonomy-status | type | luna_interfaces/msg/AutonomyStatus [TBR: proposed in section 3] |
 
 ### `performance-budgets.toml`
 
@@ -188,50 +219,19 @@ that uses them; each is listed here once.
 | TPM-10 | row "Electronics on the main battery over the cycle (LiDAR, radio, controllers)": value | [TBD: baseline] |
 | TPM-11 | threshold | ≤85 [TBR: proposed in the PDR (1.6)] |
 | TPM-11 | goal | ≤70 [TBR: proposed in the PDR (1.6)] |
-| TPM-11 | row "Localization and mapping": value | [TBD: autonomy doc v1 (7.8)]; expected to be the largest share |
-| TPM-11 | row "Path planning and following": value | [TBD: autonomy doc v1 (7.8)] |
-| TPM-11 | row "Sensor drivers, including camera compression": value | [TBD: autonomy doc v1 (7.8)] |
-| TPM-11 | row "Task sequencer": value | [TBD: autonomy doc v1 (7.8)] |
-| TPM-11 | row "Robot control": value | [TBD: autonomy doc v1 (7.8)] |
-| TPM-11 | row "Teleop mapping": value | [TBD: autonomy doc v1 (7.8)]; expected to be small |
-| TPM-11 | row "Bringup, link (rosbridge), and logging": value | [TBD: autonomy doc v1 (7.8)] |
+| TPM-11 | row "Localization and mapping": basis | LiDAR-inertial odometry matches every L2 cloud against its map: the heaviest steady work on the robot [TBR: measured on the Jetson in 7.5] |
+| TPM-11 | row "Path planning and following": basis | Nav2's costmaps mark obstacles from every cloud, and its planner and controller run beside them [TBR: measured on the Jetson in 7.5] |
+| TPM-11 | row "Sensor drivers, including camera compression": basis | The L2 driver unpacks every point, and each camera image is compressed to JPEG, which the Jetson's JPEG engine (NVJPG) can take off the processor; it has no video encoder (Jetson power modes) [TBR: the cameras, 6.1] |
+| TPM-11 | row "Task sequencer": basis | A state machine that decides a few times a second [TBR: measured on the Jetson at Bench] |
+| TPM-11 | row "Robot control": basis | The two controller managers' control loops and their CAN traffic, the mode manager, and `command_selector` [TBR: measured on the Jetson at Bench] |
+| TPM-11 | row "Teleop mapping": basis | Turns each `/joy` message into a command [TBR: measured on the Jetson at Bench] |
+| TPM-11 | row "Bringup, link (rosbridge), and logging": basis | rosbridge turns each topic the operator view subscribes to into JSON, and the recorder writes every L2 cloud to storage [TBR: measured on the Jetson at Bench] |
 | TPM-12 | threshold | ≤180 [TBR: proposed in the PDR (1.6)] |
 | TPM-12 | goal | ≤120 [TBR: proposed in the PDR (1.6)] |
 | TPM-12 | row "Operating system boots": value | [TBD: measured in 2.10] |
 | TPM-12 | row "Every robot program starts": value | [TBD: measured in 2.10] |
 | TPM-12 | row "Self-test finds every CAN device": value | ≤10, with FAULT at 60 [TBR: proposed in the PDR (1.6)] |
 | TPM-12 | row "Sensor drivers publishing": value | [TBD: sensors doc (6.2)] |
-
-### `platform.toml`
-
-| Entry | Field | Value |
-| --- | --- | --- |
-| node recorder | does | Records every run to the robot computer's storage: every topic except raw images, from DISABLED on [TBR: 2.10] |
-
-### `sensors.toml`
-
-| Entry | Field | Value |
-| --- | --- | --- |
-| node imu_driver | package | [TBD: the IMU, sensor suite evaluation (6.1)] |
-| node camera_driver | package | [TBD: the cameras, sensor suite evaluation (6.1)] |
-| interface unilidar/cloud | rate | About 12 Hz [TBR: 18 scans a cloud, measured on the bench (6.6)] |
-| interface unilidar/imu | rate | 500 Hz [TBR: the L2's reporting rate, measured on the bench (6.6)] |
-| interface imu/data_raw | rate | 100 Hz [TBR: the stub's rate (6.9), until 6.1 picks the part] |
-| interface imu/data_raw | qos | reliable, volatile, depth 10 [TBR: until the driver from 6.1 is known] |
-| interface camera-image | name | [TBD: the driving camera's topic, once 6.1 picks the camera] |
-| interface camera-image | type | sensor_msgs/msg/CompressedImage [TBR] |
-| interface camera-image | rate | [TBD: the camera's rate; the operator view takes 5 Hz] |
-| interface camera-image | qos | [TBD: the driver's QoS] |
-
-### `teleoperation.toml`
-
-| Entry | Field | Value |
-| --- | --- | --- |
-| interface /joy | rate | `autorepeat_rate`, 20 Hz, and on change [TBR] |
-| interface /joy | qos | [TBD: as rosbridge publishes it, 5.4] |
-| interface /teleop/cmd_vel | rate | `command_rate`, 20 Hz [TBR] |
-| interface teleop-mechanism-command | type | luna_interfaces/msg/ActuatorCommand [TBR: proposed in the mechanism doc (4.2)] |
-| interface teleop-mechanism-command | rate | `command_rate`, 20 Hz [TBR] |
 
 ## Marked in the test sheet
 
@@ -290,17 +290,28 @@ Every `[TBD]` and `[TBR]` in the docs' own text, by page and section.
 | [5. Libraries and hardware interfaces](operating-modes.md#5-libraries-and-hardware-interfaces) | [TBR: Once the grant's Mean Well RSD-30G converters replace the VRM, their output ground is tied to the computer's ground. They isolate input from output (RSD-30 datasheet, p. 2), so the sensors then share the computer's ground with no second path to the main battery's. The VRM's output must not be tied to it, since that would join the two grounds a second time.] |
 | [8. Test plan](operating-modes.md#8-test-plan) | [TBR: the margin] |
 
-### [Autonomy Subsystem Design](autonomy.md)
+### [Platform Design](platform.md)
 
 | Section | Marked |
 | --- | --- |
-| [2. Nodes](autonomy.md#2-nodes) | [TBR: autonomy open question 2] |
-| [3. Interfaces](autonomy.md#3-interfaces) | [TBR: Proposed] |
-| [4. Parameters](autonomy.md#4-parameters) | [TBR: tested in 7.5 and 7.6] |
-| [4. Parameters](autonomy.md#4-parameters) | [TBD: drivetrain doc (3.1)] |
-| [5. Libraries and hardware interfaces](autonomy.md#5-libraries-and-hardware-interfaces) | [TBD: chosen in 7.5, autonomy open question 2] |
-| [5. Libraries and hardware interfaces](autonomy.md#5-libraries-and-hardware-interfaces) | [TBR: autonomy open question 2] |
-| [5. Libraries and hardware interfaces](autonomy.md#5-libraries-and-hardware-interfaces) | [TBR: autonomy open question 2] |
+| [4. Parameters](platform.md#4-parameters) | [TBR: rosbridge's default, for 5.7 to confirm] |
+| [4. Parameters](platform.md#4-parameters) | [TBR: 2.10] |
+| [4. Parameters](platform.md#4-parameters) | [TBD: open question 3] |
+| [4. Parameters](platform.md#4-parameters) | [TBR: `LOCALHOST`, open question 4] |
+| [4. Parameters](platform.md#4-parameters) | [TBD: 5.7] |
+| [4. Parameters](platform.md#4-parameters) | [TBR: how to set it for the middleware the robot uses, checked in 5.6] |
+| [4. Parameters](platform.md#4-parameters) | [TBD: the bench laptop's address, 5.6] |
+| [4. Parameters](platform.md#4-parameters) | [TBD: the team's ID for bench work across computers, 5.6] |
+| [4. Parameters](platform.md#4-parameters) | [TBD: named in deliverable 1.4] |
+| [5. Libraries and hardware interfaces](platform.md#5-libraries-and-hardware-interfaces) | [TBD: 2.2] |
+| [5. Libraries and hardware interfaces](platform.md#5-libraries-and-hardware-interfaces) | [TBD: a mini PC replaces it if the grant pays, system open question 7] |
+| [5. Libraries and hardware interfaces](platform.md#5-libraries-and-hardware-interfaces) | [TBR: open question 1; 2.9 records our Jetson's JetPack version] |
+| [5. Libraries and hardware interfaces](platform.md#5-libraries-and-hardware-interfaces) | [TBR: `luna_bringup`'s robot launch, at boot, and restarts it if it stops . The robot reaches] |
+| [5. Libraries and hardware interfaces](platform.md#5-libraries-and-hardware-interfaces) | [TBR: open question 3] |
+| [6. Block diagram](platform.md#6-block-diagram) | [TBR: branch protection enforces it once 2.5 sets it] |
+| [7. Behavior on failure](platform.md#7-behavior-on-failure) | [TBR: systemd starts it again ; the robot comes back in BOOT and must be enabled again] |
+| [7. Behavior on failure](platform.md#7-behavior-on-failure) | [TBD: 2.10] |
+| [7. Behavior on failure](platform.md#7-behavior-on-failure) | [TBR: teleoperation open question 6] |
 
 ### [Drivetrain Subsystem Design](drivetrain.md)
 
@@ -332,33 +343,6 @@ Every `[TBD]` and `[TBR]` in the docs' own text, by page and section.
 | [5. Libraries and hardware interfaces](drivetrain.md#5-libraries-and-hardware-interfaces) | [TBR: `/diagnostics`. Driving resumes once the command returns to zero .] |
 | [5. Libraries and hardware interfaces](drivetrain.md#5-libraries-and-hardware-interfaces) | [TBD: decided with Electrical in 3.2; new Talon SRX and Victor SPX can no longer be bought] |
 | [7. Behavior on failure](drivetrain.md#7-behavior-on-failure) | [TBR: That side's output zero and a WARN on `/diagnostics`; driving resumes once the command returns to zero] |
-
-### [Hardware Test Modes](hardware-test-modes.md)
-
-| Section | Marked |
-| --- | --- |
-| [How to read the diagrams](hardware-test-modes.md#how-to-read-the-diagrams) | [TBD: The launch arguments are an example; deliverable 1.4 names the real ones by Oct 21.] |
-| [How to read the diagrams](hardware-test-modes.md#how-to-read-the-diagrams) | [TBR: The drivetrain diagrams assume the drive controller decision (3.2) keeps the 2 Talon SRX and 2 Victor SPX.] |
-| [How to read the diagrams](hardware-test-modes.md#how-to-read-the-diagrams) | [TBD: decided in 4.3] |
-| [Drivetrain: Stub (Sim)](hardware-test-modes.md#drivetrain-stub-sim) | [TBD: `drivetrain:=stub`] |
-| [Drivetrain: Fake motor controllers (Sim)](hardware-test-modes.md#drivetrain-fake-motor-controllers-sim) | [TBD: `drivetrain:=fake_motor_controllers`] |
-| [Drivetrain: Gazebo (Sim)](hardware-test-modes.md#drivetrain-gazebo-sim) | [TBD: `drivetrain:=gazebo`] |
-| [Drivetrain: Bench](hardware-test-modes.md#drivetrain-bench) | [TBD: `drivetrain:=real`] |
-| [Drivetrain: Drive base (Robot)](hardware-test-modes.md#drivetrain-drive-base-robot) | [TBD: `drivetrain:=real`] |
-| [Mechanism: Stub (Sim)](hardware-test-modes.md#mechanism-stub-sim) | [TBD: `mechanism:=stub`] |
-| [Mechanism: Fake motor controllers (Sim)](hardware-test-modes.md#mechanism-fake-motor-controllers-sim) | [TBD: `mechanism:=fake_motor_controllers`] |
-| [Mechanism: Bench](hardware-test-modes.md#mechanism-bench) | [TBD: `mechanism:=real`] |
-| [Battery and power: Fake power panel (Sim)](hardware-test-modes.md#battery-and-power-fake-power-panel-sim) | [TBR: The fake sends frames on a virtual CAN bus, so this mode works wherever the panel reading lives. The panel reading needs no Phoenix 5, so it may leave the drive plugin and deliverable 3.5.] |
-| [Battery and power: Drive base (Robot)](hardware-test-modes.md#battery-and-power-drive-base-robot) | [TBR: reported by other teams, cause not found] |
-| [LiDAR: Stub (Sim)](hardware-test-modes.md#lidar-stub-sim) | [TBD: `lidar:=stub`] |
-| [LiDAR: Gazebo (Sim)](hardware-test-modes.md#lidar-gazebo-sim) | [TBD: `lidar:=gazebo`] |
-| [LiDAR: Bench](hardware-test-modes.md#lidar-bench) | [TBD: `lidar:=real`] |
-| [Dedicated IMU: Stub (Sim)](hardware-test-modes.md#dedicated-imu-stub-sim) | [TBD: `imu:=stub`] |
-| [Dedicated IMU: Gazebo (Sim)](hardware-test-modes.md#dedicated-imu-gazebo-sim) | [TBD: `imu:=gazebo`] |
-| [Dedicated IMU: Bench](hardware-test-modes.md#dedicated-imu-bench) | [TBD: `imu:=real`] |
-| [Cameras: Stub (Sim)](hardware-test-modes.md#cameras-stub-sim) | [TBD: `cameras:=stub`] |
-| [Cameras: Gazebo (Sim)](hardware-test-modes.md#cameras-gazebo-sim) | [TBD: `cameras:=gazebo`] |
-| [Cameras: Bench](hardware-test-modes.md#cameras-bench) | [TBD: `cameras:=real`] |
 
 ### [Mechanism Subsystem Design](mechanism.md)
 
@@ -395,28 +379,24 @@ Every `[TBD]` and `[TBR]` in the docs' own text, by page and section.
 | [7. Behavior on failure](mechanism.md#7-behavior-on-failure) | [TBR: It stops, with a WARN on `/diagnostics`; it moves again once its command returns to zero] |
 | [8. Test plan](mechanism.md#8-test-plan) | [TBR: One depth actuator on the bench (4.6): run its full stroke from a ROS command, and its reported position matches a tape measure at both ends and the middle, within 5 mm . Hold it against a stop: it stops within `stall_time` and warns on `/diagnostics`.] |
 
-### [Platform Design](platform.md)
+### [Teleoperation Subsystem Design](teleoperation.md)
 
 | Section | Marked |
 | --- | --- |
-| [4. Parameters](platform.md#4-parameters) | [TBR: rosbridge's default, for 5.7 to confirm] |
-| [4. Parameters](platform.md#4-parameters) | [TBR: 2.10] |
-| [4. Parameters](platform.md#4-parameters) | [TBD: open question 3] |
-| [4. Parameters](platform.md#4-parameters) | [TBR: `LOCALHOST`, open question 4] |
-| [4. Parameters](platform.md#4-parameters) | [TBD: 5.7] |
-| [4. Parameters](platform.md#4-parameters) | [TBR: how to set it for the middleware the robot uses, checked in 5.6] |
-| [4. Parameters](platform.md#4-parameters) | [TBD: the bench laptop's address, 5.6] |
-| [4. Parameters](platform.md#4-parameters) | [TBD: the team's ID for bench work across computers, 5.6] |
-| [4. Parameters](platform.md#4-parameters) | [TBD: named in deliverable 1.4] |
-| [5. Libraries and hardware interfaces](platform.md#5-libraries-and-hardware-interfaces) | [TBD: 2.2] |
-| [5. Libraries and hardware interfaces](platform.md#5-libraries-and-hardware-interfaces) | [TBD: a mini PC replaces it if the grant pays, system open question 7] |
-| [5. Libraries and hardware interfaces](platform.md#5-libraries-and-hardware-interfaces) | [TBR: open question 1; 2.9 records our Jetson's JetPack version] |
-| [5. Libraries and hardware interfaces](platform.md#5-libraries-and-hardware-interfaces) | [TBR: `luna_bringup`'s robot launch, at boot, and restarts it if it stops . The robot reaches] |
-| [5. Libraries and hardware interfaces](platform.md#5-libraries-and-hardware-interfaces) | [TBR: open question 3] |
-| [6. Block diagram](platform.md#6-block-diagram) | [TBR: branch protection enforces it once 2.5 sets it] |
-| [7. Behavior on failure](platform.md#7-behavior-on-failure) | [TBR: systemd starts it again ; the robot comes back in BOOT and must be enabled again] |
-| [7. Behavior on failure](platform.md#7-behavior-on-failure) | [TBD: 2.10] |
-| [7. Behavior on failure](platform.md#7-behavior-on-failure) | [TBR: teleoperation open question 6] |
+| [4. Parameters](teleoperation.md#4-parameters) | [TBD: enumerated on each laptop] |
+| [4. Parameters](teleoperation.md#4-parameters) | [TBR: 0.05] |
+| [4. Parameters](teleoperation.md#4-parameters) | [TBR: 20] |
+| [4. Parameters](teleoperation.md#4-parameters) | [TBR: 5, 1, 1] |
+| [4. Parameters](teleoperation.md#4-parameters) | [TBR: 1] |
+| [4. Parameters](teleoperation.md#4-parameters) | [TBR: 0.3] |
+| [4. Parameters](teleoperation.md#4-parameters) | [TBR: 20] |
+| [4. Parameters](teleoperation.md#4-parameters) | [TBD: measured index, 5.2] |
+| [4. Parameters](teleoperation.md#4-parameters) | [TBR: 0.15] |
+| [4. Parameters](teleoperation.md#4-parameters) | [TBD: the drivetrain's limits, 3.7] |
+| [5. Libraries and hardware interfaces](teleoperation.md#5-libraries-and-hardware-interfaces) | [TBR: Serve the frontend from the robot computer over HTTPS with secure rosbridge WebSockets, or package it as a desktop app; open question 4 decides.] |
+| [5. Libraries and hardware interfaces](teleoperation.md#5-libraries-and-hardware-interfaces) | [TBR: the Jetson's own Wi-Fi for now, while its Ethernet port serves the LiDAR; system open question 8] |
+| [5. Libraries and hardware interfaces](teleoperation.md#5-libraries-and-hardware-interfaces) | [TBR: The stream rates and bandwidth estimates below are starting values for testing. Estimates use bytes per message × Hz × 8 / 1000 kbit/s, and leave out transport overhead and retransmissions.] |
+| [5. Libraries and hardware interfaces](teleoperation.md#5-libraries-and-hardware-interfaces) | [TBD: the statistics source, 5.7] |
 
 ### [Sensors and Robot Model Design](sensors.md)
 
@@ -442,24 +422,17 @@ Every `[TBD]` and `[TBR]` in the docs' own text, by page and section.
 | [7. Behavior on failure](sensors.md#7-behavior-on-failure) | [TBD: autonomy's timeout] |
 | [7. Behavior on failure](sensors.md#7-behavior-on-failure) | [TBR: a threshold from the bench recording, 6.6] |
 
-### [Teleoperation Subsystem Design](teleoperation.md)
+### [Autonomy Subsystem Design](autonomy.md)
 
 | Section | Marked |
 | --- | --- |
-| [4. Parameters](teleoperation.md#4-parameters) | [TBD: enumerated on each laptop] |
-| [4. Parameters](teleoperation.md#4-parameters) | [TBR: 0.05] |
-| [4. Parameters](teleoperation.md#4-parameters) | [TBR: 20] |
-| [4. Parameters](teleoperation.md#4-parameters) | [TBR: 5, 1, 1] |
-| [4. Parameters](teleoperation.md#4-parameters) | [TBR: 1] |
-| [4. Parameters](teleoperation.md#4-parameters) | [TBR: 0.3] |
-| [4. Parameters](teleoperation.md#4-parameters) | [TBR: 20] |
-| [4. Parameters](teleoperation.md#4-parameters) | [TBD: measured index, 5.2] |
-| [4. Parameters](teleoperation.md#4-parameters) | [TBR: 0.15] |
-| [4. Parameters](teleoperation.md#4-parameters) | [TBD: the drivetrain's limits, 3.7] |
-| [5. Libraries and hardware interfaces](teleoperation.md#5-libraries-and-hardware-interfaces) | [TBR: Serve the frontend from the robot computer over HTTPS with secure rosbridge WebSockets, or package it as a desktop app; open question 4 decides.] |
-| [5. Libraries and hardware interfaces](teleoperation.md#5-libraries-and-hardware-interfaces) | [TBR: the Jetson's own Wi-Fi for now, while its Ethernet port serves the LiDAR; system open question 8] |
-| [5. Libraries and hardware interfaces](teleoperation.md#5-libraries-and-hardware-interfaces) | [TBR: The stream rates and bandwidth estimates below are starting values for testing. Estimates use bytes per message × Hz × 8 / 1000 kbit/s, and leave out transport overhead and retransmissions.] |
-| [5. Libraries and hardware interfaces](teleoperation.md#5-libraries-and-hardware-interfaces) | [TBD: the statistics source, 5.7] |
+| [2. Nodes](autonomy.md#2-nodes) | [TBR: autonomy open question 2] |
+| [3. Interfaces](autonomy.md#3-interfaces) | [TBR: Proposed] |
+| [4. Parameters](autonomy.md#4-parameters) | [TBR: tested in 7.5 and 7.6] |
+| [4. Parameters](autonomy.md#4-parameters) | [TBD: drivetrain doc (3.1)] |
+| [5. Libraries and hardware interfaces](autonomy.md#5-libraries-and-hardware-interfaces) | [TBD: chosen in 7.5, autonomy open question 2] |
+| [5. Libraries and hardware interfaces](autonomy.md#5-libraries-and-hardware-interfaces) | [TBR: autonomy open question 2] |
+| [5. Libraries and hardware interfaces](autonomy.md#5-libraries-and-hardware-interfaces) | [TBR: autonomy open question 2] |
 
 ### [Testing Layers](testing-layers.md)
 
@@ -468,6 +441,33 @@ Every `[TBD]` and `[TBR]` in the docs' own text, by page and section.
 | [The layers](testing-layers.md#the-layers) | [TBR: a current-limited supply, the E-stop in reach, the device clamped, and two people present] |
 | [Stand-ins](testing-layers.md#stand-ins) | [TBR: on a virtual CAN bus] |
 | [Choosing stand-ins per system](testing-layers.md#choosing-stand-ins-per-system) | [TBD: chosen in deliverable 1.4] |
+
+### [Hardware Test Modes](hardware-test-modes.md)
+
+| Section | Marked |
+| --- | --- |
+| [How to read the diagrams](hardware-test-modes.md#how-to-read-the-diagrams) | [TBD: The launch arguments are an example; deliverable 1.4 names the real ones by Oct 21.] |
+| [How to read the diagrams](hardware-test-modes.md#how-to-read-the-diagrams) | [TBR: The drivetrain diagrams assume the drive controller decision (3.2) keeps the 2 Talon SRX and 2 Victor SPX.] |
+| [How to read the diagrams](hardware-test-modes.md#how-to-read-the-diagrams) | [TBD: decided in 4.3] |
+| [Drivetrain: Stub (Sim)](hardware-test-modes.md#drivetrain-stub-sim) | [TBD: `drivetrain:=stub`] |
+| [Drivetrain: Fake motor controllers (Sim)](hardware-test-modes.md#drivetrain-fake-motor-controllers-sim) | [TBD: `drivetrain:=fake_motor_controllers`] |
+| [Drivetrain: Gazebo (Sim)](hardware-test-modes.md#drivetrain-gazebo-sim) | [TBD: `drivetrain:=gazebo`] |
+| [Drivetrain: Bench](hardware-test-modes.md#drivetrain-bench) | [TBD: `drivetrain:=real`] |
+| [Drivetrain: Drive base (Robot)](hardware-test-modes.md#drivetrain-drive-base-robot) | [TBD: `drivetrain:=real`] |
+| [Mechanism: Stub (Sim)](hardware-test-modes.md#mechanism-stub-sim) | [TBD: `mechanism:=stub`] |
+| [Mechanism: Fake motor controllers (Sim)](hardware-test-modes.md#mechanism-fake-motor-controllers-sim) | [TBD: `mechanism:=fake_motor_controllers`] |
+| [Mechanism: Bench](hardware-test-modes.md#mechanism-bench) | [TBD: `mechanism:=real`] |
+| [Battery and power: Fake power panel (Sim)](hardware-test-modes.md#battery-and-power-fake-power-panel-sim) | [TBR: The fake sends frames on a virtual CAN bus, so this mode works wherever the panel reading lives. The panel reading needs no Phoenix 5, so it may leave the drive plugin and deliverable 3.5.] |
+| [Battery and power: Drive base (Robot)](hardware-test-modes.md#battery-and-power-drive-base-robot) | [TBR: reported by other teams, cause not found] |
+| [LiDAR: Stub (Sim)](hardware-test-modes.md#lidar-stub-sim) | [TBD: `lidar:=stub`] |
+| [LiDAR: Gazebo (Sim)](hardware-test-modes.md#lidar-gazebo-sim) | [TBD: `lidar:=gazebo`] |
+| [LiDAR: Bench](hardware-test-modes.md#lidar-bench) | [TBD: `lidar:=real`] |
+| [Dedicated IMU: Stub (Sim)](hardware-test-modes.md#dedicated-imu-stub-sim) | [TBD: `imu:=stub`] |
+| [Dedicated IMU: Gazebo (Sim)](hardware-test-modes.md#dedicated-imu-gazebo-sim) | [TBD: `imu:=gazebo`] |
+| [Dedicated IMU: Bench](hardware-test-modes.md#dedicated-imu-bench) | [TBD: `imu:=real`] |
+| [Cameras: Stub (Sim)](hardware-test-modes.md#cameras-stub-sim) | [TBD: `cameras:=stub`] |
+| [Cameras: Gazebo (Sim)](hardware-test-modes.md#cameras-gazebo-sim) | [TBD: `cameras:=gazebo`] |
+| [Cameras: Bench](hardware-test-modes.md#cameras-bench) | [TBD: `cameras:=real`] |
 
 ### [Building for the robot](../building-for-the-robot.md)
 

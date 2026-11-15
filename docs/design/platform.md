@@ -1,8 +1,12 @@
 # Platform Design
 
+<!-- design: header (generated from platform.toml by scripts/design render: edit that file, not this table) -->
+
 | Owner | Status | Last reviewed |
 | --- | --- | --- |
-| ja-zoe | Draft | 2026-11-14 |
+| ja-zoe | In progress | 2026-11-15 |
+
+<!-- /design -->
 
 This doc designs what every other subsystem runs on: the repository and its packages, the
 dev container, CI, the Gazebo world, the robot computer, how the robot starts and records
@@ -45,7 +49,7 @@ This doc's share of each technical performance measure, from the
 | [TPM-1](performance-budgets.md#tpm-1-autonomous-cycles-completed-per-run) | SW.4 | Full autonomy (§16.5): at least 2 cycles, starting in the starting zone (All of the above, plus SW.1.1 (stays enabled), SW.1.5 (passes AUTO commands), SW.3.1 (heartbeat), and SW.4 (link and logging)) | 1,400 × berm factor |
 | [TPM-5](performance-budgets.md#tpm-5-position-error-after-a-2-minute-drive) | SW.4 | Sensor timestamp mismatch | ≤10 [TBR: proposed in the PDR (1.6)] |
 | [TPM-6](performance-budgets.md#tpm-6-average-link-bandwidth-over-a-run) | SW.4 | rosbridge connection overhead (WebSocket over TCP) [TBR: measured in 5.6] | 30 kbit/s in TELEOP (default view), 30 kbit/s in AUTO (default view) |
-| [TPM-11](performance-budgets.md#tpm-11-robot-computer-processor-load-averaged-over-a-run) | SW.4 | Bringup, link (rosbridge), and logging | [TBD: autonomy doc v1 (7.8)] |
+| [TPM-11](performance-budgets.md#tpm-11-robot-computer-processor-load-averaged-over-a-run) | SW.4 | Bringup, link (rosbridge), and logging | ≤6 % |
 | [TPM-12](performance-budgets.md#tpm-12-restart-time) | SW.4 | Operating system boots (SW.4 (robot computer configuration)) | [TBD: measured in 2.10] |
 | [TPM-12](performance-budgets.md#tpm-12-restart-time) | SW.4 | Every robot program starts | [TBD: measured in 2.10] |
 
@@ -281,4 +285,4 @@ and a review [TBR: branch protection enforces it once 2.5 sets it].
 
 ## Handoff
 
-Not yet written: this doc is a draft.
+Not yet written: filled in at the end of each semester.

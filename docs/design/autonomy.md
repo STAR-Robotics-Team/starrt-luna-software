@@ -1,8 +1,12 @@
 # Autonomy Subsystem Design
 
+<!-- design: header (generated from autonomy.toml by scripts/design render: edit that file, not this table) -->
+
 | Owner | Status | Last reviewed |
 | --- | --- | --- |
-| ja-zoe | Draft | 2026-11-14 |
+| ja-zoe | Approved | 2026-11-15 |
+
+<!-- /design -->
 
 This doc designs the software that runs the mission cycle hands-free: it finds where the
 robot is, maps the obstacles, plans and follows a path between the zones, and runs dig,
@@ -192,9 +196,9 @@ This doc's share of each technical performance measure, from the
 | [TPM-6](performance-budgets.md#tpm-6-average-link-bandwidth-over-a-run) | SW.2.3 | Planned path, on by default in AUTO | 0 kbit/s in TELEOP (default view), 50 kbit/s in AUTO (default view) |
 | [TPM-6](performance-budgets.md#tpm-6-average-link-bandwidth-over-a-run) | SW.2.4 | Nothing | 0 kbit/s in TELEOP (default view), 0 kbit/s in AUTO (default view) |
 | [TPM-10](performance-budgets.md#tpm-10-energy-used-per-autonomous-cycle) | SW.2.3 | Travel, loaded and empty (SW.1.2 (limits), SW.2.3 (path length)) | [TBD: baseline] |
-| [TPM-11](performance-budgets.md#tpm-11-robot-computer-processor-load-averaged-over-a-run) | SW.2.2 | Localization and mapping | [TBD: autonomy doc v1 (7.8)]; expected to be the largest share |
-| [TPM-11](performance-budgets.md#tpm-11-robot-computer-processor-load-averaged-over-a-run) | SW.2.3 | Path planning and following | [TBD: autonomy doc v1 (7.8)] |
-| [TPM-11](performance-budgets.md#tpm-11-robot-computer-processor-load-averaged-over-a-run) | SW.2.4 | Task sequencer | [TBD: autonomy doc v1 (7.8)] |
+| [TPM-11](performance-budgets.md#tpm-11-robot-computer-processor-load-averaged-over-a-run) | SW.2.2 | Localization and mapping | ≤25 % |
+| [TPM-11](performance-budgets.md#tpm-11-robot-computer-processor-load-averaged-over-a-run) | SW.2.3 | Path planning and following | ≤18 % |
+| [TPM-11](performance-budgets.md#tpm-11-robot-computer-processor-load-averaged-over-a-run) | SW.2.4 | Task sequencer | ≤2 % |
 | [TPM-12](performance-budgets.md#tpm-12-restart-time) | SW.2.2 | Position found | ≤60 (as in TPM-3) |
 
 <!-- /design -->

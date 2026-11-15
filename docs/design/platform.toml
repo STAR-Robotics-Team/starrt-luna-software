@@ -1,6 +1,14 @@
 # Registry for the platform design (platform.md, deliverable 2.11). See "Registries" in
 # README.md, then run scripts/design render.
 
+# The doc's header, and its row in the README's table of design docs, are generated
+# from this table.
+[doc]
+owner = "ja-zoe"
+status = "In progress"
+last_reviewed = 2026-11-15
+covers = "Platform and dev environment"
+
 [[node]]
 id = "rosbridge"
 name = "`rosbridge_websocket`"

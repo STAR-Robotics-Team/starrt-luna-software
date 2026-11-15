@@ -6,6 +6,14 @@
 # stock joint state broadcaster, and the mechanism mode gate of ours (operating modes,
 # section 5). The hardware plugin is not a node; section 5 of the doc describes it.
 
+# The doc's header, and its row in the README's table of design docs, are generated
+# from this table.
+[doc]
+owner = "ja-zoe"
+status = "Approved"
+last_reviewed = 2026-11-15
+covers = "Mechanism control"
+
 [[node]]
 id = "mechanism"
 name = "`mechanism_controller`"

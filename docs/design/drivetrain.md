@@ -1,8 +1,12 @@
 # Drivetrain Subsystem Design
 
+<!-- design: header (generated from drivetrain.toml by scripts/design render: edit that file, not this table) -->
+
 | Owner | Status | Last reviewed |
 | --- | --- | --- |
-| ja-zoe | Draft | 2026-11-14 |
+| ja-zoe | Approved | 2026-11-15 |
+
+<!-- /design -->
 
 This doc designs the code that turns a velocity command into turning wheels: SW.1.2 in the
 [system design](system.md). It runs on ros2_control: the stock diff drive controller does
@@ -61,7 +65,7 @@ This doc's share of each technical performance measure, from the
 | [TPM-8](performance-budgets.md#tpm-8-stop-time-after-link-loss) | SW.1.2 | Disable chain (TPM-7) | ≤100 ms |
 | [TPM-9](performance-budgets.md#tpm-9-peak-current-in-the-worst-task-mode) | SW.1.2 | Drive, 4 motors at 15 A (creep, 20% output) | 60 A |
 | [TPM-10](performance-budgets.md#tpm-10-energy-used-per-autonomous-cycle) | SW.1.2 | Travel, loaded and empty (SW.1.2 (limits), SW.2.3 (path length)) | [TBD: baseline] |
-| [TPM-11](performance-budgets.md#tpm-11-robot-computer-processor-load-averaged-over-a-run) | SW.1.2 | Robot control (SW.1.1 to SW.1.5) | [TBD: autonomy doc v1 (7.8)] |
+| [TPM-11](performance-budgets.md#tpm-11-robot-computer-processor-load-averaged-over-a-run) | SW.1.2 | Robot control (SW.1.1 to SW.1.5) | ≤5 % |
 
 <!-- /design -->
 
@@ -401,4 +405,4 @@ a reviewed bench procedure, and Robot needs a merged Bench log.
 
 ## Handoff
 
-Not yet written: this doc is a draft.
+Not yet written: filled in at the end of each semester.

@@ -2,6 +2,14 @@
 # panel reading, their interfaces, and the open questions. See "Registries" in README.md,
 # then run scripts/design render.
 
+# The doc's header, and its row in the README's table of design docs, are generated
+# from this table.
+[doc]
+owner = "ja-zoe"
+status = "Approved"
+last_reviewed = 2026-11-15
+covers = "Operating modes and power states: what is on and what may move in each mode, for the whole robot"
+
 [[node]]
 id = "mode_manager"
 name = "`mode_manager`"

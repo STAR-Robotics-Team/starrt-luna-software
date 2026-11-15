@@ -2,27 +2,24 @@
 
 > **Delete this block after copying.** How to use this template:
 >
-> 1. Copy this file to `docs/design/<subsystem>.md`, using the file name listed in
->    [Design docs](README.md#the-docs).
+> 1. Copy this file to `docs/design/<subsystem>.md`, using the file name its elements give
+>    in the [system design](system.md#software-elements).
 > 2. Replace every `[bracketed]` placeholder, including `[Subsystem]` in the title above
 >    (for example, "Drivetrain Subsystem Design").
-> 3. Your doc's nodes, interfaces, and open questions live in its registry,
->    `docs/design/<subsystem>.toml`, and `scripts/design render` writes their tables into
->    sections 2, 3, and 9. If the registry already exists, it holds what the other docs
->    assume your subsystem provides: confirm or change each entry. Otherwise, create it.
->    [Registries](README.md#registries) explains the format.
+> 3. Your doc's owner, status, nodes, interfaces, and open questions live in its registry,
+>    `docs/design/<subsystem>.toml`, and `scripts/design render` writes their tables: the
+>    header below, and sections 2, 3, and 9. Start the registry with its `[doc]` table:
+>    your GitHub username, status `Draft` ([Status](README.md#status) explains each one),
+>    today's date, and what the doc covers. If the registry already exists, it holds what
+>    the other docs assume your subsystem provides: confirm or change each entry.
+>    Otherwise, create it. [Registries](README.md#registries) explains the format.
 > 4. Fill in every section. Write "None" rather than deleting a section, so readers know
 >    it was considered.
 > 5. Delete every quote block that starts with **Delete this**, like this one. Everything
 >    else stays.
->
-> Status is one of `Draft` (being written), `Approved` (reviewed, no code yet),
-> `In progress` (code being written to match), `Current` (code matches), or `Superseded`
-> (replaced; link the replacement). [Design docs](README.md#status) explains each one.
 
-| Owner | Status | Last reviewed |
-| --- | --- | --- |
-| [GitHub username] | Draft | [YYYY-MM-DD] |
+<!-- design: header -->
+<!-- /design -->
 
 ## 1. Purpose and requirements
 

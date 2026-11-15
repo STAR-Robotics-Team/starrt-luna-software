@@ -1,8 +1,12 @@
 # System Design
 
+<!-- design: header (generated from system.toml by scripts/design render: edit that file, not this table) -->
+
 | Owner | Status | Last reviewed |
 | --- | --- | --- |
-| ja-zoe | Draft | 2026-10-18 |
+| ja-zoe | Approved | 2026-11-15 |
+
+<!-- /design -->
 
 This doc shows how the robot's computer, motor controllers, sensors, operator station,
 and network connect, and the contracts between subsystems at the hardware. Each
@@ -46,7 +50,7 @@ This doc's share of each technical performance measure, from the
 | --- | --- | --- | --- |
 | [TPM-1](performance-budgets.md#tpm-1-autonomous-cycles-completed-per-run) | SW.1.5 | Full autonomy (§16.5): at least 2 cycles, starting in the starting zone (All of the above, plus SW.1.1 (stays enabled), SW.1.5 (passes AUTO commands), SW.3.1 (heartbeat), and SW.4 (link and logging)) | 1,400 × berm factor |
 | [TPM-6](performance-budgets.md#tpm-6-average-link-bandwidth-over-a-run) | SW.1.5 | Nothing: it runs on the robot | 0 kbit/s in TELEOP (default view), 0 kbit/s in AUTO (default view) |
-| [TPM-11](performance-budgets.md#tpm-11-robot-computer-processor-load-averaged-over-a-run) | SW.1.5 | Robot control (SW.1.1 to SW.1.5) | [TBD: autonomy doc v1 (7.8)] |
+| [TPM-11](performance-budgets.md#tpm-11-robot-computer-processor-load-averaged-over-a-run) | SW.1.5 | Robot control (SW.1.1 to SW.1.5) | ≤5 % |
 
 <!-- /design -->
 
@@ -121,41 +125,41 @@ flowchart LR
   ncommand_selection -->|"/cmd_vel"| ndrivetrain
   ncommand_selection -->|"/mechanism/#lt;function#gt;/command"| nmechanism
   nmode_manager -->|"/robot/mode"| ncommand_selection
-  nmode_manager -->|"/robot/mode"| nplanner
-  nmode_manager -->|"/robot/mode"| ntask_sequencer
   nmode_manager -->|"/robot/mode"| ndrive_mode_gate
   nmode_manager -->|"/robot/mode"| nmechanism_mode_gate
   nmode_manager -->|"/robot/mode"| noperator_frontend
   nmode_manager -->|"/robot/mode"| nteleop_node
+  nmode_manager -->|"/robot/mode"| nplanner
+  nmode_manager -->|"/robot/mode"| ntask_sequencer
   noperator_frontend -.->|"/robot/request_mode"| nmode_manager
   nteleop_node -.->|"/robot/request_mode"| nmode_manager
   ntask_sequencer -.->|"/robot/request_task"| nmode_manager
   npower_panel -->|"/power/battery"| nmode_manager
   npower_panel -->|"/power/battery"| noperator_frontend
+  ndrivetrain -->|"/drivetrain/odom"| nlocalization
+  ndrive_joint_states -->|"/drivetrain/joint_states"| nrobot_model
+  ndrive_joint_states -->|"/drivetrain/joint_states"| nlocalization
+  nmechanism -->|"/mechanism/status"| nmode_manager
+  nmechanism -->|"/mechanism/status"| noperator_frontend
+  nmechanism -->|"/mechanism/status"| ntask_sequencer
+  nmechanism_joint_states -->|"/mechanism/joint_states"| nrobot_model
+  noperator_frontend -->|"/joy"| nteleop_node
+  noperator_frontend -->|"/operator/heartbeat"| nmode_manager
+  nteleop_node -->|"/teleop/cmd_vel"| ncommand_selection
+  nteleop_node -->|"/teleop/mechanism/#lt;function#gt;/command"| ncommand_selection
+  nlidar_driver -->|"unilidar/cloud"| nlocalization
+  nlidar_driver -->|"unilidar/imu"| nlocalization
+  nimu_driver -->|"imu/data_raw"| nlocalization
+  ncamera_driver -->|"the driving camera's topic (TBD)"| noperator_frontend
   nlocalization -->|"/autonomy/odometry"| nplanner
   nlocalization -->|"/autonomy/odometry"| ntask_sequencer
-  nlocalization -->|"/autonomy/obstacle_map"| nplanner
   nlocalization -->|"/autonomy/obstacle_map"| noperator_frontend
+  nlocalization -->|"/autonomy/obstacle_map"| nplanner
   nplanner -->|"/autonomy/plan"| noperator_frontend
   nplanner -->|"/auto/cmd_vel"| ncommand_selection
   ntask_sequencer -.->|"/autonomy/navigate"| nplanner
   ntask_sequencer -->|"/auto/mechanism/#lt;function#gt;/command"| ncommand_selection
   ntask_sequencer -->|"/autonomy/status"| noperator_frontend
-  ndrivetrain -->|"/drivetrain/odom"| nlocalization
-  ndrive_joint_states -->|"/drivetrain/joint_states"| nlocalization
-  ndrive_joint_states -->|"/drivetrain/joint_states"| nrobot_model
-  nmechanism -->|"/mechanism/status"| nmode_manager
-  nmechanism -->|"/mechanism/status"| ntask_sequencer
-  nmechanism -->|"/mechanism/status"| noperator_frontend
-  nmechanism_joint_states -->|"/mechanism/joint_states"| nrobot_model
-  nlidar_driver -->|"unilidar/cloud"| nlocalization
-  nlidar_driver -->|"unilidar/imu"| nlocalization
-  nimu_driver -->|"imu/data_raw"| nlocalization
-  ncamera_driver -->|"the driving camera's topic (TBD)"| noperator_frontend
-  noperator_frontend -->|"/joy"| nteleop_node
-  noperator_frontend -->|"/operator/heartbeat"| nmode_manager
-  nteleop_node -->|"/teleop/cmd_vel"| ncommand_selection
-  nteleop_node -->|"/teleop/mechanism/#lt;function#gt;/command"| ncommand_selection
 ```
 
 <!-- /design -->
@@ -189,10 +193,10 @@ are defined here.
 | `/mechanism/<function>/command` | The active control source's command for one mechanism function | topic | luna_interfaces/msg/ActuatorCommand [TBR: proposed in the mechanism doc (4.2)] | The active source's rate: `command_rate`, 20 Hz | `command_selector` | `mechanism_controller` | reliable, volatile, depth 1 |
 | `/diagnostics` | Each node's health, OK, WARN, or ERROR, with a reason | topic | `diagnostic_msgs/msg/DiagnosticArray` | 1 Hz and on change | Drive mode gate, Mechanism mode gate, Camera driver, Dedicated IMU driver, Localization and mapping, Path planning and following, Task sequencer | `mode_manager` | reliable, depth 10 |
 | `/robot/mode` | The robot state, the control source, the task mode, and why | topic | `luna_interfaces/msg/RobotMode` | 10 Hz and on change | `mode_manager` | Drive mode gate, Mechanism mode gate, `command_selector`, Path planning and following, Task sequencer, Operator frontend, `teleop_node` | reliable, transient local, depth 1 |
-| `/auto/cmd_vel` | Autonomy's drive command, for command_selector | topic | `geometry_msgs/msg/TwistStamped` | `command_rate`, 20 Hz | Path planning and following | `command_selector` | best effort, volatile, depth 1 |
-| `/auto/mechanism/<function>/command` | Autonomy's command for one mechanism function, for command_selector | topic | luna_interfaces/msg/ActuatorCommand [TBR: proposed in the mechanism doc (4.2)] | 20 Hz [TBR: matches teleop's command_rate] | Task sequencer | `command_selector` | best effort, volatile, depth 1 |
 | `/teleop/cmd_vel` | Teleop's drive command, for command_selector | topic | `geometry_msgs/msg/TwistStamped` | `command_rate`, 20 Hz [TBR] | `teleop_node` | `command_selector` | best effort, volatile, depth 1 |
 | `/teleop/mechanism/<function>/command` | Teleop's command for one mechanism function, for command_selector | topic | luna_interfaces/msg/ActuatorCommand [TBR: proposed in the mechanism doc (4.2)] | `command_rate`, 20 Hz [TBR] | `teleop_node` | `command_selector` | best effort, volatile, depth 1 |
+| `/auto/cmd_vel` | Autonomy's drive command, for command_selector | topic | `geometry_msgs/msg/TwistStamped` | `command_rate`, 20 Hz | Path planning and following | `command_selector` | best effort, volatile, depth 1 |
+| `/auto/mechanism/<function>/command` | Autonomy's command for one mechanism function, for command_selector | topic | luna_interfaces/msg/ActuatorCommand [TBR: proposed in the mechanism doc (4.2)] | 20 Hz [TBR: matches teleop's command_rate] | Task sequencer | `command_selector` | best effort, volatile, depth 1 |
 
 <!-- /design -->
 
@@ -506,4 +510,4 @@ rosbridge, teleop_node, mode manager, drive, sensors`"]
 
 ## Handoff
 
-Not yet written: this doc is a draft.
+Not yet written: filled in at the end of each semester.
