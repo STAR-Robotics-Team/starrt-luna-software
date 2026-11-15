@@ -33,6 +33,7 @@ extra_css:
 extra_javascript:
   - javascripts/last-updated.js
   - javascripts/test-sheet.js
+  - javascripts/table-headers.js
 
 # Every page must be listed here. Add new pages in reading order.
 nav:
