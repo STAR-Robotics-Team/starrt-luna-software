@@ -211,7 +211,7 @@ This doc's share of each technical performance measure, from the
 | [TPM-8](performance-budgets.md#tpm-8-stop-time-after-link-loss) | SW.1.1 | Declare the link lost | 500 after the last heartbeat (`link_timeout`) [TBR: operating modes open question 9] |
 | [TPM-8](performance-budgets.md#tpm-8-stop-time-after-link-loss) | SW.1.1 | Disable chain (TPM-7) | ≤100 ms |
 | [TPM-10](performance-budgets.md#tpm-10-energy-used-per-autonomous-cycle) | SW.1.4 | Measuring it: energy per task mode, checked against the main energy logger (SW.1.4 logs it) | None: it measures |
-| [TPM-11](performance-budgets.md#tpm-11-robot-computer-processor-load-averaged-over-a-run) | SW.1.1, SW.1.4 | Robot control (SW.1.1 to SW.1.5) | [TBD: autonomy doc v1 (7.8)] |
+| [TPM-11](performance-budgets.md#tpm-11-robot-computer-processor-load-averaged-over-a-run) | SW.1.1, SW.1.4 | Robot control (SW.1.1 to SW.1.5) | ≤5 % |
 | [TPM-12](performance-budgets.md#tpm-12-restart-time) | SW.1.1 | Self-test finds every CAN device | ≤10, with FAULT at 60 [TBR: proposed in the PDR (1.6)] |
 
 <!-- /design -->

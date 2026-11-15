@@ -14,7 +14,7 @@ the doc, and cite the page.
   primary source wins.
 - **To cite a source or add one,** see [Cite sources](writing-docs.md#cite-sources).
 
-49 sources, 44 of them primary, cited 303 times. PDF page
+49 sources, 44 of them primary, cited 305 times. PDF page
 numbers are the ones a PDF viewer shows, so each link opens the PDF at the cited page. This
 page is generated from `docs/sources.toml` by `scripts/sources render`.
 
@@ -343,9 +343,10 @@ NVIDIA, *Jetson Linux Developer Guide r38.4: Controller Area Network (CAN)*. [Op
 NVIDIA, *Jetson Linux Developer Guide r36.5: Platform Power and Performance (Orin)*. [Open the web page](https://docs.nvidia.com/jetson/archives/r36.5/DeveloperGuide/SD/PlatformPowerAndPerformance/JetsonOrinNanoSeriesJetsonOrinNxSeriesAndJetsonAgxOrinSeries.html).
 
 - **Primary source.**
-- **Checked:** 2026-10-07
-- **Used for:** The Jetson's power modes.
-- **Cited at:** not cited in these docs yet
+- **Checked:** 2026-11-15
+- **Used for:** The Jetson's power modes: how many CPU cores each mode runs, and the clocks of its engines, which list a JPEG engine (nvjpg) and no video encoder (nvenc: n/a) on the Orin Nano.
+- **Cited at:**
+    - [Performance budgets](design/performance-budgets.md): [whole source](https://docs.nvidia.com/jetson/archives/r36.5/DeveloperGuide/SD/PlatformPowerAndPerformance/JetsonOrinNanoSeriesJetsonOrinNxSeriesAndJetsonAgxOrinSeries.html)
 
 ### `nvidia-jetson-rootfs-r36-5`
 

@@ -46,7 +46,7 @@ This doc's share of each technical performance measure, from the
 | --- | --- | --- | --- |
 | [TPM-1](performance-budgets.md#tpm-1-autonomous-cycles-completed-per-run) | SW.1.5 | Full autonomy (§16.5): at least 2 cycles, starting in the starting zone (All of the above, plus SW.1.1 (stays enabled), SW.1.5 (passes AUTO commands), SW.3.1 (heartbeat), and SW.4 (link and logging)) | 1,400 × berm factor |
 | [TPM-6](performance-budgets.md#tpm-6-average-link-bandwidth-over-a-run) | SW.1.5 | Nothing: it runs on the robot | 0 kbit/s in TELEOP (default view), 0 kbit/s in AUTO (default view) |
-| [TPM-11](performance-budgets.md#tpm-11-robot-computer-processor-load-averaged-over-a-run) | SW.1.5 | Robot control (SW.1.1 to SW.1.5) | [TBD: autonomy doc v1 (7.8)] |
+| [TPM-11](performance-budgets.md#tpm-11-robot-computer-processor-load-averaged-over-a-run) | SW.1.5 | Robot control (SW.1.1 to SW.1.5) | ≤5 % |
 
 <!-- /design -->
 

@@ -47,7 +47,7 @@ This doc's share of each technical performance measure, from the
 | [TPM-6](performance-budgets.md#tpm-6-average-link-bandwidth-over-a-run) | SW.3.1 | /joy, the heartbeat, and mode requests (laptop to robot) | 50 kbit/s in TELEOP (default view), 50 kbit/s in AUTO (default view) |
 | [TPM-6](performance-budgets.md#tpm-6-average-link-bandwidth-over-a-run) | SW.3.2 | Nothing: it runs on the robot | 0 kbit/s in TELEOP (default view), 0 kbit/s in AUTO (default view) |
 | [TPM-8](performance-budgets.md#tpm-8-stop-time-after-link-loss) | SW.3.1 | Send a heartbeat every 100 ms, which sets how soon a loss can be seen | 100 (the period), not counted |
-| [TPM-11](performance-budgets.md#tpm-11-robot-computer-processor-load-averaged-over-a-run) | SW.3.2 | Teleop mapping | [TBD: autonomy doc v1 (7.8)]; expected to be small |
+| [TPM-11](performance-budgets.md#tpm-11-robot-computer-processor-load-averaged-over-a-run) | SW.3.2 | Teleop mapping | ≤1 % |
 
 <!-- /design -->
 

@@ -188,13 +188,13 @@ that uses them; each is listed here once.
 | TPM-10 | row "Electronics on the main battery over the cycle (LiDAR, radio, controllers)": value | [TBD: baseline] |
 | TPM-11 | threshold | ≤85 [TBR: proposed in the PDR (1.6)] |
 | TPM-11 | goal | ≤70 [TBR: proposed in the PDR (1.6)] |
-| TPM-11 | row "Localization and mapping": value | [TBD: autonomy doc v1 (7.8)]; expected to be the largest share |
-| TPM-11 | row "Path planning and following": value | [TBD: autonomy doc v1 (7.8)] |
-| TPM-11 | row "Sensor drivers, including camera compression": value | [TBD: autonomy doc v1 (7.8)] |
-| TPM-11 | row "Task sequencer": value | [TBD: autonomy doc v1 (7.8)] |
-| TPM-11 | row "Robot control": value | [TBD: autonomy doc v1 (7.8)] |
-| TPM-11 | row "Teleop mapping": value | [TBD: autonomy doc v1 (7.8)]; expected to be small |
-| TPM-11 | row "Bringup, link (rosbridge), and logging": value | [TBD: autonomy doc v1 (7.8)] |
+| TPM-11 | row "Localization and mapping": basis | LiDAR-inertial odometry matches every L2 cloud against its map: the heaviest steady work on the robot [TBR: measured on the Jetson in 7.5] |
+| TPM-11 | row "Path planning and following": basis | Nav2's costmaps mark obstacles from every cloud, and its planner and controller run beside them [TBR: measured on the Jetson in 7.5] |
+| TPM-11 | row "Sensor drivers, including camera compression": basis | The L2 driver unpacks every point, and each camera image is compressed to JPEG, which the Jetson's JPEG engine (NVJPG) can take off the processor; it has no video encoder (Jetson power modes) [TBR: the cameras, 6.1] |
+| TPM-11 | row "Task sequencer": basis | A state machine that decides a few times a second [TBR: measured on the Jetson at Bench] |
+| TPM-11 | row "Robot control": basis | The two controller managers' control loops and their CAN traffic, the mode manager, and `command_selector` [TBR: measured on the Jetson at Bench] |
+| TPM-11 | row "Teleop mapping": basis | Turns each `/joy` message into a command [TBR: measured on the Jetson at Bench] |
+| TPM-11 | row "Bringup, link (rosbridge), and logging": basis | rosbridge turns each topic the operator view subscribes to into JSON, and the recorder writes every L2 cloud to storage [TBR: measured on the Jetson at Bench] |
 | TPM-12 | threshold | ≤180 [TBR: proposed in the PDR (1.6)] |
 | TPM-12 | goal | ≤120 [TBR: proposed in the PDR (1.6)] |
 | TPM-12 | row "Operating system boots": value | [TBD: measured in 2.10] |

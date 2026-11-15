@@ -393,8 +393,8 @@ publisher = "NVIDIA"
 url = "https://docs.nvidia.com/jetson/archives/r36.5/DeveloperGuide/SD/PlatformPowerAndPerformance/JetsonOrinNanoSeriesJetsonOrinNxSeriesAndJetsonAgxOrinSeries.html"
 format = "web"
 expect = "Supported Modes and Power Efficiency"
-checked = 2026-10-07
-notes = "The Jetson's power modes."
+checked = 2026-11-15
+notes = "The Jetson's power modes: how many CPU cores each mode runs, and the clocks of its engines, which list a JPEG engine (nvjpg) and no video encoder (nvenc: n/a) on the Orin Nano."
 
 [[source]]
 id = "ctre-phoenix5-motor-controllers"

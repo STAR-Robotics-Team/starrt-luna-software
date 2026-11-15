@@ -66,7 +66,7 @@ This doc's share of each technical performance measure, from the
 | [TPM-9](performance-budgets.md#tpm-9-peak-current-in-the-worst-task-mode) | SW.1.3 | Hatch (off in EXCAVATE) | 0 A |
 | [TPM-10](performance-budgets.md#tpm-10-energy-used-per-autonomous-cycle) | SW.1.3 | Excavate (SW.1.3 (limits, and how it digs)) | [TBD: baseline] |
 | [TPM-10](performance-budgets.md#tpm-10-energy-used-per-autonomous-cycle) | SW.1.3 | Dump | [TBD: baseline] |
-| [TPM-11](performance-budgets.md#tpm-11-robot-computer-processor-load-averaged-over-a-run) | SW.1.3 | Robot control (SW.1.1 to SW.1.5) | [TBD: autonomy doc v1 (7.8)] |
+| [TPM-11](performance-budgets.md#tpm-11-robot-computer-processor-load-averaged-over-a-run) | SW.1.3 | Robot control (SW.1.1 to SW.1.5) | ≤5 % |
 
 <!-- /design -->
 

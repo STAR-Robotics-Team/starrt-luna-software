@@ -48,7 +48,7 @@ This doc's share of each technical performance measure, from the
 | [TPM-5](performance-budgets.md#tpm-5-position-error-after-a-2-minute-drive) | SW.2.1 | Sensor position error in the robot model | ≤0.01, from CAD [TBR: proposed in the PDR (1.6)] |
 | [TPM-5](performance-budgets.md#tpm-5-position-error-after-a-2-minute-drive) | SW.2.1 | Sensor timestamp mismatch | ≤10 [TBR: proposed in the PDR (1.6)] |
 | [TPM-6](performance-budgets.md#tpm-6-average-link-bandwidth-over-a-run) | SW.2.1 | Compressed driving camera, as CBOR on its own connection: on by default in TELEOP, and the operator can turn it on in AUTO | 750 kbit/s in TELEOP (default view), 0 kbit/s in AUTO (default view) |
-| [TPM-11](performance-budgets.md#tpm-11-robot-computer-processor-load-averaged-over-a-run) | SW.2.1 | Sensor drivers, including camera compression | [TBD: autonomy doc v1 (7.8)] |
+| [TPM-11](performance-budgets.md#tpm-11-robot-computer-processor-load-averaged-over-a-run) | SW.2.1 | Sensor drivers, including camera compression | ≤8 % |
 | [TPM-12](performance-budgets.md#tpm-12-restart-time) | SW.2.1 | Sensor drivers publishing | [TBD: sensors doc (6.2)] |
 
 <!-- /design -->
