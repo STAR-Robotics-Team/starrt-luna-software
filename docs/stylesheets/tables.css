@@ -4,3 +4,23 @@
 .md-typeset table:not([class]) td:first-child code {
   white-space: nowrap;
 }
+
+/* A table's header row while it floats under the site's top bar
+   (docs/javascripts/table-headers.js): drawn above the rows it covers, on the page's own
+   background, with a shadow under it so it reads as lifted off the table. */
+.md-typeset table:not([class]) thead {
+  position: relative;
+  z-index: 1;
+}
+
+.md-typeset table:not([class]) thead.table-head-floating {
+  /* One shadow for the whole row; a shadow on each cell would leave seams between them. */
+  filter: drop-shadow(0 0.15rem 0.2rem rgba(0, 0, 0, 0.25));
+}
+
+.md-typeset table:not([class]) thead.table-head-floating th {
+  background-color: var(--md-default-bg-color);
+  /* A line in the table's own border color, which shows on the dark theme too, where the
+     shadow barely does. An inset line stays inside each cell, so it leaves no seams. */
+  box-shadow: inset 0 -0.1rem var(--md-typeset-table-color);
+}
