@@ -498,6 +498,44 @@ checked = 2026-10-18
 notes = "How ros2_control is put together, and how a robot description lists each hardware component with its own plugin."
 
 [[source]]
+id = "ros2-control-writing-hardware"
+primary = true
+group = "Software references"
+title = "ros2_control: Writing a Hardware Component"
+publisher = "ros-controls"
+url = "https://control.ros.org/jazzy/doc/ros2_control/hardware_interface/doc/writing_new_hardware_component.html"
+format = "web"
+expect = "dynamically loaded by the controller manager"
+checked = 2026-11-15
+notes = "That a hardware component is a library the controller manager loads with pluginlib, and the steps for writing one."
+
+[[source]]
+id = "ros2-control-demo-2-header"
+primary = true
+group = "Software references"
+title = "ros2_control_demos, jazzy branch: example 2 (DiffBot), diffbot_system.hpp"
+publisher = "ros-controls"
+url = "https://github.com/ros-controls/ros2_control_demos/blob/jazzy/example_2/hardware/include/ros2_control_demo_example_2/diffbot_system.hpp"
+fetch_url = "https://raw.githubusercontent.com/ros-controls/ros2_control_demos/jazzy/example_2/hardware/include/ros2_control_demo_example_2/diffbot_system.hpp"
+format = "web"
+expect = "HardwareComponentInterfaceParams"
+checked = 2026-11-15
+notes = "The functions a Jazzy system hardware plugin overrides, and their signatures."
+
+[[source]]
+id = "ros2-control-demo-2-cmake"
+primary = true
+group = "Software references"
+title = "ros2_control_demos, jazzy branch: example 2 (DiffBot), CMakeLists.txt"
+publisher = "ros-controls"
+url = "https://github.com/ros-controls/ros2_control_demos/blob/jazzy/example_2/CMakeLists.txt"
+fetch_url = "https://raw.githubusercontent.com/ros-controls/ros2_control_demos/jazzy/example_2/CMakeLists.txt"
+format = "web"
+expect = "pluginlib_export_plugin_description_file"
+checked = 2026-11-15
+notes = "How a hardware plugin is built as a shared library, registered with pluginlib, and installed."
+
+[[source]]
 id = "ros2-control-mock-components"
 primary = true
 group = "Software references"

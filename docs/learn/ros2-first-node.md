@@ -435,7 +435,9 @@ is a node in your workstream's package that publishes made-up data, with the top
 message types, and rates from its design doc's interface table: the skeleton node that
 [Design docs](../design/README.md#interfaces-are-contracts) describes. It starts from the
 deliverable assigned to you in Turgor and goes in `src/`, on a branch, through a pull
-request, as [Contributing](../contributing.md) explains. Later, real code replaces the
+request, as [Contributing](../contributing.md) explains.
+[Packages, nodes, and libraries](../packages-nodes-libraries.md) shows how to add it to
+the team's workspace. Later, real code replaces the
 made-up data.
 
 Next: [Launch files and parameter files](ros2-launch-files.md).

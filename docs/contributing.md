@@ -43,18 +43,8 @@ they work.
 
 - One package per subsystem, named `luna_<subsystem>`. ROS package names use lowercase
   letters, digits, and underscores only; no hyphens.
-- Create a package from inside `src/`:
-
-    ```bash title="Dev container"
-    ros2 pkg create --build-type ament_cmake --license Apache-2.0 luna_example
-    ```
-
-    Then replace the `if(BUILD_TESTING)` block in its `CMakeLists.txt` with the one in
-    `src/luna_drivetrain/CMakeLists.txt`, so the linters run without per-file copyright
-    headers.
-
-- Declare every dependency in `package.xml`, then run `scripts/install_deps.sh` to
-  install it.
+- To create a package, use another package's code, or add a node or a plugin library,
+  follow [Packages, nodes, and libraries](packages-nodes-libraries.md).
 - Never commit third-party binaries or SDKs. Download them at build time, the way
   `src/ctre_phoenix5_vendor` does.
 

@@ -14,7 +14,7 @@ the doc, and cite the page.
   primary source wins.
 - **To cite a source or add one,** see [Cite sources](writing-docs.md#cite-sources).
 
-49 sources, 44 of them primary, cited 305 times. PDF page
+52 sources, 47 of them primary, cited 311 times. PDF page
 numbers are the ones a PDF viewer shows, so each link opens the PDF at the cited page. This
 page is generated from `docs/sources.toml` by `scripts/sources render`.
 
@@ -403,6 +403,26 @@ Open Robotics, *REP 2000: ROS 2 Releases and Target Platforms*. [Open the web pa
     - [Platform Design](design/platform.md): [section "Jazzy Jalisco (May 2024 - May 2029)"](https://www.ros.org/reps/rep-2000.html#:~:text=Jazzy%20Jalisco%20%28May%202024%20%2D%20May%202029%29)
     - [Development environment](development-environment.md): [section "Jazzy Jalisco (May 2024 - May 2029)"](https://www.ros.org/reps/rep-2000.html#:~:text=Jazzy%20Jalisco%20%28May%202024%20%2D%20May%202029%29)
 
+### `ros2-control-demo-2-cmake`
+
+ros-controls, *ros2_control_demos, jazzy branch: example 2 (DiffBot), CMakeLists.txt*. [Open the web page](https://github.com/ros-controls/ros2_control_demos/blob/jazzy/example_2/CMakeLists.txt).
+
+- **Primary source.**
+- **Checked:** 2026-11-15
+- **Used for:** How a hardware plugin is built as a shared library, registered with pluginlib, and installed.
+- **Cited at:**
+    - [Packages, nodes, and libraries](packages-nodes-libraries.md): [whole source](https://github.com/ros-controls/ros2_control_demos/blob/jazzy/example_2/CMakeLists.txt)
+
+### `ros2-control-demo-2-header`
+
+ros-controls, *ros2_control_demos, jazzy branch: example 2 (DiffBot), diffbot_system.hpp*. [Open the web page](https://github.com/ros-controls/ros2_control_demos/blob/jazzy/example_2/hardware/include/ros2_control_demo_example_2/diffbot_system.hpp).
+
+- **Primary source.**
+- **Checked:** 2026-11-15
+- **Used for:** The functions a Jazzy system hardware plugin overrides, and their signatures.
+- **Cited at:**
+    - [Packages, nodes, and libraries](packages-nodes-libraries.md): [whole source](https://github.com/ros-controls/ros2_control_demos/blob/jazzy/example_2/hardware/include/ros2_control_demo_example_2/diffbot_system.hpp)
+
 ### `ros2-control-getting-started`
 
 ros-controls, *ros2_control: Getting Started*. [Open the web page](https://control.ros.org/jazzy/doc/getting_started/getting_started.html).
@@ -413,6 +433,7 @@ ros-controls, *ros2_control: Getting Started*. [Open the web page](https://contr
 - **Cited at:**
     - [Drivetrain Subsystem Design](design/drivetrain.md): [whole source](https://control.ros.org/jazzy/doc/getting_started/getting_started.html)
     - [Testing Layers](design/testing-layers.md): [section "Hardware Description in URDF"](https://control.ros.org/jazzy/doc/getting_started/getting_started.html#:~:text=Hardware%20Description%20in%20URDF)
+    - [Packages, nodes, and libraries](packages-nodes-libraries.md): [section "Controller Manager"](https://control.ros.org/jazzy/doc/getting_started/getting_started.html#:~:text=Controller%20Manager), [section "Controllers"](https://control.ros.org/jazzy/doc/getting_started/getting_started.html#:~:text=Controllers), [section "Hardware Description in URDF"](https://control.ros.org/jazzy/doc/getting_started/getting_started.html#:~:text=Hardware%20Description%20in%20URDF)
 
 ### `ros2-control-mock-components`
 
@@ -426,6 +447,16 @@ ros-controls, *ros2_control: Mock Components*. [Open the web page](https://contr
     - [Operating Modes Design](design/operating-modes.md): [whole source](https://control.ros.org/jazzy/doc/ros2_control/hardware_interface/doc/mock_components_userdoc.html)
     - [System Design](design/system.md): [whole source](https://control.ros.org/jazzy/doc/ros2_control/hardware_interface/doc/mock_components_userdoc.html)
     - [Testing Layers](design/testing-layers.md): [section "Mock Components"](https://control.ros.org/jazzy/doc/ros2_control/hardware_interface/doc/mock_components_userdoc.html#:~:text=Mock%20Components)
+
+### `ros2-control-writing-hardware`
+
+ros-controls, *ros2_control: Writing a Hardware Component*. [Open the web page](https://control.ros.org/jazzy/doc/ros2_control/hardware_interface/doc/writing_new_hardware_component.html).
+
+- **Primary source.**
+- **Checked:** 2026-11-15
+- **Used for:** That a hardware component is a library the controller manager loads with pluginlib, and the steps for writing one.
+- **Cited at:**
+    - [Packages, nodes, and libraries](packages-nodes-libraries.md): [whole source](https://control.ros.org/jazzy/doc/ros2_control/hardware_interface/doc/writing_new_hardware_component.html)
 
 ### `ros2-controllers-diff-drive`
 
