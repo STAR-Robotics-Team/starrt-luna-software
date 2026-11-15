@@ -2,6 +2,14 @@
 # cross subsystems, and the open questions. See "Registries" in README.md, then run
 # scripts/design render.
 
+# The doc's header, and its row in the README's table of design docs, are generated
+# from this table.
+[doc]
+owner = "ja-zoe"
+status = "Approved"
+last_reviewed = 2026-11-15
+covers = "Architecture and integration: how every subsystem fits together"
+
 # ----------------------------------------------------------------------------------------
 # Software elements: the PDR's system hierarchy (guidebook §18.3.1.1), each designed in one
 # design doc. turgor is the deliverable that writes that doc.

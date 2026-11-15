@@ -1,8 +1,12 @@
 # Platform Design
 
+<!-- design: header (generated from platform.toml by scripts/design render: edit that file, not this table) -->
+
 | Owner | Status | Last reviewed |
 | --- | --- | --- |
-| ja-zoe | Draft | 2026-11-14 |
+| ja-zoe | In progress | 2026-11-15 |
+
+<!-- /design -->
 
 This doc designs what every other subsystem runs on: the repository and its packages, the
 dev container, CI, the Gazebo world, the robot computer, how the robot starts and records
@@ -281,4 +285,4 @@ and a review [TBR: branch protection enforces it once 2.5 sets it].
 
 ## Handoff
 
-Not yet written: this doc is a draft.
+Not yet written: filled in at the end of each semester.

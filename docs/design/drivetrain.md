@@ -1,8 +1,12 @@
 # Drivetrain Subsystem Design
 
+<!-- design: header (generated from drivetrain.toml by scripts/design render: edit that file, not this table) -->
+
 | Owner | Status | Last reviewed |
 | --- | --- | --- |
-| ja-zoe | Draft | 2026-11-14 |
+| ja-zoe | Approved | 2026-11-15 |
+
+<!-- /design -->
 
 This doc designs the code that turns a velocity command into turning wheels: SW.1.2 in the
 [system design](system.md). It runs on ros2_control: the stock diff drive controller does
@@ -401,4 +405,4 @@ a reviewed bench procedure, and Robot needs a merged Bench log.
 
 ## Handoff
 
-Not yet written: this doc is a draft.
+Not yet written: filled in at the end of each semester.

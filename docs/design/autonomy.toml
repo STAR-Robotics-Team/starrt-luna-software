@@ -4,6 +4,14 @@
 # Names, rates, and QoS below are the autonomy doc's proposal for 7.2. Each one still
 # marked [TBR] waits on the open question or deliverable it names.
 
+# The doc's header, and its row in the README's table of design docs, are generated
+# from this table.
+[doc]
+owner = "ja-zoe"
+status = "Approved"
+last_reviewed = 2026-11-15
+covers = "Autonomy"
+
 # ----------------------------------------------------------------------------------------
 # SW.2.2 Localization and mapping
 # ----------------------------------------------------------------------------------------

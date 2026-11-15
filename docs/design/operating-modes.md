@@ -1,8 +1,12 @@
 # Operating Modes Design
 
+<!-- design: header (generated from operating-modes.toml by scripts/design render: edit that file, not this table) -->
+
 | Owner | Status | Last reviewed |
 | --- | --- | --- |
-| ja-zoe | Draft | 2026-10-07 |
+| ja-zoe | Approved | 2026-11-15 |
+
+<!-- /design -->
 
 This doc defines every mode the robot can be in: what has power, what may move, which
 software runs, and how the robot moves between modes. Software enforces these modes, and
@@ -517,4 +521,4 @@ The dotted arrows are `/robot/mode`, which every node follows.
 
 ## Handoff
 
-Not yet written: this doc is a draft.
+Not yet written: filled in at the end of each semester.

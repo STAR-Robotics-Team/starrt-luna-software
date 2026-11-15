@@ -23,7 +23,7 @@ with a TBD or TBR tag (docs/stylesheets/unsettled.css). See "Mark what is not se
 docs/writing-docs.md.
 
 Each design doc's page gets a people table under its header: its owner (the GitHub
-username in the header), everyone who committed to it (with Co-authored-by trailers), and,
+username in the [doc] table of its registry), everyone who committed to it (with Co-authored-by trailers), and,
 when a GitHub token is set, everyone who reviewed or commented on a pull request that
 changed it, each with their role. CI sets the token, so the published site shows reviewers
 and names; a local build shows committers only.
@@ -339,16 +339,11 @@ class Person:
         return ", ".join(roles)
 
 
-def doc_owner(markdown):
-    """The GitHub username in the doc's header table, under Owner."""
-    lines = markdown.split("\n")
-    for i, line in enumerate(lines[:-2]):
-        cells = [c.strip() for c in line.strip().strip("|").split("|")]
-        if "Owner" in cells and lines[i + 1].lstrip().startswith("|"):
-            values = [c.strip().strip("`") for c in lines[i + 2].strip().strip("|").split("|")]
-            owner = values[cells.index("Owner")] if cells.index("Owner") < len(values) else ""
-            return owner if re.fullmatch(r"[A-Za-z0-9-]+", owner) else ""
-    return ""
+def doc_owner(src_uri):
+    """The GitHub username in the [doc] table of the doc's registry, if it has one."""
+    _, reg = design()
+    doc = reg.docs.get(Path(src_uri).stem)
+    return doc["owner"] if doc else ""
 
 
 def people(src_uri, owner):
@@ -448,9 +443,9 @@ def people(src_uri, owner):
 
 
 def add_contributors(markdown, src_uri):
-    """The doc with a people table after its header table, or after its title."""
-    owner = doc_owner(markdown)
+    """The doc with a people table after its header block, or after its title."""
     try:
+        owner = doc_owner(src_uri)
         everyone = people(src_uri, owner)
     except (subprocess.CalledProcessError, OSError, ValueError, KeyError) as error:
         # In CI a missing table is a broken page, so the build fails; locally it is a note.
@@ -465,23 +460,20 @@ def add_contributors(markdown, src_uri):
     table = [f"| Person | {role} |", "| --- | --- |"] + [f"| {p.cell()} | {p.roles()} |" for p in everyone]
     lines = markdown.split("\n")
     title = next((i for i, text in enumerate(lines) if text.startswith("# ")), -1)
-    at = title + 1
-    while at < len(lines) and not lines[at].strip():
-        at += 1
-    if at < len(lines) and lines[at].startswith("|"):
-        header = at
-        while at < len(lines) and lines[at].startswith("|"):
-            at += 1
+    start = next((i for i, text in enumerate(lines) if text.startswith("<!-- design: header")), None)
+    if start is None:
+        at = title + 1
+    else:
+        at = next(i for i in range(start, len(lines)) if lines[i].strip() == "<!-- /design -->") + 1
         # The people table names the owner, so the header table drops its Owner column.
-        cells = [c.strip() for c in lines[header].strip().strip("|").split("|")]
+        rows = [i for i in range(start, at) if lines[i].startswith("|")]
+        cells = [c.strip() for c in lines[rows[0]].strip().strip("|").split("|")] if rows else []
         if "Owner" in cells:
             column = cells.index("Owner")
-            for i in range(header, at):
+            for i in rows:
                 row = [c.strip() for c in lines[i].strip().strip("|").split("|")]
                 del row[column]
                 lines[i] = "| " + " | ".join(row) + " |"
-    else:
-        at = title + 1
     return "\n".join(lines[:at] + [""] + table + [""] + lines[at:])
 
 

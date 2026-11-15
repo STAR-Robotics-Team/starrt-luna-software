@@ -1,8 +1,12 @@
 # Autonomy Subsystem Design
 
+<!-- design: header (generated from autonomy.toml by scripts/design render: edit that file, not this table) -->
+
 | Owner | Status | Last reviewed |
 | --- | --- | --- |
-| ja-zoe | Draft | 2026-11-14 |
+| ja-zoe | Approved | 2026-11-15 |
+
+<!-- /design -->
 
 This doc designs the software that runs the mission cycle hands-free: it finds where the
 robot is, maps the obstacles, plans and follows a path between the zones, and runs dig,

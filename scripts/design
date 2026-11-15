@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Keeps the design docs' shared tables in registries, and checks that they fit together.
 
-Each design doc has a registry beside it, docs/design/<doc>.toml, that holds its software
-elements, nodes, and open questions. Each node defines the topics it publishes and the
+Each design doc has a registry beside it, docs/design/<doc>.toml, that holds the doc's
+owner and status, and its software elements, nodes, and open questions. Each node defines the topics it publishes and the
 services and actions it serves, so every interface lives with its only publisher or
 server; a topic many nodes publish by design is a [[shared]] entry instead. A doc shows
 them in tables that this script writes between two markers:
@@ -30,6 +30,7 @@ the browser; this script reads it too, to check it against the registries.
 Needs only Python 3.11 or newer. See "Registries" in docs/design/README.md.
 """
 import argparse
+import functools
 import re
 import sys
 import tomllib
@@ -47,12 +48,21 @@ PROCEDURES_PAGE = DESIGN / "end-to-end-tests.md"
 MODES_PAGE = DESIGN / "hardware-test-modes.md"
 LAYERS = ("Sim", "Bench", "Robot")
 TEMPLATE = DESIGN / "template.md"
+MKDOCS = REPO / "mkdocs.yml"
 # Pages generated from other data, which the open items scan skips.
 GENERATED_PAGES = {INTERFACES_PAGE, OPEN_ITEMS_PAGE, BUDGETS_PAGE, PROCEDURES_PAGE, DOCS / "sources.md"}
 # Pages that show markers as examples of how to write them.
 EXAMPLE_PAGES = {DOCS / "writing-docs.md"}
 # Docs listed first, in this order; the rest follow alphabetically.
-DOC_ORDER = ["system", "operating-modes"]
+# The statuses a design doc moves through, and what each means. The README's Status table
+# is generated from this.
+STATUSES = {
+    "Draft": "Being written. The interfaces may still change.",
+    "Approved": "Written and reviewed, but no code exists yet. Code can start.",
+    "In progress": "Code is being written to match the doc, but does not fully match yet.",
+    "Current": "The code matches the doc.",
+    "Superseded": "Replaced by another doc, which it links to.",
+}
 
 IFACE = [
     ("name", True, "Its name, or a marker while it has none"),
@@ -66,6 +76,13 @@ IFACE = [
 # Every kind of registry entry: (where it goes, what it is), then its fields as (field,
 # required, what it holds). The README's field reference is generated from this.
 SCHEMA = {
+    "doc": (("Each design doc's registry, as one `[doc]` table", "The doc itself. Its header and its row in the table of design docs are generated from it."), [
+        ("owner", True, "The owner's GitHub username"),
+        ("status", True, "One of the statuses under [Status](#status)"),
+        ("last_reviewed", True, "The date the doc was last approved or checked against the code, such as 2026-11-15"),
+        ("covers", True, "What the doc designs, in a few words, shown in the table of design docs"),
+        ("superseded_by", False, "The file name of the doc that replaces it, such as `drivetrain.md`; required when its status is `Superseded`"),
+    ]),
     "element": (("`system.toml`", "A software element from the PDR's system hierarchy"), [
         ("id", True, "Its ID in the hierarchy, such as `SW.1.2`"),
         ("name", True, "Its name"),
@@ -136,6 +153,8 @@ SCHEMA = {
 }
 # Tables written under an entry: (parent kind, key) -> schema name.
 SUBTABLES = {"row": "tpm.row"}
+# Kinds written as one table, [doc], rather than a list of them, [[node]].
+SINGLE = {"doc"}
 
 
 def fields(table):
@@ -146,7 +165,7 @@ def fields(table):
 
 # The interfaces a node defines, under it, and the kind each one is.
 NESTED = {"publishes": "topic", "serves": "service", "serves_actions": "action"}
-FIELDS = {t: fields(t) for t in ("element", "node", "shared", "question", "tpm", "sheet")}
+FIELDS = {t: fields(t) for t in ("doc", "element", "node", "shared", "question", "tpm", "sheet")}
 FIELDS["node"][1].extend(NESTED)
 FIELDS["tpm"][1].append("row")
 LISTS = {"subscribes", "calls", "publishes_shared", "turgor", "elements", "cases", "notes"}
@@ -162,6 +181,9 @@ BLOCK_HELP = {
     "interfaces": ([], "The topics, services, and actions this doc's nodes define, then the ones they use from other docs"),
     "questions": ([], "This doc's open and decided questions"),
     "budgets": ([], "Every budget row in `performance-budgets.toml` that names one of this doc's elements"),
+    "header": ([], "This doc's owner, status, and last reviewed date, from the `[doc]` table in its registry"),
+    "docs": ([], "Every design doc with a `[doc]` table, with what it covers and its status, in the website's sidebar order"),
+    "statuses": ([], "What each design doc status means"),
     "elements": ([], "Every software element"),
     "graph": ([], "A diagram of every node, with an arrow for each topic and call"),
     "fields": ([], "This reference of registry fields"),
@@ -169,7 +191,7 @@ BLOCK_HELP = {
 }
 BLOCKS = {kind: options for kind, (options, _) in BLOCK_HELP.items()}
 # Blocks that show the doc's own registry, so the doc needs one beside it.
-OWN_REGISTRY = {"nodes", "interfaces", "questions", "budgets"}
+OWN_REGISTRY = {"nodes", "interfaces", "questions", "budgets", "header"}
 NOTE = "generated from {registry} by scripts/design render: edit that file, not this table"
 
 
@@ -202,6 +224,7 @@ class Registry:
     """Every registry's entries, keyed for lookup, and where each one is defined."""
 
     def __init__(self):
+        self.docs = {}        # doc stem -> its [doc] table
         self.elements = {}    # id -> entry
         self.nodes = {}       # id -> entry
         self.interfaces = {}  # id -> entry
@@ -229,9 +252,17 @@ def registry_files():
     return sorted(DESIGN.glob("*.toml"), key=doc_sort_key)
 
 
+@functools.cache
+def nav_order():
+    """The stems of the pages in docs/design, in the website's sidebar order: the nav in
+    mkdocs.yml, the one place that order is written."""
+    nav = re.search(r"^nav:\n((?:[ #-].*\n|\n)*)", MKDOCS.read_text(encoding="utf-8"), re.M)
+    return re.findall(r"\bdesign/([a-z0-9-]+)\.md\b", nav.group(1)) if nav else []
+
+
 def doc_sort_key(path):
-    stem = path.stem
-    return (DOC_ORDER.index(stem) if stem in DOC_ORDER else len(DOC_ORDER), stem)
+    stem, order = path.stem, nav_order()
+    return (order.index(stem) if stem in order else len(order), stem)
 
 
 def check_value(problems, where, key, value):
@@ -264,7 +295,7 @@ def check_value(problems, where, key, value):
         if not isinstance(value, int):
             problems.error(f"{where}: number must be a whole number")
         return
-    elif key in ("decided", "date"):
+    elif key in ("decided", "date", "last_reviewed"):
         if not isinstance(value, date):
             problems.error(f"{where}: {key} must be a date, such as 2026-10-27")
         return
@@ -314,7 +345,17 @@ def load(problems):
         for table in data:
             if table not in FIELDS:
                 problems.error(f"{path.name}: unknown table [[{table}]]; use {', '.join(FIELDS)}")
+        if "doc" in data:
+            doc = data["doc"]
+            if isinstance(doc, dict):
+                check_entry(problems, f"{path.name}: doc", doc, *FIELDS["doc"])
+                reg.docs[stem] = doc
+                reg.home[id(doc)] = stem
+            else:
+                problems.error(f"{path.name}: a registry has one [doc] table; write [doc], not [[doc]]")
         for kind, (required, optional) in FIELDS.items():
+            if kind in SINGLE:
+                continue
             for n, entry in enumerate(data.get(kind, []), 1):
                 label = entry.get("id") or entry.get("name") or entry.get("number") or n
                 where = f"{path.name}: {kind} {label}"
@@ -448,6 +489,26 @@ def validate(problems, reg):
             for t in q.get("turgor", []):
                 if not TURGOR.fullmatch(t):
                     problems.error(f"{where}: turgor holds deliverable numbers, such as 5.7, not {t!r}")
+    for stem, doc in reg.docs.items():
+        where = f"{stem}.toml: doc"
+        if not re.fullmatch(r"[A-Za-z0-9-]+", str(doc.get("owner", ""))):
+            problems.error(f"{where}: owner must be a GitHub username, such as ja-zoe")
+        status, successor = doc.get("status"), doc.get("superseded_by")
+        if status not in STATUSES:
+            problems.error(f"{where}: status must be one of {', '.join(STATUSES)}, not {status!r}")
+        elif (status == "Superseded") != (successor is not None):
+            problems.error(f"{where}: a Superseded doc names its replacement in superseded_by, "
+                           "and only a Superseded doc has one")
+        elif successor and not (re.fullmatch(r"[a-z0-9-]+\.md", str(successor)) and (DESIGN / successor).exists()):
+            problems.error(f"{where}: superseded_by must be a design doc's file name, not {successor!r}")
+        page = DESIGN / f"{stem}.md"
+        if not page.exists():
+            problems.error(f"{where}: no {stem}.md beside it")
+        elif not re.search(r"^<!-- design: header\b", page.read_text(encoding="utf-8"), re.M):
+            problems.error(f"{where}: {stem}.md has no <!-- design: header --> block to show it")
+        if stem not in nav_order():
+            problems.error(f"{where}: {stem}.md is not in the nav in mkdocs.yml; add it to the Design "
+                           "section, which orders the website's sidebar and the table of design docs")
 
 
 # ----------------------------------------------------------------------------------------
@@ -1439,13 +1500,17 @@ def render_procedures_page(reg):
     return "\n".join(out) + "\n"
 
 
+def entry_name(name):
+    return f"`[{name}]`" if name in SINGLE else f"`[[{name}]]`"
+
+
 def block_fields(reg, stem, options):
     out = table(["Entry", "Where it goes", "What it is"],
-                [[f"`[[{name}]]`", where, what] for name, ((where, what), _) in SCHEMA.items()])
+                [[entry_name(name), where, what] for name, ((where, what), _) in SCHEMA.items()])
     rows = []
     for name, (_, entries) in SCHEMA.items():
         for field, required, holds in entries:
-            rows.append([f"`[[{name}]]`", f"`{field}`", "Yes" if required else "No", holds])
+            rows.append([entry_name(name), f"`{field}`", "Yes" if required else "No", holds])
     return out + [""] + table(["Entry", "Field", "Required", "What it holds"], rows)
 
 
@@ -1455,8 +1520,31 @@ def block_blocks(reg, stem, options):
     return table(["Block", "Options", "What it shows"], rows)
 
 
+def status_text(doc):
+    if doc["status"] == "Superseded":
+        return f"Superseded by {doc_link(Path(doc['superseded_by']).stem)}"
+    return doc["status"]
+
+
+def block_header(reg, stem, options):
+    doc = reg.docs[stem]
+    return table(["Owner", "Status", "Last reviewed"],
+                 [[doc["owner"], status_text(doc), doc["last_reviewed"].isoformat()]])
+
+
+def block_docs(reg, stem, options):
+    stems = sorted(reg.docs, key=lambda s: doc_sort_key(Path(s)))
+    return table(["Doc", "What it covers", "Status"],
+                 [[f"[`{s}.md`]({s}.md)", reg.docs[s]["covers"], status_text(reg.docs[s])] for s in stems])
+
+
+def block_statuses(reg, stem, options):
+    return table(["Status", "Meaning"], [[f"`{status}`", meaning] for status, meaning in STATUSES.items()])
+
+
 RENDERERS = {"elements": block_elements, "graph": block_graph, "nodes": block_nodes,
              "interfaces": block_interfaces, "questions": block_questions, "budgets": block_budgets,
+             "header": block_header, "docs": block_docs, "statuses": block_statuses,
              "fields": block_fields, "blocks": block_blocks}
 
 
@@ -1482,9 +1570,12 @@ def render_doc(problems, reg, path, text):
         if kind in OWN_REGISTRY and not (DESIGN / f"{stem}.toml").exists():
             problems.error(f"{where} has a design: {kind} block but no {stem}.toml beside it")
             return text
-        if kind in ("elements", "graph"):
+        if kind == "header" and stem not in reg.docs:
+            problems.error(f"{where} has a design: header block but no [doc] table in {stem}.toml")
+            return text
+        if kind in ("elements", "graph", "docs"):
             note = "generated from docs/design/*.toml by scripts/design render: edit those files, not this block"
-        elif kind in ("fields", "blocks"):
+        elif kind in ("fields", "blocks", "statuses"):
             note = "generated from scripts/design by scripts/design render: edit the script, not this table"
         else:
             note = NOTE.format(registry=f"{stem}.toml")

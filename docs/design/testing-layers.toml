@@ -1,6 +1,14 @@
 # Registry for testing layers (testing-layers.md): its open questions. See "Registries" in
 # README.md, then run scripts/design render.
 
+# The doc's header, and its row in the README's table of design docs, are generated
+# from this table.
+[doc]
+owner = "ja-zoe"
+status = "Approved"
+last_reviewed = 2026-11-15
+covers = "Testing layers: how each component is tested, from stand-ins on a laptop up to the rover"
+
 [[question]]
 number = 1
 status = "open"

@@ -1,8 +1,12 @@
 # Mechanism Subsystem Design
 
+<!-- design: header (generated from mechanism.toml by scripts/design render: edit that file, not this table) -->
+
 | Owner | Status | Last reviewed |
 | --- | --- | --- |
-| ja-zoe | Draft | 2026-11-14 |
+| ja-zoe | Approved | 2026-11-15 |
+
+<!-- /design -->
 
 This doc designs the code that runs the excavation and deposition mechanism: SW.1.3 in the
 [system design](system.md). Four functions move on their own: the depth actuators that
@@ -399,4 +403,4 @@ sequencer knows the bin is full is autonomy's question 5, which may add a field 
 
 ## Handoff
 
-Not yet written: this doc is a draft.
+Not yet written: filled in at the end of each semester.

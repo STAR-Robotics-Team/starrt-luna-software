@@ -1,8 +1,12 @@
 # Sensors and Robot Model Design
 
+<!-- design: header (generated from sensors.toml by scripts/design render: edit that file, not this table) -->
+
 | Owner | Status | Last reviewed |
 | --- | --- | --- |
-| ja-zoe | Draft | 2026-11-14 |
+| ja-zoe | Approved | 2026-11-15 |
+
+<!-- /design -->
 
 This doc designs how the robot's sensors reach ROS, and the robot model that places them:
 SW.2.1 in the [system design](system.md). The robot has a Unitree L2 LiDAR with its
@@ -281,4 +285,4 @@ sensor, as [Hardware test modes](hardware-test-modes.md#lidar-stub-sim) draws fo
 
 ## Handoff
 
-Not yet written: this doc is a draft.
+Not yet written: filled in at the end of each semester.

@@ -5,6 +5,14 @@
 # (system design, Adding a sensor). The dedicated IMU and the cameras wait on the sensor
 # suite evaluation (6.1), so their rows hold what the other docs assume of them.
 
+# The doc's header, and its row in the README's table of design docs, are generated
+# from this table.
+[doc]
+owner = "ja-zoe"
+status = "Approved"
+last_reviewed = 2026-11-15
+covers = "Sensors and robot model"
+
 [[node]]
 id = "lidar_driver"
 name = "Unitree L2 driver"

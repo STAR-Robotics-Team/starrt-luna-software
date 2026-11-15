@@ -4,6 +4,14 @@
 # The operator frontend runs in a browser and is not a ROS node: rosbridge publishes and
 # calls for it, and the platform doc's registry holds rosbridge itself.
 
+# The doc's header, and its row in the README's table of design docs, are generated
+# from this table.
+[doc]
+owner = "ja-zoe"
+status = "In progress"
+last_reviewed = 2026-11-15
+covers = "Teleoperation and operator station"
+
 [[node]]
 id = "operator_frontend"
 name = "Operator frontend"
