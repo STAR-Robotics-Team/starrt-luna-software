@@ -10,6 +10,17 @@
   <buildtool_depend>ament_cmake</buildtool_depend>
 
   <depend>ctre_phoenix5_vendor</depend>
+  <!-- The drive hardware plugin (3.5): a ros2_control system interface. -->
+  <depend>hardware_interface</depend>
+  <depend>pluginlib</depend>
+  <depend>rclcpp</depend>
+  <depend>rclcpp_lifecycle</depend>
+  <!-- What runs the drivetrain (3.3): the controller manager, the stock controllers,
+       and the ros2 control command. -->
+  <exec_depend>controller_manager</exec_depend>
+  <exec_depend>diff_drive_controller</exec_depend>
+  <exec_depend>joint_state_broadcaster</exec_depend>
+  <exec_depend>ros2controlcli</exec_depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
