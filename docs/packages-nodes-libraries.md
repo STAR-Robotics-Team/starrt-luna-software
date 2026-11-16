@@ -121,16 +121,20 @@ Nothing tells them by default. These three lines do, in this order:
 
     ```cmake title="src/luna_teleop/CMakeLists.txt"
     target_link_libraries(heartbeat_publisher
-      rclcpp::rclcpp ${std_msgs_TARGETS})
+      rclcpp::rclcpp std_msgs::std_msgs)
     ```
 
 **Why `find_package` and `target_link_libraries` are separate:** a package can build
 several programs, and each one gets only what it uses. So `find_package` appears once for
 each package you use, and `target_link_libraries` once for each program.
 
-**The bundle's name** is usually `<package>::<package>`, as with `rclcpp::rclcpp`. A
-message package, such as `std_msgs`, gives a list instead, `${std_msgs_TARGETS}`. A few
-packages pick their own name, such as `ctre_phoenix5_vendor::phoenix5` in
+**The bundle's name is `<package>::<package>`,** such as `rclcpp::rclcpp` or
+`std_msgs::std_msgs`. A message package compiles its messages into several libraries: C
+and C++ code, the code that sends them over the network, and Python. Its
+`<package>::<package>` bundles them all, so you name it once. ROS's own tutorials write
+the same thing as `${std_msgs_TARGETS}`, a CMake variable that lists those libraries
+(`${...}` means a variable's value). Both work; the team writes `<package>::<package>`.
+A few packages pick their own name, such as `ctre_phoenix5_vendor::phoenix5` in
 `src/luna_drivetrain/CMakeLists.txt`; the package's examples show it.
 
 **What each line's absence looks like,** so you can recognize it:
@@ -197,11 +201,11 @@ uses two packages the heartbeat publisher does not: `sensor_msgs` and `geometry_
 
      add_executable(heartbeat_publisher src/heartbeat_publisher.cpp)
      target_link_libraries(heartbeat_publisher
-       rclcpp::rclcpp ${std_msgs_TARGETS})
+       rclcpp::rclcpp std_msgs::std_msgs)
     +
     +add_executable(teleop_node src/teleop_node.cpp)
     +target_link_libraries(teleop_node
-    +  rclcpp::rclcpp ${sensor_msgs_TARGETS} ${geometry_msgs_TARGETS})
+    +  rclcpp::rclcpp sensor_msgs::sensor_msgs geometry_msgs::geometry_msgs)
 
     -install(TARGETS heartbeat_publisher DESTINATION lib/${PROJECT_NAME})
     +install(TARGETS heartbeat_publisher teleop_node

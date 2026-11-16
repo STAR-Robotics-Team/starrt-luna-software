@@ -11,7 +11,7 @@ find_package(std_msgs REQUIRED)
 
 add_executable(heartbeat_publisher src/heartbeat_publisher.cpp)
 target_link_libraries(heartbeat_publisher
-  rclcpp::rclcpp ${std_msgs_TARGETS})
+  rclcpp::rclcpp std_msgs::std_msgs)
 
 install(TARGETS heartbeat_publisher DESTINATION lib/${PROJECT_NAME})
 

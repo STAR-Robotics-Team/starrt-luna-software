@@ -245,10 +245,10 @@ Open `~/tutorial_ws/src/hello_ros/CMakeLists.txt`. Below the line
 
 ```cmake title="~/tutorial_ws/src/hello_ros/CMakeLists.txt"
 add_executable(hello_publisher src/hello_publisher.cpp)
-target_link_libraries(hello_publisher rclcpp::rclcpp ${std_msgs_TARGETS})
+target_link_libraries(hello_publisher rclcpp::rclcpp std_msgs::std_msgs)
 
 add_executable(hello_subscriber src/hello_subscriber.cpp)
-target_link_libraries(hello_subscriber rclcpp::rclcpp ${std_msgs_TARGETS})
+target_link_libraries(hello_subscriber rclcpp::rclcpp std_msgs::std_msgs)
 
 install(TARGETS hello_publisher hello_subscriber
   DESTINATION lib/${PROJECT_NAME})
@@ -262,7 +262,10 @@ install(TARGETS hello_publisher hello_subscriber
 
 The official ROS tutorial uses `ament_target_dependencies` instead of
 `target_link_libraries`. It does the same job, but newer ROS releases deprecate it, and the
-team's packages, such as `src/luna_drivetrain`, use `target_link_libraries`.
+team's packages, such as `src/luna_drivetrain`, use `target_link_libraries`. Other
+tutorials write `${std_msgs_TARGETS}` where this page writes `std_msgs::std_msgs`: both
+name the same libraries
+([Packages, nodes, and libraries](../packages-nodes-libraries.md#use-another-package)).
 
 You do not need to change `package.xml`: `--dependencies` already added these lines to it.
 
