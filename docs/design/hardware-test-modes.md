@@ -79,8 +79,8 @@ config:
 ---
 flowchart TB
   b1["`*Input*
-**Keyboard teleop or a test script**
-Sends velocity commands`"]
+**teleop_twist_keyboard or a test script**
+ROS's terminal keyboard tool, or a script, sends velocity commands`"]
   b2["`*Ours · 1.8, 1.17*
 **Mode manager and command selector**
 Publish /robot/mode, and pass on only the commands of the source it names`"]
@@ -134,8 +134,8 @@ config:
 ---
 flowchart TB
   b1["`*Input*
-**Keyboard teleop or a test script**
-Sends velocity commands`"]
+**teleop_twist_keyboard or a test script**
+ROS's terminal keyboard tool, or a script, sends velocity commands`"]
   b2["`*Ours · 1.8, 1.17*
 **Mode manager and command selector**
 Publish /robot/mode, and pass on only the commands of the source it names`"]
@@ -195,8 +195,8 @@ config:
 ---
 flowchart TB
   b1["`*Input*
-**Keyboard teleop or a test script**
-Sends velocity commands`"]
+**teleop_twist_keyboard or a test script**
+ROS's terminal keyboard tool, or a script, sends velocity commands`"]
   b2["`*Ours · 1.8, 1.17*
 **Mode manager and command selector**
 Publish /robot/mode, and pass on only the commands of the source it names`"]
@@ -1281,7 +1281,7 @@ flowchart BT
 Get commands and mode requests`"]
   b2["`*Ours · 5.3*
 **Teleop mapping**
-teleop_twist_joy plus our node for the mechanism and mode buttons`"]
+teleop_node turns /joy into drive and mechanism commands`"]
   line3["`**Hardware line:** /joy`"]
   b4["`*ROS tool · stand-in*
 **ros2 bag play**
@@ -1322,7 +1322,7 @@ flowchart BT
 Get commands and mode requests`"]
   b2["`*Ours · 5.3*
 **Teleop mapping**
-teleop_twist_joy plus our node for the mechanism and mode buttons`"]
+teleop_node turns /joy into drive and mechanism commands`"]
   line3["`**Hardware line:** /joy`"]
   b4["`*Ours · 5.1*
 **Operator frontend**
@@ -1365,7 +1365,7 @@ flowchart BT
 Get commands and mode requests`"]
   b2["`*Ours · 5.3*
 **Teleop mapping**
-teleop_twist_joy plus our node for the mechanism and mode buttons`"]
+teleop_node turns /joy into drive and mechanism commands`"]
   line3["`**Hardware line:** /joy`"]
   b4["`*Ours · 5.1*
 **Operator frontend**
