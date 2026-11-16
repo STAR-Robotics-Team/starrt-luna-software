@@ -18,13 +18,13 @@ name = "Operator frontend"
 package = "Custom frontend with `roslibjs`"
 runs_on = "Operator laptop, in a browser, through rosbridge"
 element = "SW.3.1"
-does = "Reads the gamepad through the browser's Gamepad API, sends /joy, the heartbeat, and mode requests through rosbridge, and shows each control source's default view, which the operator can change, with live link bandwidth. It is not a ROS node: rosbridge publishes and calls for it."
+does = "Reads the gamepad through the browser's Gamepad API, or the laptop keyboard as a backup, sends /joy, the heartbeat, and mode requests through rosbridge, and shows each control source's default view, which the operator can change, with live link bandwidth. It is not a ROS node: rosbridge publishes and calls for it."
 calls = ["/robot/request_mode"]
 subscribes = ["/robot/mode", "/power/battery", "/mechanism/status", "camera-image", "obstacle-map", "planned-path", "autonomy-status"]
 
 [[node.publishes]]
 name = "/joy"
-carries = "The gamepad's sticks and buttons, from the operator laptop"
+carries = "The gamepad's sticks and buttons, or the keyboard's keys in the same layout, from the operator laptop"
 type = "sensor_msgs/msg/Joy"
 rate = "`autorepeat_rate`, 20 Hz, and on change [TBR]"
 qos = "[TBD: as rosbridge publishes it, 5.4]"
@@ -93,3 +93,9 @@ number = 6
 status = "open"
 turgor = ["5.4"]
 text = "How does the robot judge the age of a command whose stamp starts on the laptop? The frontend stamps /joy, so a stale command after a Wi-Fi stall is caught only if the laptop's clock agrees with the robot's. Proposed: the frontend measures the offset with rosapi's get_time service, part of the rosbridge suite, from round trips, and stamps /joy in the robot's time; an operator laptop's own clock cannot be relied on to be set."
+
+[[question]]
+number = 7
+status = "open"
+turgor = ["5.4"]
+text = "How does the frontend keep the heartbeat and /joy at their rates while its tab is hidden, meaning another tab is active or the window is minimized ([Chrome 88 timer throttling, section \"Hidden pages\"](../sources.md#chrome-timer-throttling))? A hidden tab's timers run about once a second at most ([Chrome 88 timer throttling, section \"Throttling\"](../sources.md#chrome-timer-throttling); [MDN setTimeout(), section \"Timeouts in inactive tabs\"](../sources.md#mdn-settimeout)). That is longer than link_timeout (0.5 s) and input_timeout (0.15 s), so hiding the frontend would disable the robot, in AUTO too; not yet tested with our frontend. Options: keeping the frontend's tab visible as a run rule; running the timers in a Web Worker, which neither source covers, so it needs a test; or the desktop app in question 4."

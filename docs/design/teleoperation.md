@@ -8,16 +8,16 @@
 
 <!-- /design -->
 
-This doc designs the operator station and the code that turns the gamepad into robot
-commands: SW.3 in the [system design](system.md). The operator frontend runs in a browser
+This doc designs the operator station and the code that turns the gamepad, or the laptop
+keyboard as a backup, into robot commands: SW.3 in the [system design](system.md). The operator frontend runs in a browser
 on any member's Windows, macOS, or Linux laptop and reaches the robot through rosbridge;
 `teleop_node` runs on the robot computer. Robot permissions and stopping behavior follow
 the [operating modes design](operating-modes.md). Hardware validation is pending.
 
 ## 1. Purpose and requirements
 
-Teleoperation maps gamepad inputs to robot commands and gives the operator the controls
-and views the run needs.
+Teleoperation maps gamepad or keyboard inputs to robot commands and gives the operator the
+controls and views the run needs.
 
 - R1. Run the operator frontend on any member's laptop (Windows, macOS, or Linux), reading
   every required gamepad input through the browser's Gamepad API.
@@ -29,8 +29,10 @@ and views the run needs.
   Reconnecting must not resume motion by itself.
 - R5. Display the acknowledged state, live link bandwidth, and the TELEOP and AUTO default
   views, which the operator can change at runtime.
-- R6. Record the mapping, configuration, and test results, so another Windows, macOS, or
-  Linux station can repeat the setup.
+- R6. Record the gamepad and keyboard mappings, the configuration, and test results, so
+  another Windows, macOS, or Linux station can repeat the setup.
+- R7. Drive from the laptop keyboard when the gamepad is missing or fails, in every layer,
+  through the same frontend and the same `/joy`, so R2 to R4 hold unchanged.
 
 Tasks are TRAVEL, EXCAVATE, DUMP, and SERVICE. EXCAVATE permits creep driving; DUMP uses
 the conveyor to unload with the hatch. SERVICE requires TELEOP and `allow_service` true.
@@ -68,7 +70,7 @@ drivetrain and the mechanism enforce their limits and timeouts.
 
 | Node | Package | Runs on | Element | What it does |
 | --- | --- | --- | --- | --- |
-| Operator frontend | Custom frontend with `roslibjs` | Operator laptop, in a browser, through rosbridge | SW.3.1 Operator frontend | Reads the gamepad through the browser's Gamepad API, sends /joy, the heartbeat, and mode requests through rosbridge, and shows each control source's default view, which the operator can change, with live link bandwidth. It is not a ROS node: rosbridge publishes and calls for it. |
+| Operator frontend | Custom frontend with `roslibjs` | Operator laptop, in a browser, through rosbridge | SW.3.1 Operator frontend | Reads the gamepad through the browser's Gamepad API, or the laptop keyboard as a backup, sends /joy, the heartbeat, and mode requests through rosbridge, and shows each control source's default view, which the operator can change, with live link bandwidth. It is not a ROS node: rosbridge publishes and calls for it. |
 | `teleop_node` | `luna_teleop` | Robot computer | SW.3.2 Teleop mapping | Turns fresh /joy input into drive and mechanism commands, each stamped with its /joy message's stamp, zeroes them when the hold button is released, drops stale input, and requests DISABLED when the controller's input is lost |
 
 <!-- /design -->
@@ -85,7 +87,7 @@ TCP; the QoS in the table is on the robot's side.
 
 | Name | What it carries | Kind | Type | Rate | Publisher or server | Subscriber or client | QoS |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| `/joy` | The gamepad's sticks and buttons, from the operator laptop | topic | `sensor_msgs/msg/Joy` | `autorepeat_rate`, 20 Hz, and on change [TBR] | Operator frontend | `teleop_node` | [TBD: as rosbridge publishes it, 5.4] |
+| `/joy` | The gamepad's sticks and buttons, or the keyboard's keys in the same layout, from the operator laptop | topic | `sensor_msgs/msg/Joy` | `autorepeat_rate`, 20 Hz, and on change [TBR] | Operator frontend | `teleop_node` | [TBD: as rosbridge publishes it, 5.4] |
 | `/operator/heartbeat` | The operator station's sign of life, which keeps the robot enabled | topic | `std_msgs/msg/Header` | `heartbeat_rate`, 10 Hz, including in AUTO and with the hold button released | Operator frontend | `mode_manager` | best effort, depth 1 |
 | `/teleop/cmd_vel` | Teleop's drive command, for command_selector | topic | `geometry_msgs/msg/TwistStamped` | `command_rate`, 20 Hz [TBR] | `teleop_node` | `command_selector` | best effort, volatile, depth 1 |
 | `/teleop/mechanism/<function>/command` | Teleop's command for one mechanism function, for command_selector | topic | luna_interfaces/msg/ActuatorCommand [TBR: proposed in the mechanism doc (4.2)] | `command_rate`, 20 Hz [TBR] | `teleop_node` | `command_selector` | best effort, volatile, depth 1 |
@@ -121,8 +123,9 @@ per function ([mechanism design, section 3](mechanism.md#3-interfaces)).
 
 | Parameter | Node | Type | Default | Units | Meaning |
 | --- | --- | --- | --- | --- | --- |
-| `device_name` | Operator frontend | string | [TBD: enumerated on each laptop] | None | Selected controller |
+| `device_name` | Operator frontend | string | [TBD: enumerated on each laptop] | None | Selected controller: a gamepad the browser lists, or the keyboard |
 | `deadzone` | Operator frontend | double | 0.05 [TBR] | fraction | Ignore small stick drift |
+| `keyboard_scale` | Operator frontend | double | 0.5 [TBR] | fraction | How far a held W, S, A, or D pushes its stick; every other key pushes fully |
 | `autorepeat_rate` | Operator frontend | double | 20 [TBR] | Hz | Poll and resend unchanged input |
 | `heartbeat_rate` | Operator frontend | double | 10 | Hz | Send the operator heartbeat, including in AUTO and with the hold button released |
 | `camera_rate`, `map_rate`, `path_rate` | Operator frontend | double | 5, 1, 1 [TBR] | Hz | Rate each stream is forwarded at while it is on |
@@ -161,21 +164,43 @@ files available offline for Mission Control.
 
 **Gamepad.** An Xbox Model 1914, connected to the operator laptop by a USB data cable with
 USB-C at the controller. The physical mapping below was accepted in review; the measured
-axis and button numbers wait on bench testing (5.2).
+axis and button numbers wait on bench testing (5.2). The Keyboard column is the backup controller,
+described below the table.
 
-| Control | Action |
-| --- | --- |
-| LB held | Permit manual actuator commands |
-| Left stick vertical, horizontal | Drive forward or reverse; steer |
-| Right stick vertical | Raise or lower the excavator (depth) |
-| RT, LT | Excavator chain forward, reverse |
-| D-pad up, down | Conveyor forward, reverse |
-| A, X | Hatch open, close |
-| Laptop controls | Enable, disable, clear fault, select the control source and task |
+| Control | Action | Keyboard |
+| --- | --- | --- |
+| LB held | Permit manual actuator commands | Space held |
+| Left stick vertical, horizontal | Drive forward or reverse; steer | W, S; A, D |
+| Right stick vertical | Raise or lower the excavator (depth) | Up, Down arrows |
+| RT, LT | Excavator chain forward, reverse | E, Q |
+| D-pad up, down | Conveyor forward, reverse | R, F |
+| A, X | Hatch open, close | T, G |
+| Laptop controls | Enable, disable, clear fault, select the control source and task | On screen only, never a key |
 
 Releasing LB zeroes every manual command. Opposite commands for one actuator give zero.
 Task permissions apply, and AUTO ignores the gamepad. After input loss, moving again takes
 an explicit enable and a fresh release and press of LB.
+
+**Keyboard.** The laptop keyboard is the backup controller in every layer: in Sim on a
+laptop with no gamepad, and on the Bench and the rover if the gamepad fails (R7). The
+frontend turns the keys in the table into the same `/joy` the gamepad sends, with the
+gamepad's axis and button numbers, so `teleop_node` cannot tell them apart and every rule
+above holds unchanged. Space stands for LB. [TBR: the keys are a proposal until they are
+tried at the bench (5.9).]
+
+- **One input at a time.** The operator picks the gamepad or the keyboard in the frontend.
+  Switching zeroes every manual command, and moving again takes a fresh press of LB or
+  Space.
+- **Press and release, not key repeat.** The frontend follows each key's press and release
+  and sends `/joy` at `autorepeat_rate`, as it does for the gamepad. A held key pushes its
+  axis or button fully, except W, S, A, and D, which push the drive and steer axes to
+  `keyboard_scale`: a key is only on or off, so without it every press would be full speed.
+- **Focus loss.** When the frontend's window or tab loses focus, every key counts as
+  released, so manual commands go to zero. A key released while another window has focus
+  never reaches the frontend, so it cannot wait for the release.
+- **No browser shortcuts.** The frontend blocks the browser's default action for every key
+  in the table, on press and on release, so Space never presses a focused on-screen
+  button, such as Enable, and the arrows never scroll the page.
 
 **Hardware testing.** Check that the browser's Gamepad API finds the controller and that
 `/joy` reaches the robot computer through rosbridge, on Windows, macOS, and Linux. Record the
@@ -232,6 +257,7 @@ flowchart TB
   subgraph mcc["Mission Control"]
     direction TB
     pad["Xbox Model 1914"]
+    kb["Laptop keyboard (backup)"]
     laptop["Operator laptop: Gamepad API, roslibjs frontend, controls and views"]
     sw["NASA network switch"]
   end
@@ -245,6 +271,7 @@ flowchart TB
     end
   end
   pad -->|"USB-C data cable"| laptop
+  kb -->|"Built in"| laptop
   laptop <-->|"Ethernet"| sw
   sw <-->|"NASA cable and network drop"| ap
   ap <-.->|"Wi-Fi"| radio
@@ -254,7 +281,7 @@ flowchart TB
   classDef hw fill:#4a725926,stroke:#4a7259
   class laptop,jetson ours
   class sw nasa
-  class pad,ap,radio hw
+  class pad,kb,ap,radio hw
   style mcc fill:#8b939c14,stroke:#8b939c80
   style arena fill:#8b939c14,stroke:#8b939c80
   style rover fill:#8b939c14,stroke:#8b939c80
@@ -287,6 +314,7 @@ command (section 3, open question 6).
 | Failure | How it is detected | What the subsystem does |
 | --- | --- | --- |
 | Controller or input lost in TELEOP | The connection check and `input_timeout` | Zero manual commands; request DISABLED |
+| Keyboard focus lost: another window or tab | The browser's focus and visibility events | Every key counts as released, so manual commands go to zero; moving again takes a fresh press of Space. Focus loss alone does not disable, but a hidden tab can (open question 7). |
 | Robot state updates stop | The frontend's `state_timeout` | Show the connection as unconfirmed; inhibit manual commands |
 | Operator or Wi-Fi lost | The robot's `link_timeout`, 0.5 s | `mode_manager` disables, including in AUTO. Only fresh heartbeats refresh the timeout. |
 | `mode_manager` stops | The mode gates' `mode_timeout`, 0.3 s | The drivetrain and the mechanism zero their outputs on their own |
@@ -302,7 +330,9 @@ recovery and current limits.
 
 Follow [Testing layers](testing-layers.md). In Sim, recorded or scripted `/joy` messages
 pass through rosbridge in place of the gamepad, `heartbeat_publisher` in `luna_teleop`
-stands in for the frontend's heartbeat, and the robot's hardware is on stand-ins. Bench
+stands in for the frontend's heartbeat, and the robot's hardware is on stand-ins. A person
+can also drive by keyboard through the frontend (R7); the recordings stay, since they repeat
+exactly and run in CI. Bench
 needs passing Sim tests and a reviewed procedure; Robot needs a merged Bench log.
 
 | Requirement | Test | Where | Result |
@@ -318,6 +348,8 @@ needs passing Sim tests and a reviewed procedure; Robot needs a merged Bench log
 | R6 | A teammate repeats the setup and mapping on Windows, macOS, and Linux from the repository's configuration; check the chosen delivery and the offline files. | Bench | Not run |
 | R4 | With `tc netem` packet loss and a Wi-Fi stall, measure button-to-motor latency and false disables. A burst of old input after the stall moves nothing, the stopping deadlines hold, and reconnecting does not resume motion (5.6, open question 6). | Bench | Not run |
 | R4 | Reject rate changes whose periods do not fit the heartbeat, input, mode, or actuator command timeouts. | Unit, then Sim | Not run |
+| R7 | Drive the stub robot by keyboard through the frontend (5.9): each key in section 5 moves its function; releasing Space zeroes every command within one `command_rate` period; switching to another window zeroes them; switching between the gamepad and the keyboard needs a fresh hold press; Space never presses a focused on-screen button. | Sim, then Bench | Not run |
+| R7 | On each station's laptop, the keys a run presses together (Space, W, D, E, and Down) all register at once; some keyboards miss keys in certain combinations. | Bench | Not run |
 
 ## 9. Open questions
 
@@ -334,6 +366,7 @@ operating modes doc still lists driving while digging and the conveyor in DUMP a
 | 4. What final network settings and frontend delivery will be used: HTTPS and secure WebSockets served from the robot computer, or a packaged desktop app? | Open | 5.7 |
 | 5. One command topic for each function that moves on its own: drive, depth, excavator, conveyor, and hatch ([mechanism design, section 3](mechanism.md#3-interfaces)). Telemetry comes one topic per source, such as /mechanism/status and /power/battery, not one per motor or button. | Decided 2026-11-14 | None |
 | 6. How does the robot judge the age of a command whose stamp starts on the laptop? The frontend stamps /joy, so a stale command after a Wi-Fi stall is caught only if the laptop's clock agrees with the robot's. Proposed: the frontend measures the offset with rosapi's get_time service, part of the rosbridge suite, from round trips, and stamps /joy in the robot's time; an operator laptop's own clock cannot be relied on to be set. | Open | 5.4 |
+| 7. How does the frontend keep the heartbeat and /joy at their rates while its tab is hidden, meaning another tab is active or the window is minimized ([Chrome 88 timer throttling, section "Hidden pages"](../sources.md#chrome-timer-throttling))? A hidden tab's timers run about once a second at most ([Chrome 88 timer throttling, section "Throttling"](../sources.md#chrome-timer-throttling); [MDN setTimeout(), section "Timeouts in inactive tabs"](../sources.md#mdn-settimeout)). That is longer than link_timeout (0.5 s) and input_timeout (0.15 s), so hiding the frontend would disable the robot, in AUTO too; not yet tested with our frontend. Options: keeping the frontend's tab visible as a run rule; running the timers in a Web Worker, which neither source covers, so it needs a test; or the desktop app in question 4. | Open | 5.4 |
 
 <!-- /design -->
 

@@ -14,7 +14,7 @@ the doc, and cite the page.
   primary source wins.
 - **To cite a source or add one,** see [Cite sources](writing-docs.md#cite-sources).
 
-52 sources, 47 of them primary, cited 311 times. PDF page
+54 sources, 49 of them primary, cited 314 times. PDF page
 numbers are the ones a PDF viewer shows, so each link opens the PDF at the cited page. This
 page is generated from `docs/sources.toml` by `scripts/sources render`.
 
@@ -273,6 +273,16 @@ Pololu, *Glideforce LACT18-500APL Industrial-Duty Linear Actuator*. [Open the we
 
 ## Software references
 
+### `chrome-timer-throttling`
+
+Google, Chrome for Developers, *Heavy throttling of chained JS timers beginning in Chrome 88*. [Open the web page](https://developer.chrome.com/blog/timer-throttling-in-chrome-88).
+
+- **Primary source.**
+- **Checked:** 2026-11-16
+- **Used for:** How often Chrome runs a hidden tab's timers, and what counts as hidden: why the operator frontend's heartbeat and /joy slow down when its tab is hidden.
+- **Cited at:**
+    - [Teleoperation Subsystem Design](design/teleoperation.md): [section "Hidden pages"](https://developer.chrome.com/blog/timer-throttling-in-chrome-88#:~:text=Hidden%20pages), [section "Throttling"](https://developer.chrome.com/blog/timer-throttling-in-chrome-88#:~:text=Throttling)
+
 ### `ctre-phoenix5-motor-controllers`
 
 CTRE, *Phoenix 5 documentation: Bring Up: Talon FX/SRX and Victor SPX*. [Open the web page](https://v5.docs.ctr-electronics.com/en/stable/ch13_MC.html).
@@ -328,6 +338,16 @@ ros-controls, *gz_ros2_control*. [Open the web page](https://control.ros.org/jaz
     - [Platform Design](design/platform.md): [whole source](https://control.ros.org/jazzy/doc/gz_ros2_control/doc/index.html)
     - [System Design](design/system.md): [whole source](https://control.ros.org/jazzy/doc/gz_ros2_control/doc/index.html)
     - [Testing Layers](design/testing-layers.md): [section "Notes on the command interface"](https://control.ros.org/jazzy/doc/gz_ros2_control/doc/index.html#:~:text=Notes%20on%20the%20command%20interface), [section "gz_ros2_control"](https://control.ros.org/jazzy/doc/gz_ros2_control/doc/index.html#:~:text=gz_ros2_control)
+
+### `mdn-settimeout`
+
+MDN Web Docs, Mozilla, *Window: setTimeout() method*. [Open the web page](https://developer.mozilla.org/en-US/docs/Web/API/Window/setTimeout).
+
+- **Primary source.**
+- **Checked:** 2026-11-16
+- **Used for:** The minimum timer delay Firefox and Chrome enforce in inactive tabs.
+- **Cited at:**
+    - [Teleoperation Subsystem Design](design/teleoperation.md): [section "Timeouts in inactive tabs"](https://developer.mozilla.org/en-US/docs/Web/API/Window/setTimeout#:~:text=Timeouts%20in%20inactive%20tabs)
 
 ### `nvidia-jetson-can-r38-4`
 
