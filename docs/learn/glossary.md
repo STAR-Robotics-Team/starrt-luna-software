@@ -44,6 +44,8 @@ one links to the page that explains it properly.
   [Services, actions, and parameters](ros2-services-actions-parameters.md#three-ways-to-talk)
 - **Clone:** your own full copy of a Git repository, on your computer.
   [Git and GitHub](git-and-github.md#the-main-ideas)
+- **CMake:** the build tool behind every C++ package. `CMakeLists.txt` tells it what to
+  build, and from what. [Packages, nodes, and libraries](../packages-nodes-libraries.md#use-another-package)
 - **colcon:** the tool that builds every package in a ROS workspace.
   [ROS 2 basics](ros2-basics.md#packages-and-the-workspace)
 - **Command line:** using a computer by typing commands into a terminal.
@@ -60,6 +62,10 @@ one links to the page that explains it properly.
   made. [Write your first node](ros2-first-node.md#what-each-part-does)
 - **Container:** a running, separate environment made from an image, like a lightweight
   computer inside yours. [Containers](containers.md)
+- **Controller manager:** the ros2_control program that runs the robot's control loop:
+  each cycle it reads the hardware, runs the controllers, and writes their outputs back. It
+  loads hardware plugins and controllers by name.
+  [Packages, nodes, and libraries](../packages-nodes-libraries.md#add-a-plugin-library)
 - **CTRE Phoenix:** the library from CTRE, the company that makes our motor controllers,
   that our code uses to drive them. [CAN bus](../can-bus.md)
 - **Dev container:** the container the team writes and runs code in, with Ubuntu 24.04,
@@ -106,6 +112,9 @@ one links to the page that explains it properly.
   as its topics or joints. Every stand-in and the real driver must meet it, so the code
   above runs the same in every test.
   [Testing layers](../design/testing-layers.md#the-hardware-line)
+- **Header file:** a C++ file, ending in `.hpp`, that declares what a library or class
+  offers, so other code can `#include` it.
+  [Packages, nodes, and libraries](../packages-nodes-libraries.md#use-another-package)
 - **Heartbeat:** a small message the operator laptop sends many times a second so the
   robot knows the link is alive. If it stops arriving, the robot stops.
   [Operating modes](../design/operating-modes.md)
@@ -121,8 +130,16 @@ one links to the page that explains it properly.
   often as a callback. [Write your first node](ros2-first-node.md#what-each-part-does)
 - **Launch file:** a file that starts several ROS nodes at once, with their settings.
   [Launch files and parameter files](ros2-launch-files.md#write-a-launch-file)
+- **Library:** compiled code that programs use but that is not a program itself, such as
+  rclcpp. A **shared library** is loaded when a program runs.
+  [Packages, nodes, and libraries](../packages-nodes-libraries.md#add-a-plugin-library)
 - **Lidar:** a sensor that measures distances by sweeping a laser around.
   [The arena and a run](../competition/arena-and-runs.md#the-regolith)
+- **Linker:** the build step that joins your compiled code to the libraries it uses.
+  [Packages, nodes, and libraries](../packages-nodes-libraries.md#use-another-package)
+- **Linter:** a tool that checks code for style or likely mistakes without running it.
+  `colcon test` runs several on every package.
+  [Packages, nodes, and libraries](../packages-nodes-libraries.md#see-what-the-tests-check)
 - **`localhost`:** a name that always means "this computer".
   [Containers](containers.md#two-more-ideas-you-will-meet)
 - **Log level:** how serious a log message is: `DEBUG`, `INFO`, `WARN`, `ERROR`, or
@@ -170,6 +187,9 @@ one links to the page that explains it properly.
   [Launch files and parameter files](ros2-launch-files.md#put-the-parameters-in-a-file)
 - **Path:** a file's address, the folders you go through to reach it.
   [The command line](command-line.md#folders-and-paths)
+- **Plugin:** a library that a running program loads by a name written in a file, such
+  as a ros2_control hardware plugin, which the controller manager loads by the name in the
+  robot model. [Packages, nodes, and libraries](../packages-nodes-libraries.md#add-a-plugin-library)
 - **Port:** a numbered door that a network program listens on, like an apartment number.
   [Containers](containers.md#two-more-ideas-you-will-meet)
 - **Power budget:** the spreadsheet that adds up how much current and energy each part of

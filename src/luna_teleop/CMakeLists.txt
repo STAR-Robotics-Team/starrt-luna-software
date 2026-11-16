@@ -10,7 +10,8 @@ find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
 
 add_executable(heartbeat_publisher src/heartbeat_publisher.cpp)
-ament_target_dependencies(heartbeat_publisher rclcpp std_msgs)
+target_link_libraries(heartbeat_publisher
+  rclcpp::rclcpp ${std_msgs_TARGETS})
 
 install(TARGETS heartbeat_publisher DESTINATION lib/${PROJECT_NAME})
 

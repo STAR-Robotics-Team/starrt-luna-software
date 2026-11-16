@@ -144,6 +144,8 @@ enrolled at Rutgers in the semester of the competition or the one before
   using another editor or no container, and what works on each operating system.
 - **[Everyday workflow](everyday-workflow.md):** editing, building, testing, and running
   code, and running commands from your own terminal with `scripts/dev`.
+- **[Packages, nodes, and libraries](packages-nodes-libraries.md):** creating a package,
+  using another package, adding a node or a plugin library, and what the tests check.
 - **[GUI tools](gui-tools.md):** seeing RViz, rqt, and other programs with windows.
 - **[CAN bus](can-bus.md):** working with the motor controllers, with or without hardware.
 - **[ROS 2 networking](ros-networking.md):** connecting your nodes to the robot or another

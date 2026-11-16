@@ -60,6 +60,7 @@ nav:
   - Reference:
       - Development environment: development-environment.md
       - Everyday workflow: everyday-workflow.md
+      - Packages, nodes, and libraries: packages-nodes-libraries.md
       - GUI tools: gui-tools.md
       - CAN bus: can-bus.md
       - ROS 2 networking: ros-networking.md

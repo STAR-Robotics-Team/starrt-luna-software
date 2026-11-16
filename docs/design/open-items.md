@@ -501,4 +501,11 @@ Every `[TBD]` and `[TBR]` in the docs' own text, by page and section.
 | [What works where](../development-environment.md#what-works-where) | [TBD: not set up yet] |
 | [What works where](../development-environment.md#what-works-where) | [TBR: yes, with ROS's `joy` package; not tested yet] |
 
+### [Packages, nodes, and libraries](../packages-nodes-libraries.md)
+
+| Section | Marked |
+| --- | --- |
+| [See what the tests check](../packages-nodes-libraries.md#see-what-the-tests-check) | [TBD: a learning guide page on unit and launch tests (2.4)] |
+| [See what the tests check](../packages-nodes-libraries.md#see-what-the-tests-check) | [TBD: CI that builds and tests the code (2.5)] |
+
 <!-- test-sheet: data -->
