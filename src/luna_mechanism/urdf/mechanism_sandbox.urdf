@@ -1,0 +1,137 @@
+<?xml version="1.0"?>
+<!-- SYNTHETIC TEST FIXTURE: not robot dimensions, names, or approved limits. -->
+<robot name="mechanism_sandbox">
+  <link name="base_link">
+    <visual>
+      <geometry>
+        <box size="1 0.8 0.1" />
+      </geometry>
+    </visual>
+  </link>
+  <ros2_control name="MechanismSandbox" type="system">
+    <hardware>
+      <plugin>mock_components/GenericSystem</plugin>
+      <param name="calculate_dynamics">true</param>
+    </hardware>
+    <joint name="depth_left_joint">
+      <command_interface name="position" />
+      <state_interface name="position">
+        <param name="initial_value">0.0</param>
+      </state_interface>
+      <state_interface name="velocity" />
+    </joint>
+    <joint name="depth_right_joint">
+      <command_interface name="position" />
+      <state_interface name="position">
+        <param name="initial_value">0.0</param>
+      </state_interface>
+      <state_interface name="velocity" />
+    </joint>
+    <joint name="hatch_joint">
+      <command_interface name="position" />
+      <state_interface name="position">
+        <param name="initial_value">0.0</param>
+      </state_interface>
+      <state_interface name="velocity" />
+    </joint>
+    <joint name="excavator_chain_joint">
+      <command_interface name="velocity" />
+      <state_interface name="position">
+        <param name="initial_value">0.0</param>
+      </state_interface>
+      <state_interface name="velocity" />
+    </joint>
+    <joint name="conveyor_joint">
+      <command_interface name="velocity" />
+      <state_interface name="position">
+        <param name="initial_value">0.0</param>
+      </state_interface>
+      <state_interface name="velocity" />
+    </joint>
+  </ros2_control>
+  <link name="depth_left_link">
+    <visual>
+      <geometry>
+        <box size="0.25 0.12 0.08" />
+      </geometry>
+      <material name="depth_left_joint_color">
+        <color rgba="0.2 0.6 0.9 1" />
+      </material>
+    </visual>
+  </link>
+  <joint name="depth_left_joint" type="prismatic">
+    <parent link="base_link" />
+    <child link="depth_left_link" />
+    <origin xyz="0 0.3 0.15" rpy="0 0 0" />
+    <axis xyz="0 0 1" />
+    <limit effort="10" velocity="0.1" lower="0" upper="0.2" />
+  </joint>
+  <link name="depth_right_link">
+    <visual>
+      <geometry>
+        <box size="0.25 0.12 0.08" />
+      </geometry>
+      <material name="depth_right_joint_color">
+        <color rgba="0.2 0.6 0.9 1" />
+      </material>
+    </visual>
+  </link>
+  <joint name="depth_right_joint" type="prismatic">
+    <parent link="base_link" />
+    <child link="depth_right_link" />
+    <origin xyz="0 -0.3 0.15" rpy="0 0 0" />
+    <axis xyz="0 0 1" />
+    <limit effort="10" velocity="0.1" lower="0" upper="0.2" />
+  </joint>
+  <link name="hatch_link">
+    <visual>
+      <geometry>
+        <box size="0.25 0.12 0.08" />
+      </geometry>
+      <material name="hatch_joint_color">
+        <color rgba="0.2 0.6 0.9 1" />
+      </material>
+    </visual>
+  </link>
+  <joint name="hatch_joint" type="revolute">
+    <parent link="base_link" />
+    <child link="hatch_link" />
+    <origin xyz="-0.4 0 0.2" rpy="0 0 0" />
+    <axis xyz="0 1 0" />
+    <limit effort="10" velocity="0.5" lower="0" upper="1" />
+  </joint>
+  <link name="excavator_chain_link">
+    <visual>
+      <geometry>
+        <box size="0.25 0.12 0.08" />
+      </geometry>
+      <material name="excavator_chain_joint_color">
+        <color rgba="0.2 0.6 0.9 1" />
+      </material>
+    </visual>
+  </link>
+  <joint name="excavator_chain_joint" type="continuous">
+    <parent link="base_link" />
+    <child link="excavator_chain_link" />
+    <origin xyz="0.4 0 0.3" rpy="0 0 0" />
+    <axis xyz="0 1 0" />
+    <limit effort="10" velocity="2" />
+  </joint>
+  <link name="conveyor_link">
+    <visual>
+      <geometry>
+        <box size="0.25 0.12 0.08" />
+      </geometry>
+      <material name="conveyor_joint_color">
+        <color rgba="0.2 0.6 0.9 1" />
+      </material>
+    </visual>
+  </link>
+  <joint name="conveyor_joint" type="continuous">
+    <parent link="base_link" />
+    <child link="conveyor_link" />
+    <origin xyz="0 0 0.3" rpy="0 0 0" />
+    <axis xyz="0 1 0" />
+    <limit effort="10" velocity="2" />
+  </joint>
+</robot>
