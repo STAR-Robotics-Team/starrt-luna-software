@@ -24,4 +24,3 @@ if(BUILD_TESTING)
   ament_cpplint(FILTERS "-legal/copyright")
 endif()
 
-ament_package()
