@@ -21,6 +21,5 @@ if(BUILD_TESTING)
   # so skip ament_copyright and run cpplint without its copyright check.
   list(APPEND AMENT_LINT_AUTO_EXCLUDE ament_cmake_copyright ament_cmake_cpplint)
   ament_lint_auto_find_test_dependencies()
-  ament_cpplint(FILTERS "-legal/copyright")
 
 
