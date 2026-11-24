@@ -1348,8 +1348,8 @@ Replaces the gamepad; a person presses the keys`"]
 
 - **Deliverable:** 5.9, Keyboard drives the stub robot through the frontend
 - **Runs on:** Any laptop: the frontend in a browser, the robot's side in the dev container
-- **Proves:** The keyboard layout, the hold key, focus loss, and the frontend's /joy, driven
-  by hand
+- **Proves:** The keyboard layout, the speed steps and the conveyor step, the hold key, focus
+  loss, and the frontend's /joy, driven by hand
 - **Can't catch:** What the real gamepad does when it disconnects. It needs a person at the
   keys, so CI keeps using the recording.
 

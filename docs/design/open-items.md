@@ -386,7 +386,7 @@ Every `[TBD]` and `[TBR]` in the docs' own text, by page and section.
 | --- | --- |
 | [4. Parameters](teleoperation.md#4-parameters) | [TBD: enumerated on each laptop] |
 | [4. Parameters](teleoperation.md#4-parameters) | [TBR: 0.05] |
-| [4. Parameters](teleoperation.md#4-parameters) | [TBR: 0.5] |
+| [4. Parameters](teleoperation.md#4-parameters) | [TBR: 0.2, 0.4, 0.6, 0.8, 1.0] |
 | [4. Parameters](teleoperation.md#4-parameters) | [TBR: 20] |
 | [4. Parameters](teleoperation.md#4-parameters) | [TBR: 5, 1, 1] |
 | [4. Parameters](teleoperation.md#4-parameters) | [TBR: 1] |
@@ -396,6 +396,8 @@ Every `[TBD]` and `[TBR]` in the docs' own text, by page and section.
 | [4. Parameters](teleoperation.md#4-parameters) | [TBR: 0.15] |
 | [4. Parameters](teleoperation.md#4-parameters) | [TBD: the drivetrain's limits, 3.7] |
 | [5. Libraries and hardware interfaces](teleoperation.md#5-libraries-and-hardware-interfaces) | [TBR: Serve the frontend from the robot computer over HTTPS with secure rosbridge WebSockets, or package it as a desktop app; open question 4 decides.] |
+| [5. Libraries and hardware interfaces](teleoperation.md#5-libraries-and-hardware-interfaces) | [TBR: added after the review] |
+| [5. Libraries and hardware interfaces](teleoperation.md#5-libraries-and-hardware-interfaces) | [TBD: its index, with 5.2's measured table] |
 | [5. Libraries and hardware interfaces](teleoperation.md#5-libraries-and-hardware-interfaces) | [TBR: the keys are a proposal until they are tried at the bench (5.9).] |
 | [5. Libraries and hardware interfaces](teleoperation.md#5-libraries-and-hardware-interfaces) | [TBR: the Jetson's own Wi-Fi for now, while its Ethernet port serves the LiDAR; system open question 8] |
 | [5. Libraries and hardware interfaces](teleoperation.md#5-libraries-and-hardware-interfaces) | [TBR: The stream rates and bandwidth estimates below are starting values for testing. Estimates use bytes per message × Hz × 8 / 1000 kbit/s, and leave out transport overhead and retransmissions.] |

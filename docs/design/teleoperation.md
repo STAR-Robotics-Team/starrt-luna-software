@@ -87,7 +87,7 @@ TCP; the QoS in the table is on the robot's side.
 
 | Name | What it carries | Kind | Type | Rate | Publisher or server | Subscriber or client | QoS |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| `/joy` | The gamepad's sticks and buttons, or the keyboard's keys in the same layout, from the operator laptop | topic | `sensor_msgs/msg/Joy` | `autorepeat_rate`, 20 Hz, and on change [TBR] | Operator frontend | `teleop_node` | [TBD: as rosbridge publishes it, 5.4] |
+| `/joy` | The gamepad's sticks and buttons, or the keyboard's keys in the same layout, plus the conveyor command at its step, from the operator laptop | topic | `sensor_msgs/msg/Joy` | `autorepeat_rate`, 20 Hz, and on change [TBR] | Operator frontend | `teleop_node` | [TBD: as rosbridge publishes it, 5.4] |
 | `/operator/heartbeat` | The operator station's sign of life, which keeps the robot enabled | topic | `std_msgs/msg/Header` | `heartbeat_rate`, 10 Hz, including in AUTO and with the hold button released | Operator frontend | `mode_manager` | best effort, depth 1 |
 | `/teleop/cmd_vel` | Teleop's drive command, for command_selector | topic | `geometry_msgs/msg/TwistStamped` | `command_rate`, 20 Hz [TBR] | `teleop_node` | `command_selector` | best effort, volatile, depth 1 |
 | `/teleop/mechanism/<function>/command` | Teleop's command for one mechanism function, for command_selector | topic | luna_interfaces/msg/ActuatorCommand [TBR: proposed in the mechanism doc (4.2)] | `command_rate`, 20 Hz [TBR] | `teleop_node` | `command_selector` | best effort, volatile, depth 1 |
@@ -125,7 +125,7 @@ per function ([mechanism design, section 3](mechanism.md#3-interfaces)).
 | --- | --- | --- | --- | --- | --- |
 | `device_name` | Operator frontend | string | [TBD: enumerated on each laptop] | None | Selected controller: a gamepad the browser lists, or the keyboard |
 | `deadzone` | Operator frontend | double | 0.05 [TBR] | fraction | Ignore small stick drift |
-| `keyboard_scale` | Operator frontend | double | 0.5 [TBR] | fraction | How far a held W, S, A, or D pushes its stick; every other key pushes fully |
+| `speed_steps` | Operator frontend | double array | 0.2, 0.4, 0.6, 0.8, 1.0 [TBR] | fraction | The five speed steps: number keys 1 to 5 pick one for the keyboard's stick and trigger keys, and D-pad left and right (Z and X) move the conveyor's step |
 | `autorepeat_rate` | Operator frontend | double | 20 [TBR] | Hz | Poll and resend unchanged input |
 | `heartbeat_rate` | Operator frontend | double | 10 | Hz | Send the operator heartbeat, including in AUTO and with the hold button released |
 | `camera_rate`, `map_rate`, `path_rate` | Operator frontend | double | 5, 1, 1 [TBR] | Hz | Rate each stream is forwarded at while it is on |
@@ -163,8 +163,9 @@ WebSockets, or package it as a desktop app; open question 4 decides.] Keep the f
 files available offline for Mission Control.
 
 **Gamepad.** An Xbox Model 1914, connected to the operator laptop by a USB data cable with
-USB-C at the controller. The physical mapping below was accepted in review; the measured
-axis and button numbers wait on bench testing (5.2). The Keyboard column is the backup controller,
+USB-C at the controller. The physical mapping below was accepted in review, except the
+conveyor step on D-pad left and right [TBR: added after the review]; the measured axis and
+button numbers wait on bench testing (5.2). The Keyboard column is the backup controller,
 described below the table.
 
 | Control | Action | Keyboard |
@@ -173,13 +174,30 @@ described below the table.
 | Left stick vertical, horizontal | Drive forward or reverse; steer | W, S; A, D |
 | Right stick vertical | Raise or lower the excavator (depth) | Up, Down arrows |
 | RT, LT | Excavator chain forward, reverse | E, Q |
-| D-pad up, down | Conveyor forward, reverse | R, F |
+| How far a stick or trigger is pushed | How fast that function moves | 1 to 5: the speed step |
+| D-pad up, down | Conveyor forward, reverse, at the conveyor step | R, F |
+| D-pad left, right | Conveyor step slower, faster | Z, X |
 | A, X | Hatch open, close | T, G |
 | Laptop controls | Enable, disable, clear fault, select the control source and task | On screen only, never a key |
 
 Releasing LB zeroes every manual command. Opposite commands for one actuator give zero.
 Task permissions apply, and AUTO ignores the gamepad. After input loss, moving again takes
 an explicit enable and a fresh release and press of LB.
+
+**Conveyor speed.** The conveyor's motor can run at any speed, but the D-pad is only on or
+off, so the frontend keeps a conveyor step. D-pad left and right move it one step slower or
+faster through the five `speed_steps`; it starts at the first step when the frontend
+starts, keeps its value until changed, and is shown on screen. While D-pad up or down is
+held, the frontend sends the conveyor command, the current step forward or reverse, on one
+extra `/joy` axis after the gamepad's own [TBD: its index, with 5.2's measured table], so
+`teleop_node` maps the conveyor like any other analog input. The step lives in the
+frontend rather than in `teleop_node` for three reasons:
+
+- The frontend can show it without a new topic from the robot.
+- Each press is seen on the laptop, so a burst of late `/joy` after a Wi-Fi stall cannot
+  replay a step change.
+- The keyboard, which already makes its own axis values in the frontend, shares the same
+  code.
 
 **Keyboard.** The laptop keyboard is the backup controller in every layer: in Sim on a
 laptop with no gamepad, and on the Bench and the rover if the gamepad fails (R7). The
@@ -192,9 +210,16 @@ tried at the bench (5.9).]
   Switching zeroes every manual command, and moving again takes a fresh press of LB or
   Space.
 - **Press and release, not key repeat.** The frontend follows each key's press and release
-  and sends `/joy` at `autorepeat_rate`, as it does for the gamepad. A held key pushes its
-  axis or button fully, except W, S, A, and D, which push the drive and steer axes to
-  `keyboard_scale`: a key is only on or off, so without it every press would be full speed.
+  and sends `/joy` at `autorepeat_rate`, as it does for the gamepad. A held key for a
+  button presses it fully, and R and F run the conveyor at its step, like D-pad up and
+  down.
+- **Speed steps.** A key is only on or off, so number keys 1 to 5 pick one of the
+  `speed_steps`, and a held key for a stick or trigger (W, S, A, D, Up, Down, E, and Q)
+  pushes its axis to that step. The step is shown on screen and goes back to 1 whenever
+  the keyboard is selected, so a new session never starts at full speed. Changing it while
+  keys are held takes effect at once, like pushing a stick further. In EXCAVATE and DUMP
+  the drive is still capped at `creep_output`
+  ([operating modes, section 4](operating-modes.md#4-parameters)), whatever the step.
 - **Focus loss.** When the frontend's window or tab loses focus, every key counts as
   released, so manual commands go to zero. A key released while another window has focus
   never reaches the frontend, so it cannot wait for the release.
@@ -220,7 +245,8 @@ shows the obstacle map and planned path for judging, with the camera off. The op
 change either view at runtime, such as turning the camera on in AUTO; views never change
 robot permissions. Other states show low-rate status and faults, following the operating
 modes design's bandwidth rules. The controls show the acknowledged state, source, task,
-battery, connection status, and refusal or fault reasons, and provide enable, disable,
+battery, connection status, the selected input, the speed step and the conveyor step, and
+refusal or fault reasons, and provide enable, disable,
 clear-fault, source, and task controls, plus view and stream selection and live link
 bandwidth.
 
@@ -338,7 +364,7 @@ needs passing Sim tests and a reviewed procedure; Robot needs a merged Bench log
 | Requirement | Test | Where | Result |
 | --- | --- | --- | --- |
 | R1 | Find the controller through the Gamepad API on Windows, macOS, and Linux; see every required input on `/joy` through rosbridge (5.2). | Bench | Not run |
-| R2 | Unit tests of `teleop_node` (5.3): deadzone, axis signs, opposite commands, and releasing LB; task restrictions, creep driving in EXCAVATE, the conveyor in DUMP, and AUTO ignoring input. | Unit, then Sim | Not run |
+| R2 | Unit tests of `teleop_node` (5.3): deadzone, axis signs, opposite commands, and releasing LB; the conveyor axis mapped like the other analog inputs; task restrictions, creep driving in EXCAVATE, the conveyor in DUMP, and AUTO ignoring input. | Unit, then Sim | Not run |
 | R2, R4 | Launch test (5.3): a `/joy` recording drives the stub robot; once LB is released, `/teleop/cmd_vel` and every mechanism command are zero within one `command_rate` period. | Sim | Not run |
 | R4 | Launch test (5.4): with `heartbeat_publisher` running, freeze it with Ctrl+Z during a stub drive; the robot disables within `link_timeout` plus 100 ms. | Sim | Not run |
 | R3 | Accepted and refused requests, and clear-then-enable recovery; after the link recovers, no queued operator request runs. | Sim, then Bench | Not run |
@@ -348,7 +374,8 @@ needs passing Sim tests and a reviewed procedure; Robot needs a merged Bench log
 | R6 | A teammate repeats the setup and mapping on Windows, macOS, and Linux from the repository's configuration; check the chosen delivery and the offline files. | Bench | Not run |
 | R4 | With `tc netem` packet loss and a Wi-Fi stall, measure button-to-motor latency and false disables. A burst of old input after the stall moves nothing, the stopping deadlines hold, and reconnecting does not resume motion (5.6, open question 6). | Bench | Not run |
 | R4 | Reject rate changes whose periods do not fit the heartbeat, input, mode, or actuator command timeouts. | Unit, then Sim | Not run |
-| R7 | Drive the stub robot by keyboard through the frontend (5.9): each key in section 5 moves its function; releasing Space zeroes every command within one `command_rate` period; switching to another window zeroes them; switching between the gamepad and the keyboard needs a fresh hold press; Space never presses a focused on-screen button. | Sim, then Bench | Not run |
+| R1, R7 | In the frontend (5.9), with the gamepad and with the keyboard: D-pad left and right, and Z and X, move the conveyor step one at a time and stop at the first and last steps; the conveyor axis equals the step while D-pad up or down (R or F) is held, and zero otherwise; the step shows on screen. | Unit, then Sim | Not run |
+| R7 | Drive the stub robot by keyboard through the frontend (5.9): each key in section 5 moves its function; each number key sets the speed step, and a held W gives `/teleop/cmd_vel` at that fraction of `max_speed`; the step starts at 1 whenever the keyboard is selected; releasing Space zeroes every command within one `command_rate` period; switching to another window zeroes them; switching between the gamepad and the keyboard needs a fresh hold press; Space never presses a focused on-screen button. | Sim, then Bench | Not run |
 | R7 | On each station's laptop, the keys a run presses together (Space, W, D, E, and Down) all register at once; some keyboards miss keys in certain combinations. | Bench | Not run |
 
 ## 9. Open questions

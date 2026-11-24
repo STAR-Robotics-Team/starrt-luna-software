@@ -24,11 +24,11 @@ subscribes = ["/robot/mode", "/power/battery", "/mechanism/status", "camera-imag
 
 [[node.publishes]]
 name = "/joy"
-carries = "The gamepad's sticks and buttons, or the keyboard's keys in the same layout, from the operator laptop"
+carries = "The gamepad's sticks and buttons, or the keyboard's keys in the same layout, plus the conveyor command at its step, from the operator laptop"
 type = "sensor_msgs/msg/Joy"
 rate = "`autorepeat_rate`, 20 Hz, and on change [TBR]"
 qos = "[TBD: as rosbridge publishes it, 5.4]"
-note = "Stamped by the frontend in the robot's time (open question 6), so teleop_node can pass the stamp on to its commands."
+note = "Stamped by the frontend in the robot's time (open question 6), so teleop_node can pass the stamp on to its commands. The frontend adds one axis after the gamepad's own: the conveyor command at its step (section 5)."
 
 [[node.publishes]]
 name = "/operator/heartbeat"
