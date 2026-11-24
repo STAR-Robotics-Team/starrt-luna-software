@@ -685,3 +685,27 @@ format = "web"
 expect = "Discharge cycles and capacity as a function of charge voltage limit"
 checked = 2026-10-26
 notes = "Table 4: the energy a cobalt-based lithium cell stores when charged to less than 4.20 V. Estimates, not a datasheet for our packs."
+
+[[source]]
+id = "chrome-timer-throttling"
+primary = true
+group = "Software references"
+title = "Heavy throttling of chained JS timers beginning in Chrome 88"
+publisher = "Google, Chrome for Developers"
+url = "https://developer.chrome.com/blog/timer-throttling-in-chrome-88"
+format = "web"
+expect = "Intensive throttling"
+checked = 2026-11-16
+notes = "How often Chrome runs a hidden tab's timers, and what counts as hidden: why the operator frontend's heartbeat and /joy slow down when its tab is hidden."
+
+[[source]]
+id = "mdn-settimeout"
+primary = true
+group = "Software references"
+title = "Window: setTimeout() method"
+publisher = "MDN Web Docs, Mozilla"
+url = "https://developer.mozilla.org/en-US/docs/Web/API/Window/setTimeout"
+format = "web"
+expect = "Timeouts in inactive tabs"
+checked = 2026-11-16
+notes = "The minimum timer delay Firefox and Chrome enforce in inactive tabs."

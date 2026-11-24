@@ -79,8 +79,8 @@ config:
 ---
 flowchart TB
   b1["`*Input*
-**Keyboard teleop or a test script**
-Sends velocity commands`"]
+**teleop_twist_keyboard or a test script**
+ROS's terminal keyboard tool, or a script, sends velocity commands`"]
   b2["`*Ours · 1.8, 1.17*
 **Mode manager and command selector**
 Publish /robot/mode, and pass on only the commands of the source it names`"]
@@ -134,8 +134,8 @@ config:
 ---
 flowchart TB
   b1["`*Input*
-**Keyboard teleop or a test script**
-Sends velocity commands`"]
+**teleop_twist_keyboard or a test script**
+ROS's terminal keyboard tool, or a script, sends velocity commands`"]
   b2["`*Ours · 1.8, 1.17*
 **Mode manager and command selector**
 Publish /robot/mode, and pass on only the commands of the source it names`"]
@@ -195,8 +195,8 @@ config:
 ---
 flowchart TB
   b1["`*Input*
-**Keyboard teleop or a test script**
-Sends velocity commands`"]
+**teleop_twist_keyboard or a test script**
+ROS's terminal keyboard tool, or a script, sends velocity commands`"]
   b2["`*Ours · 1.8, 1.17*
 **Mode manager and command selector**
 Publish /robot/mode, and pass on only the commands of the source it names`"]
@@ -1281,7 +1281,7 @@ flowchart BT
 Get commands and mode requests`"]
   b2["`*Ours · 5.3*
 **Teleop mapping**
-teleop_twist_joy plus our node for the mechanism and mode buttons`"]
+teleop_node turns /joy into drive and mechanism commands`"]
   line3["`**Hardware line:** /joy`"]
   b4["`*ROS tool · stand-in*
 **ros2 bag play**
@@ -1308,6 +1308,51 @@ A /joy recording of every stick and button, kept beside its test`"]
 - **Proves:** The mapping, the deadband, and no motion without the enable button
 - **Can't catch:** What the real gamepad does when it disconnects
 
+### Gamepad: Keyboard (Sim)
+
+```mermaid
+---
+config:
+  flowchart:
+    wrappingWidth: 260
+---
+flowchart BT
+  b1["`*Ours*
+**Drive, mechanism, mode manager**
+Get commands and mode requests`"]
+  b2["`*Ours · 5.3*
+**Teleop mapping**
+teleop_node turns /joy into drive and mechanism commands`"]
+  line3["`**Hardware line:** /joy`"]
+  b4["`*Ours · 5.9*
+**Operator frontend**
+Reads the laptop keyboard; sends /joy in the gamepad's layout over rosbridge`"]
+  b5["`*Stand-in*
+**The laptop keyboard**
+Replaces the gamepad; a person presses the keys`"]
+  b2 --> b1
+  line3 --> b2
+  b4 --> line3
+  b5 --> b4
+  classDef ours fill:#4c669026,stroke:#4c6690
+  classDef ros fill:#8b939c1f,stroke:#8b939c
+  classDef stand fill:#b0844526,stroke:#b08445
+  classDef hw fill:#4a725926,stroke:#4a7259
+  classDef hwline fill:#b9707c26,stroke:#b9707c,stroke-dasharray:4 3
+  classDef ghost fill:none,stroke:#8b939c,stroke-dasharray:4 4,color:#8b939c
+  class b1,b2 ours
+  class line3 hwline
+  class b4 ours
+  class b5 stand
+```
+
+- **Deliverable:** 5.9, Keyboard drives the stub robot through the frontend
+- **Runs on:** Any laptop: the frontend in a browser, the robot's side in the dev container
+- **Proves:** The keyboard layout, the speed steps and the conveyor step, the hold key, focus
+  loss, and the frontend's /joy, driven by hand
+- **Can't catch:** What the real gamepad does when it disconnects. It needs a person at the
+  keys, so CI keeps using the recording.
+
 ### Gamepad: Bench
 
 ```mermaid
@@ -1322,7 +1367,7 @@ flowchart BT
 Get commands and mode requests`"]
   b2["`*Ours · 5.3*
 **Teleop mapping**
-teleop_twist_joy plus our node for the mechanism and mode buttons`"]
+teleop_node turns /joy into drive and mechanism commands`"]
   line3["`**Hardware line:** /joy`"]
   b4["`*Ours · 5.1*
 **Operator frontend**
@@ -1351,6 +1396,9 @@ On the operator laptop, any OS`"]
 - **Proves:** The real gamepad drives the bench motor over the access point
 - **Can't catch:** Competition distance and interference
 
+The laptop keyboard can replace the gamepad here, through the same frontend
+([teleoperation design, R7](teleoperation.md#1-purpose-and-requirements)).
+
 ### Gamepad: Drive base (Robot)
 
 ```mermaid
@@ -1365,7 +1413,7 @@ flowchart BT
 Get commands and mode requests`"]
   b2["`*Ours · 5.3*
 **Teleop mapping**
-teleop_twist_joy plus our node for the mechanism and mode buttons`"]
+teleop_node turns /joy into drive and mechanism commands`"]
   line3["`**Hardware line:** /joy`"]
   b4["`*Ours · 5.1*
 **Operator frontend**
@@ -1394,6 +1442,9 @@ On the operator laptop; its commands cross the radio link`"]
 - **Proves:** Driving the drive base from the operator station
 
 Only if the drive base is ready by Nov 22; otherwise this moves to spring. It runs again on the whole rover in spring.
+
+The laptop keyboard can replace the gamepad here, through the same frontend
+([teleoperation design, R7](teleoperation.md#1-purpose-and-requirements)).
 
 Other modes:
 

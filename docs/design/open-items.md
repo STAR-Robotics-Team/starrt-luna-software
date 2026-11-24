@@ -72,6 +72,7 @@ by `scripts/design render`.
 | --- | --- |
 | 4. What final network settings and frontend delivery will be used: HTTPS and secure WebSockets served from the robot computer, or a packaged desktop app? | 5.7 |
 | 6. How does the robot judge the age of a command whose stamp starts on the laptop? The frontend stamps /joy, so a stale command after a Wi-Fi stall is caught only if the laptop's clock agrees with the robot's. Proposed: the frontend measures the offset with rosapi's get_time service, part of the rosbridge suite, from round trips, and stamps /joy in the robot's time; an operator laptop's own clock cannot be relied on to be set. | 5.4 |
+| 7. How does the frontend keep the heartbeat and /joy at their rates while its tab is hidden, meaning another tab is active or the window is minimized (Chrome 88 timer throttling, section "Hidden pages")? A hidden tab's timers run about once a second at most (Chrome 88 timer throttling, section "Throttling"; MDN setTimeout(), section "Timeouts in inactive tabs"). That is longer than link_timeout (0.5 s) and input_timeout (0.15 s), so hiding the frontend would disable the robot, in AUTO too; not yet tested with our frontend. Options: keeping the frontend's tab visible as a run rule; running the timers in a Web Worker, which neither source covers, so it needs a test; or the desktop app in question 4. | 5.4 |
 
 ### [Sensors and Robot Model Design](sensors.md#9-open-questions)
 
@@ -385,6 +386,7 @@ Every `[TBD]` and `[TBR]` in the docs' own text, by page and section.
 | --- | --- |
 | [4. Parameters](teleoperation.md#4-parameters) | [TBD: enumerated on each laptop] |
 | [4. Parameters](teleoperation.md#4-parameters) | [TBR: 0.05] |
+| [4. Parameters](teleoperation.md#4-parameters) | [TBR: 0.2, 0.4, 0.6, 0.8, 1.0] |
 | [4. Parameters](teleoperation.md#4-parameters) | [TBR: 20] |
 | [4. Parameters](teleoperation.md#4-parameters) | [TBR: 5, 1, 1] |
 | [4. Parameters](teleoperation.md#4-parameters) | [TBR: 1] |
@@ -394,6 +396,9 @@ Every `[TBD]` and `[TBR]` in the docs' own text, by page and section.
 | [4. Parameters](teleoperation.md#4-parameters) | [TBR: 0.15] |
 | [4. Parameters](teleoperation.md#4-parameters) | [TBD: the drivetrain's limits, 3.7] |
 | [5. Libraries and hardware interfaces](teleoperation.md#5-libraries-and-hardware-interfaces) | [TBR: Serve the frontend from the robot computer over HTTPS with secure rosbridge WebSockets, or package it as a desktop app; open question 4 decides.] |
+| [5. Libraries and hardware interfaces](teleoperation.md#5-libraries-and-hardware-interfaces) | [TBR: added after the review] |
+| [5. Libraries and hardware interfaces](teleoperation.md#5-libraries-and-hardware-interfaces) | [TBD: its index, with 5.2's measured table] |
+| [5. Libraries and hardware interfaces](teleoperation.md#5-libraries-and-hardware-interfaces) | [TBR: the keys are a proposal until they are tried at the bench (5.9).] |
 | [5. Libraries and hardware interfaces](teleoperation.md#5-libraries-and-hardware-interfaces) | [TBR: the Jetson's own Wi-Fi for now, while its Ethernet port serves the LiDAR; system open question 8] |
 | [5. Libraries and hardware interfaces](teleoperation.md#5-libraries-and-hardware-interfaces) | [TBR: The stream rates and bandwidth estimates below are starting values for testing. Estimates use bytes per message × Hz × 8 / 1000 kbit/s, and leave out transport overhead and retransmissions.] |
 | [5. Libraries and hardware interfaces](teleoperation.md#5-libraries-and-hardware-interfaces) | [TBD: the statistics source, 5.7] |
